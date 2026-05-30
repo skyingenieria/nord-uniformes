@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NORD Uniformes — Hecho para durar.</title>
+    <meta name="description" content="Uniformes escolares y corporativos para Zona Norte del Gran Buenos Aires. Algodón 280 g, costuras reforzadas, entrega coordinada.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400&family=Cormorant+Garamond:ital,wght@1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --azul:      #1E2D4A;
+            --azul-900:  #0F172E;
+            --azul-600:  #34466A;
+            --azul-400:  #6B7B9C;
+            --dorado:    #C8A96E;
+            --dorado-700:#A6884B;
+            --dorado-300:#E0CBA0;
+            --niebla:    #8A9AB5;
+            --niebla-200:#D3DAE5;
+            --niebla-700:#5E6F88;
+            --crema:     #F4F1EA;
+            --crema-2:   #ECE7DC;
+            --blanco:    #FFFFFF;
+            --negro:     #0A0E18;
+            --sans:      "Mulish", system-ui, sans-serif;
+            --serif:     "Cormorant Garamond", serif;
+            --mono:      "JetBrains Mono", monospace;
+            --pad-x:     clamp(20px, 5vw, 80px);
+            --max:       1280px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--sans);
+            background-color: var(--crema);
+            color: var(--azul-900);
+            line-height: 1.55;
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+        img { max-width: 100%; display: block; }
+        a { text-decoration: none; }
+
+        /* ===== BARRA DE ANUNCIO ===== */
+        .announcement-bar {
+            background-color: var(--azul-900);
+            color: var(--dorado-300);
+            text-align: center;
+            padding: 10px var(--pad-x);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background-color: rgba(244, 241, 234, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(30, 45, 74, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-container {
+            max-width: var(--max);
+            margin: 0 auto;
+            padding: 0 var(--pad-x);
+            height: 64px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .brand-logo {
+            color: var(--azul-900);
+            line-height: 0.88;
+            display: inline-block;
+        }
+        .brand-logo .nord {
+            font-weight: 900;
+            font-size: 22px;
+            letter-spacing: 0.06em;
+            display: block;
+        }
+        .brand-logo .uniformes {
+            font-weight: 300;
+            font-size: 6px;
+            letter-spacing: 0.55em;
+            display: block;
+            margin-top: 2px;
+            padding-left: 0.55em;
+        }
+        nav { display: flex; gap: 4px; }
+        nav a {
+            color: var(--azul);
+            font-family: var(--sans);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 10px 16px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            opacity: 0.65;
+            transition: opacity 0.2s, color 0.2s;
+            display: inline-block;
+        }
+        nav a:hover { opacity: 1; color: var(--dorado-700); }
+        .btn-whatsapp {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--azul-900);
+            color: var(--crema);
+            font-family: var(--sans);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            padding: 10px 20px;
+            border: 1px solid var(--azul-900);
+            transition: all 0.2s;
+        }
+        .btn-whatsapp:hover {
+            background-color: var(--dorado);
+            border-color: var(--dorado);
+            color: var(--azul-900);
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            background-color: var(--azul-900);
+            color: var(--crema);
+            position: relative;
+            overflow: hidden;
+            padding: clamp(80px, 14vh, 140px) var(--pad-x);
+            min-height: 78vh;
+            display: flex;
+            align-items: center;
+        }
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(800px 500px at 20% 35%, rgba(200,169,110,0.08), transparent 55%),
+                radial-gradient(600px 400px at 80% 75%, rgba(138,154,181,0.06), transparent 50%);
+        }
+        .hero::after {
+            content: "";
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--dorado), transparent);
+        }
+        .hero-content {
+            max-width: 720px;
+            position: relative;
+            z-index: 2;
+        }
+        .hero-content .eyebrow {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--dorado-700);
+            margin-bottom: 24px;
+            display: block;
+        }
+        .hero-content h1 {
+            font-size: clamp(48px, 9vw, 96px);
+            font-weight: 900;
+            line-height: 0.92;
+            letter-spacing: -0.02em;
+            color: var(--crema);
+            margin-bottom: 28px;
+        }
+        .hero-content .lede {
+            font-family: var(--serif);
+            font-style: italic;
+            font-size: clamp(20px, 2.4vw, 28px);
+            color: var(--dorado-300);
+            margin-bottom: 44px;
+            line-height: 1.35;
+            max-width: 28ch;
+        }
+        .btn-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: transparent;
+            color: var(--crema);
+            padding: 16px 36px;
+            font-family: var(--sans);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            border: 1px solid var(--dorado);
+            transition: all 0.25s;
+        }
+        .btn-cta:hover {
+            background-color: var(--dorado);
+            color: var(--azul-900);
+        }
+        .btn-cta::after { content: "\2192"; font-size: 16px; }
+
+        /* ===== HIGHLIGHTS ===== */
+        .highlights {
+            background-color: var(--crema);
+            border-bottom: 1px solid rgba(30, 45, 74, 0.08);
+            padding: 48px var(--pad-x);
+        }
+        .highlights-grid {
+            max-width: var(--max);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+        .highlight-card {
+            display: flex;
+            gap: 18px;
+            align-items: flex-start;
+        }
+        .highlight-icon {
+            flex-shrink: 0;
+            width: 48px;
+            height: 48px;
+            border: 1px solid rgba(30, 45, 74, 0.12);
+            display: grid;
+            place-content: center;
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--dorado-700);
+        }
+        .highlight-info h3 {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            color: var(--azul-900);
+        }
+        .highlight-info p {
+            font-size: 13px;
+            color: var(--azul-600);
+            line-height: 1.55;
+        }
+
+        /* ===== COLEGIOS ===== */
+        .schools-section {
+            padding: clamp(80px, 12vh, 120px) var(--pad-x);
+            max-width: var(--max);
+            margin: 0 auto;
+        }
+        .section-header {
+            margin-bottom: 48px;
+        }
+        .section-header .eyebrow {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--dorado-700);
+            margin-bottom: 14px;
+            display: block;
+        }
+        .section-header h2 {
+            font-size: clamp(28px, 4vw, 48px);
+            font-weight: 800;
+            letter-spacing: -0.015em;
+            line-height: 1;
+            color: var(--azul-900);
+        }
+        .schools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 24px;
+        }
+        .school-card {
+            background-color: var(--crema-2);
+            border: 1px solid rgba(30, 45, 74, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.2s;
+        }
+        .school-card:hover { border-color: var(--dorado); }
+        .school-card-img {
+            aspect-ratio: 16/10;
+            background: linear-gradient(160deg, var(--azul-600) 0%, var(--azul-900) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .school-card-img::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, transparent 40%, rgba(15,23,46,0.6));
+        }
+        .school-card-img .school-name-overlay {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            z-index: 2;
+            color: var(--crema);
+            font-family: var(--serif);
+            font-style: italic;
+            font-size: 18px;
+            color: var(--dorado-300);
+        }
+        .school-card-body {
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .school-card-body h3 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.005em;
+            color: var(--azul-900);
+        }
+        .school-card-body p {
+            font-size: 14px;
+            color: var(--azul-600);
+            line-height: 1.6;
+            margin-bottom: 24px;
+            flex-grow: 1;
+        }
+        .btn-secondary {
+            display: inline-block;
+            background-color: var(--azul-900);
+            color: var(--crema);
+            text-align: center;
+            padding: 14px 28px;
+            font-family: var(--sans);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            border: 1px solid var(--azul-900);
+        }
+        .btn-secondary:hover {
+            background-color: var(--dorado);
+            color: var(--azul-900);
+            border-color: var(--dorado);
+        }
+
+        /* ===== PILARES ===== */
+        .pillars {
+            background-color: var(--azul-900);
+            color: var(--crema);
+            padding: clamp(80px, 12vh, 120px) var(--pad-x);
+            position: relative;
+        }
+        .pillars::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--dorado), transparent);
+        }
+        .pillars-grid {
+            max-width: var(--max);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: clamp(32px, 4vw, 56px);
+        }
+        .pillar-card {
+            border-top: 1px solid rgba(255,255,255,0.12);
+            padding-top: 28px;
+        }
+        .pillar-card .num {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--dorado);
+            letter-spacing: 0.1em;
+            display: block;
+            margin-bottom: 14px;
+        }
+        .pillar-card h3 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: var(--crema);
+            letter-spacing: -0.005em;
+        }
+        .pillar-card p {
+            font-size: 14px;
+            color: var(--niebla-200);
+            line-height: 1.65;
+            max-width: 36ch;
+        }
+
+        /* ===== LOGÍSTICA ===== */
+        .delivery {
+            background-color: var(--crema);
+            padding: clamp(80px, 12vh, 120px) var(--pad-x);
+            border-top: 1px solid rgba(30, 45, 74, 0.08);
+        }
+        .delivery-container {
+            max-width: var(--max);
+            margin: 0 auto;
+        }
+        .delivery-header {
+            margin-bottom: 48px;
+        }
+        .delivery-header .eyebrow {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--dorado-700);
+            margin-bottom: 14px;
+            display: block;
+        }
+        .delivery-header h2 {
+            font-size: clamp(24px, 3.2vw, 36px);
+            font-weight: 800;
+            letter-spacing: -0.015em;
+            margin-bottom: 12px;
+            color: var(--azul-900);
+        }
+        .delivery-header p {
+            font-family: var(--serif);
+            font-style: italic;
+            font-size: 18px;
+            color: var(--azul-600);
+        }
+        .delivery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+        .delivery-card {
+            border: 1px solid rgba(30, 45, 74, 0.08);
+            padding: 36px;
+            background-color: var(--blanco);
+        }
+        .delivery-card .tag {
+            display: inline-block;
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--dorado-700);
+            margin-bottom: 20px;
+        }
+        .delivery-card h3 {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: var(--azul-900);
+            letter-spacing: -0.005em;
+        }
+        .delivery-card p {
+            font-size: 14px;
+            color: var(--azul-600);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .delivery-card ul { list-style: none; }
+        .delivery-card ul li {
+            position: relative;
+            padding-left: 18px;
+            font-size: 13px;
+            color: var(--azul-600);
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        .delivery-card ul li::before {
+            content: "";
+            position: absolute;
+            left: 0; top: 10px;
+            width: 8px; height: 1px;
+            background-color: var(--dorado-700);
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background-color: var(--azul-900);
+            color: var(--niebla);
+            padding: clamp(56px, 8vh, 80px) var(--pad-x) 32px;
+            border-top: 1px solid var(--dorado);
+        }
+        .footer-container {
+            max-width: var(--max);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: clamp(24px, 4vw, 56px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 36px;
+            margin-bottom: 24px;
+        }
+        .footer-col h4 {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--dorado-700);
+            margin-bottom: 18px;
+        }
+        .footer-col p {
+            font-size: 14px;
+            margin-bottom: 10px;
+            line-height: 1.6;
+            color: var(--niebla);
+        }
+        .footer-col a {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: var(--niebla);
+            transition: color 0.2s;
+        }
+        .footer-col a:hover { color: var(--dorado-300); }
+        .footer-bottom {
+            max-width: var(--max);
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--azul-400);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .highlights-grid { grid-template-columns: 1fr; }
+            .pillars-grid { grid-template-columns: 1fr; }
+            .footer-container { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .header-container { flex-direction: column; height: auto; padding: 16px var(--pad-x); gap: 12px; }
+            nav { width: 100%; justify-content: center; }
+            .footer-container { grid-template-columns: 1fr; }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--niebla-200); }
+        ::selection { background: var(--dorado); color: var(--azul-900); }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA DE ANUNCIO -->
+    <div class="announcement-bar">
+        3 cuotas sin interés con Pago Nube &middot; 17% off por transferencia bancaria
+    </div>
+
+    <!-- HEADER -->
+    <header>
+        <div class="header-container">
+            <a href="#" class="brand-logo">
+                <span class="nord">NORD</span>
+                <span class="uniformes">UNIFORMES</span>
+            </a>
+            <nav>
+                <a href="#">Inicio</a>
+                <a href="#colegios">Colegios</a>
+                <a href="#logistica">Logística</a>
+            </nav>
+            <a class="btn-whatsapp" href="https://wa.me/5491100000000" target="_blank" rel="noopener">
+                Consultar
+            </a>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-content">
+            <span class="eyebrow">Uniformes escolares y corporativos</span>
+            <h1>Hecho para<br>durar.</h1>
+            <p class="lede">Indumentaria escolar con criterio, resistencia y diseño. Algodón 280 g, costuras reforzadas.</p>
+            <a class="btn-cta" href="https://norduniformes.mitiendanube.com" target="_blank" rel="noopener">
+                Ver tienda Wellspring
+            </a>
+        </div>
+    </section>
+
+    <!-- HIGHLIGHTS -->
+    <section class="highlights">
+        <div class="highlights-grid">
+            <div class="highlight-card">
+                <div class="highlight-icon">3x</div>
+                <div class="highlight-info">
+                    <h3>3 cuotas sin interés</h3>
+                    <p>Con tarjetas de crédito seleccionadas a través de Pago Nube.</p>
+                </div>
+            </div>
+            <div class="highlight-card">
+                <div class="highlight-icon">17%</div>
+                <div class="highlight-info">
+                    <h3>Descuento transferencia</h3>
+                    <p>Descuento directo en el total del pedido por transferencia bancaria.</p>
+                </div>
+            </div>
+            <div class="highlight-card">
+                <div class="highlight-icon">RET</div>
+                <div class="highlight-info">
+                    <h3>Retiro coordinado</h3>
+                    <p>Lockers en el colegio o retiro en Barrio Habitat, Zona Norte.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- COLEGIOS -->
+    <section id="colegios">
+        <div class="schools-section">
+            <div class="section-header">
+                <span class="eyebrow">Colegios</span>
+                <h2>Seleccioná tu institución</h2>
+            </div>
+            <div class="schools-grid">
+                <div class="school-card">
+                    <div class="school-card-img">
+                        <span class="school-name-overlay">Kinder · Primary · Secondary</span>
+                    </div>
+                    <div class="school-card-body">
+                        <h3>Colegio Wellspring</h3>
+                        <p>Catálogo oficial de prendas reglamentarias. Kinder, Primary y Secondary. Todos los talles disponibles. Pagá en cuotas o con transferencia.</p>
+                        <a class="btn-secondary" href="https://norduniformes.mitiendanube.com" target="_blank" rel="noopener">Ingresar a la tienda</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PILARES -->
+    <section class="pillars">
+        <div class="pillars-grid">
+            <div class="pillar-card">
+                <span class="num">01 — Calidad</span>
+                <h3>Costuras reforzadas</h3>
+                <p>Algodón peinado de 280 g, costuras dobles, técnicas de sastrería industrial. Prendas que resisten el patio.</p>
+            </div>
+            <div class="pillar-card">
+                <span class="num">02 — Logística</span>
+                <h3>Retiro inteligente</h3>
+                <p>Lockers en el colegio y punto de retiro en Barrio Habitat. Sin esperas, sin envíos domiciliarios.</p>
+            </div>
+            <div class="pillar-card">
+                <span class="num">03 — Durabilidad</span>
+                <h3>Sin desperdicio</h3>
+                <p>Color, textura y talle intactos tras lavados frecuentes. Uniformes que pasan de hermanos a hermanos.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- LOGÍSTICA -->
+    <section id="logistica" class="delivery">
+        <div class="delivery-container">
+            <div class="delivery-header">
+                <span class="eyebrow">Logística</span>
+                <h2>Opciones de retiro</h2>
+                <p>La alternativa que mejor se adapte a tus horarios.</p>
+            </div>
+            <div class="delivery-grid">
+                <div class="delivery-card">
+                    <span class="tag">Próximamente</span>
+                    <h3>Lockers en el colegio</h3>
+                    <p>Casilleros de metal reforzado instalados dentro del colegio. Código de 4 dígitos enviado por WhatsApp.</p>
+                    <ul>
+                        <li>Retiro al momento de la salida de clases.</li>
+                        <li>Sin pasar por secretaría.</li>
+                        <li>Disponible en Wellspring.</li>
+                    </ul>
+                </div>
+                <div class="delivery-card">
+                    <span class="tag">Activo</span>
+                    <h3>Retiro en Barrio Habitat</h3>
+                    <p>Punto de retiro en Habitat, Zona Norte. Coordinación previa por WhatsApp.</p>
+                    <ul>
+                        <li>Franja horaria a coordinar.</li>
+                        <li>Ingreso controlado al barrio.</li>
+                        <li>Sobre cerrado NORD.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <a href="#" class="brand-logo" style="color: var(--crema); margin-bottom: 16px; display: inline-block;">
+                    <span class="nord">NORD</span>
+                    <span class="uniformes">UNIFORMES</span>
+                </a>
+                <p>Uniformes escolares y corporativos. Zona Norte del Gran Buenos Aires. Hecho para durar.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Colegios</h4>
+                <a href="https://norduniformes.mitiendanube.com" target="_blank" rel="noopener">Wellspring</a>
+            </div>
+            <div class="footer-col">
+                <h4>Información</h4>
+                <a href="#">Botón de arrepentimiento</a>
+                <a href="#">Políticas de cambio</a>
+                <p>Formulario 960/D AFIP</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>NORD Uniformes 2026</span>
+            <span>contacto@norduniformes.com</span>
+        </div>
+    </footer>
+
+</body>
+</html>
