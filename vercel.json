@@ -1,3 +1,6 @@
 {
-  "redirects": []
+  "rewrites": [
+    { "source": "/wellspring", "destination": "/wellspring.html" },
+    { "source": "/carrito",    "destination": "/carrito.html" }
+  ]
 }
