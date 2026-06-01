@@ -35,9 +35,9 @@ async function fetchFromSheets(colegio = "WS") {
   const productsMap = {};
 
   for (const row of rows) {
-    const colegioCell = (row[0] || "").trim();
-    const nombre      = (row[1] || "").trim();
-    const talle       = (row[2] || "").trim();
+    const colegioCell = String(row[0] || "").trim();
+    const nombre      = String(row[1] || "").trim();
+    const talle       = String(row[2] ?? "").trim();
     const stockActual = Number(row[8]) || 0;  // columna I
     const precioUnit  = Number(row[10]) || 0; // columna K
 
