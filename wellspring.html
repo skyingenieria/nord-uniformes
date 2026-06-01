@@ -7,6 +7,7 @@
   <meta name="description" content="Catálogo de uniformes escolares Wellspring Pilar. Consultá stock, elegí talle y pedí por WhatsApp.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="/api/products" as="fetch" crossorigin="anonymous">
   <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -336,6 +337,46 @@
       text-transform: uppercase;
     }
 
+    /* SKELETON */
+    .skeleton-card {
+      background: var(--blanco);
+      border: 1px solid var(--niebla-200);
+    }
+    .skeleton-img {
+      aspect-ratio: 4/3;
+      background: linear-gradient(90deg, var(--crema-2) 25%, #e8e4db 50%, var(--crema-2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    .skeleton-body { padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+    .skeleton-line {
+      height: 14px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--crema-2) 25%, #e8e4db 50%, var(--crema-2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    .skeleton-line.title { height: 20px; width: 65%; }
+    .skeleton-line.price { height: 24px; width: 40%; }
+    .skeleton-line.short { height: 12px; width: 80%; }
+    .skeleton-talles { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+    .skeleton-talle {
+      width: 36px; height: 32px;
+      background: linear-gradient(90deg, var(--crema-2) 25%, #e8e4db 50%, var(--crema-2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    .skeleton-btn {
+      height: 44px; margin-top: 8px;
+      background: linear-gradient(90deg, var(--crema-2) 25%, #e8e4db 50%, var(--crema-2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
     /* FOOTER */
     footer {
       background-color: var(--azul-900);
@@ -408,7 +449,10 @@
   </div>
 
   <div id="products-container" class="products-grid">
-    <div class="status-msg">Cargando catálogo...</div>
+    <!-- Skeletons visibles mientras carga -->
+    <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line title"></div><div class="skeleton-line price"></div><div class="skeleton-line short"></div><div class="skeleton-talles"><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div></div><div class="skeleton-btn"></div></div></div>
+    <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line title"></div><div class="skeleton-line price"></div><div class="skeleton-line short"></div><div class="skeleton-talles"><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div></div><div class="skeleton-btn"></div></div></div>
+    <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line title"></div><div class="skeleton-line price"></div><div class="skeleton-line short"></div><div class="skeleton-talles"><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div></div><div class="skeleton-btn"></div></div></div>
   </div>
 </section>
 

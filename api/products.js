@@ -63,6 +63,8 @@ async function fetchFromSheets(colegio = "WS") {
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
+  // Edge cache: sirve desde CDN de Vercel por 5 min, sigue siendo válido 1h mientras refresca en background
+  res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=3600");
 
   // ?debug=1 → devuelve las primeras 5 filas WS en crudo para verificar índices
   if (req.query.debug === "1") {
