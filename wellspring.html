@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wellspring Pilar — NORD Uniformes</title>
+  <meta name="description" content="Catálogo de uniformes escolares Wellspring Pilar. Consultá stock, elegí talle y pedí por WhatsApp.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --azul:      #1E2D4A;
+      --azul-900:  #0F172E;
+      --azul-600:  #34466A;
+      --azul-400:  #6B7B9C;
+      --dorado:    #C8A96E;
+      --dorado-700:#A6884B;
+      --dorado-300:#E0CBA0;
+      --niebla:    #8A9AB5;
+      --niebla-200:#D3DAE5;
+      --crema:     #F4F1EA;
+      --crema-2:   #ECE7DC;
+      --blanco:    #FFFFFF;
+      --negro:     #0A0E18;
+      --sans:      "Mulish", system-ui, sans-serif;
+      --serif:     "Cormorant Garamond", serif;
+      --pad-x:     clamp(20px, 5vw, 80px);
+      --max:       1280px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--sans);
+      background-color: var(--crema);
+      color: var(--azul-900);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    img { max-width: 100%; display: block; }
+    a { text-decoration: none; }
+
+    /* ANNOUNCEMENT */
+    .announcement-bar {
+      background-color: var(--azul-900);
+      color: var(--dorado-300);
+      text-align: center;
+      padding: 10px var(--pad-x);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+
+    /* HEADER */
+    header {
+      background-color: rgba(244,241,234,0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(30,45,74,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-container {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 var(--pad-x);
+      height: 64px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-logo { color: var(--azul-900); line-height: 0.88; }
+    .brand-logo .nord { font-weight: 900; font-size: 22px; letter-spacing: 0.06em; display: block; }
+    .brand-logo .uniformes { font-weight: 300; font-size: 6px; letter-spacing: 0.55em; display: block; margin-top: 2px; padding-left: 0.55em; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    nav { display: flex; gap: 4px; }
+    nav a {
+      color: var(--azul);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 10px 16px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      opacity: 0.65;
+      transition: opacity 0.2s, color 0.2s;
+    }
+    nav a:hover, nav a.active { opacity: 1; color: var(--dorado-700); }
+
+    /* CARRITO ICON */
+    .cart-btn {
+      position: relative;
+      background: none;
+      border: 1px solid rgba(30,45,74,0.2);
+      padding: 10px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--azul);
+      transition: all 0.2s;
+    }
+    .cart-btn:hover { background-color: var(--azul-900); color: var(--crema); border-color: var(--azul-900); }
+    .cart-count {
+      background-color: var(--dorado);
+      color: var(--azul-900);
+      font-size: 10px;
+      font-weight: 800;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .cart-count.hidden { display: none; }
+
+    /* PAGE HEADER */
+    .page-hero {
+      background-color: var(--azul-900);
+      color: var(--crema);
+      padding: clamp(48px, 8vh, 80px) var(--pad-x);
+      position: relative;
+      overflow: hidden;
+    }
+    .page-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(600px 400px at 80% 50%, rgba(200,169,110,0.07), transparent 55%);
+    }
+    .page-hero::after {
+      content: "";
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--dorado), transparent);
+    }
+    .page-hero-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+    .page-hero .eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--dorado-700);
+      margin-bottom: 16px;
+      display: block;
+    }
+    .page-hero h1 {
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    .page-hero p {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: clamp(16px, 2vw, 20px);
+      color: var(--dorado-300);
+      max-width: 40ch;
+    }
+
+    /* CATALOG SECTION */
+    .catalog {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 60px var(--pad-x);
+    }
+    .catalog-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--azul-400);
+      margin-bottom: 40px;
+    }
+
+    /* PRODUCT GRID */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 32px;
+    }
+
+    /* PRODUCT CARD */
+    .product-card {
+      background: var(--blanco);
+      border: 1px solid var(--niebla-200);
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .product-card:hover {
+      box-shadow: 0 8px 32px rgba(15,23,46,0.1);
+      transform: translateY(-2px);
+    }
+    .product-img {
+      aspect-ratio: 4/3;
+      overflow: hidden;
+      background-color: var(--crema-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .product-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .product-img-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--niebla);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    .product-img-placeholder svg { opacity: 0.3; }
+    .product-body { padding: 24px; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+    .product-name {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--azul-900);
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    .product-price {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--azul-900);
+    }
+    .product-price span {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--azul-400);
+      margin-left: 4px;
+    }
+
+    /* TALLE SELECTOR */
+    .talle-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--azul-400);
+      margin-bottom: 10px;
+    }
+    .talles-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .talle-btn {
+      border: 1px solid var(--niebla-200);
+      background: none;
+      padding: 6px 12px;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--azul);
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .talle-btn:hover:not(.sin-stock) {
+      border-color: var(--azul);
+      background-color: var(--azul);
+      color: var(--crema);
+    }
+    .talle-btn.selected {
+      border-color: var(--dorado);
+      background-color: var(--dorado);
+      color: var(--azul-900);
+    }
+    .talle-btn.sin-stock {
+      opacity: 0.3;
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+
+    /* ADD TO CART BUTTON */
+    .btn-agregar {
+      margin-top: auto;
+      background-color: var(--azul-900);
+      color: var(--crema);
+      border: none;
+      padding: 14px;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      width: 100%;
+    }
+    .btn-agregar:hover { background-color: var(--dorado); color: var(--azul-900); }
+    .btn-agregar:disabled {
+      background-color: var(--niebla-200);
+      color: var(--azul-400);
+      cursor: not-allowed;
+    }
+    .btn-agregar.added {
+      background-color: #2e7d52;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background-color: var(--azul-900);
+      color: var(--crema);
+      padding: 12px 24px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      z-index: 999;
+      transition: transform 0.3s ease;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* LOADING / ERROR */
+    .status-msg {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--azul-400);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* FOOTER */
+    footer {
+      background-color: var(--azul-900);
+      color: var(--niebla);
+      padding: 48px var(--pad-x) 32px;
+      margin-top: 80px;
+    }
+    .footer-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+    .footer-brand .nord { color: var(--crema); font-weight: 900; font-size: 18px; letter-spacing: 0.06em; }
+    .footer-brand .uniformes { color: var(--niebla); font-weight: 300; font-size: 6px; letter-spacing: 0.55em; margin-top: 2px; padding-left: 0.55em; }
+    .footer-text { font-size: 12px; margin-top: 12px; max-width: 28ch; line-height: 1.6; }
+    .footer-bottom {
+      max-width: var(--max);
+      margin: 32px auto 0;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font-size: 11px;
+      color: rgba(138,154,181,0.5);
+    }
+
+    @media (max-width: 768px) {
+      .products-grid { grid-template-columns: 1fr; }
+      nav { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="announcement-bar">Talles 4 al 18 · Entrega coordinada · Pagá por transferencia sin costo extra</div>
+
+<header>
+  <div class="header-container">
+    <a href="/" class="brand-logo">
+      <span class="nord">NORD</span>
+      <span class="uniformes">UNIFORMES</span>
+    </a>
+    <div class="header-right">
+      <nav>
+        <a href="/">Inicio</a>
+        <a href="/wellspring" class="active">Wellspring</a>
+      </nav>
+      <button class="cart-btn" onclick="window.location.href='/carrito'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        Carrito
+        <span class="cart-count hidden" id="cart-count">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<section class="page-hero">
+  <div class="page-hero-inner">
+    <span class="eyebrow">Wellspring Pilar</span>
+    <h1>Uniforme escolar</h1>
+    <p>Seleccioná tu talle y agregá al carrito. Coordinamos el pago y entrega por WhatsApp.</p>
+  </div>
+</section>
+
+<section class="catalog">
+  <p class="catalog-title">Colección 2025</p>
+  <div id="products-container" class="products-grid">
+    <div class="status-msg">Cargando catálogo...</div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="nord">NORD</div>
+      <div class="uniformes">UNIFORMES</div>
+      <p class="footer-text">Uniformes escolares para Zona Norte del Gran Buenos Aires.</p>
+    </div>
+  </div>
+  <div class="footer-bottom">© 2025 NORD Uniformes · norduniformes.com.ar</div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const WHATSAPP_NUMBER = "5491122913796";
+
+  // ── Carrito (localStorage) ──────────────────────────────────────────
+  function getCart() {
+    try { return JSON.parse(localStorage.getItem("nord_cart") || "[]"); }
+    catch { return []; }
+  }
+  function saveCart(cart) {
+    localStorage.setItem("nord_cart", JSON.stringify(cart));
+  }
+  function updateCartCount() {
+    const cart = getCart();
+    const total = cart.reduce((s, i) => s + i.qty, 0);
+    const el = document.getElementById("cart-count");
+    if (total > 0) {
+      el.textContent = total;
+      el.classList.remove("hidden");
+    } else {
+      el.classList.add("hidden");
+    }
+  }
+
+  function addToCart(productId, nombre, talle, precio) {
+    const cart = getCart();
+    const key = `${productId}_${talle}`;
+    const existing = cart.find(i => i.key === key);
+    if (existing) {
+      existing.qty++;
+    } else {
+      cart.push({ key, productId, nombre, talle, precio, qty: 1 });
+    }
+    saveCart(cart);
+    updateCartCount();
+  }
+
+  // ── Toast ────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2200);
+  }
+
+  // ── Formatear precio ─────────────────────────────────────────────────
+  function fmt(n) {
+    return "$" + Number(n).toLocaleString("es-AR");
+  }
+
+  // ── Renderizar productos ─────────────────────────────────────────────
+  function renderProducts(products) {
+    const container = document.getElementById("products-container");
+
+    if (!products.length) {
+      container.innerHTML = '<div class="status-msg">No hay productos disponibles.</div>';
+      return;
+    }
+
+    container.innerHTML = products.map(p => {
+      const imgHtml = p.imagen_url
+        ? `<img src="${p.imagen_url}" alt="${p.nombre}" loading="lazy">`
+        : `<div class="product-img-placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>Foto próximamente</span>
+           </div>`;
+
+      const tallesHtml = p.talles
+        .sort((a, b) => {
+          const order = ["4","6","8","10","12","14","16","18","XS","S","M","L","XL","XXL"];
+          return (order.indexOf(a.talle) - order.indexOf(b.talle)) || a.talle.localeCompare(b.talle);
+        })
+        .map(t => `<button
+            class="talle-btn${t.stock === 0 ? " sin-stock" : ""}"
+            data-product-id="${p.id}"
+            data-talle="${t.talle}"
+            onclick="selectTalle(this, '${p.id}')"
+            ${t.stock === 0 ? "disabled" : ""}
+            title="${t.stock === 0 ? "Sin stock" : `${t.stock} disponibles`}"
+          >${t.talle}</button>`).join("");
+
+      return `
+        <div class="product-card" data-product-id="${p.id}">
+          <div class="product-img">${imgHtml}</div>
+          <div class="product-body">
+            <div>
+              <h2 class="product-name">${p.nombre}</h2>
+              <p class="product-price">${fmt(p.precio)}<span>c/u</span></p>
+            </div>
+            <div>
+              <p class="talle-label">Elegí tu talle</p>
+              <div class="talles-grid">${tallesHtml}</div>
+            </div>
+            <button
+              class="btn-agregar"
+              id="btn-add-${p.id}"
+              disabled
+              onclick="handleAddToCart('${p.id}', '${p.nombre}', ${p.precio})"
+            >Seleccioná un talle</button>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  function selectTalle(btn, productId) {
+    // Deselect previous in same product
+    const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+    card.querySelectorAll(".talle-btn").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
+
+    const addBtn = document.getElementById(`btn-add-${productId}`);
+    addBtn.disabled = false;
+    addBtn.textContent = `Agregar talle ${btn.dataset.talle}`;
+  }
+
+  function handleAddToCart(productId, nombre, precio) {
+    const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+    const selected = card.querySelector(".talle-btn.selected");
+    if (!selected) return;
+
+    addToCart(productId, nombre, selected.dataset.talle, precio);
+    showToast(`✓ ${nombre} talle ${selected.dataset.talle} agregado`);
+
+    const addBtn = document.getElementById(`btn-add-${productId}`);
+    addBtn.textContent = "¡Agregado!";
+    addBtn.classList.add("added");
+    setTimeout(() => {
+      addBtn.textContent = `Agregar talle ${selected.dataset.talle}`;
+      addBtn.classList.remove("added");
+    }, 1500);
+  }
+
+  // ── Fetch productos ──────────────────────────────────────────────────
+  async function loadProducts() {
+    const container = document.getElementById("products-container");
+    try {
+      const res = await fetch("/api/products");
+      if (!res.ok) throw new Error("Error HTTP " + res.status);
+      const products = await res.json();
+      renderProducts(products);
+    } catch (err) {
+      console.error(err);
+      container.innerHTML = '<div class="status-msg">Error al cargar el catálogo. Intentá de nuevo.</div>';
+    }
+  }
+
+  updateCartCount();
+  loadProducts();
+</script>
+</body>
+</html>

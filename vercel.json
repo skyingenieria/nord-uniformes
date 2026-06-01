@@ -1,9 +1,3 @@
 {
-  "redirects": [
-    {
-      "source": "/wellspring",
-      "destination": "https://nord41.mitiendanube.com",
-      "permanent": false
-    }
-  ]
+  "redirects": []
 }
