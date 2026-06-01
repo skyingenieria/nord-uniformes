@@ -122,70 +122,57 @@
     }
     .cart-count.hidden { display: none; }
 
-    /* PAGE HEADER */
-    .page-hero {
-      background-color: var(--azul-900);
-      color: var(--crema);
-      padding: clamp(48px, 8vh, 80px) var(--pad-x);
-      position: relative;
-      overflow: hidden;
-    }
-    .page-hero::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(600px 400px at 80% 50%, rgba(200,169,110,0.07), transparent 55%);
-    }
-    .page-hero::after {
-      content: "";
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--dorado), transparent);
-    }
-    .page-hero-inner {
-      max-width: var(--max);
-      margin: 0 auto;
-      position: relative;
-      z-index: 2;
-    }
-    .page-hero .eyebrow {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.28em;
-      text-transform: uppercase;
-      color: var(--dorado-700);
-      margin-bottom: 16px;
-      display: block;
-    }
-    .page-hero h1 {
-      font-size: clamp(32px, 5vw, 56px);
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      line-height: 1;
-      margin-bottom: 12px;
-    }
-    .page-hero p {
-      font-family: var(--serif);
-      font-style: italic;
-      font-size: clamp(16px, 2vw, 20px);
-      color: var(--dorado-300);
-      max-width: 40ch;
-    }
-
     /* CATALOG SECTION */
     .catalog {
       max-width: var(--max);
       margin: 0 auto;
-      padding: 60px var(--pad-x);
+      padding: 56px var(--pad-x) 80px;
     }
-    .catalog-title {
+    .catalog-header {
+      margin-bottom: 48px;
+      border-bottom: 1px solid var(--niebla-200);
+      padding-bottom: 32px;
+    }
+    .catalog-school-title {
+      font-size: clamp(48px, 10vw, 100px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 0.9;
+      color: var(--azul-900);
+      margin-bottom: 12px;
+    }
+    .catalog-subtitle {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: clamp(15px, 1.8vw, 19px);
+      color: var(--azul-400);
+      margin-bottom: 32px;
+    }
+
+    /* NIVEL TABS */
+    .nivel-tabs {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .nivel-tab {
+      background: none;
+      border: 1px solid var(--niebla-200);
+      padding: 10px 24px;
+      font-family: var(--sans);
       font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.28em;
+      font-weight: 700;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--azul-400);
-      margin-bottom: 40px;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .nivel-tab:hover { border-color: var(--azul); color: var(--azul); }
+    .nivel-tab.active {
+      background-color: var(--azul-900);
+      border-color: var(--azul-900);
+      color: var(--crema);
     }
 
     /* PRODUCT GRID */
@@ -407,16 +394,19 @@
   </div>
 </header>
 
-<section class="page-hero">
-  <div class="page-hero-inner">
-    <span class="eyebrow">Wellspring Pilar</span>
-    <h1>Uniforme escolar</h1>
-    <p>Seleccioná tu talle y agregá al carrito. Coordinamos el pago y entrega por WhatsApp.</p>
-  </div>
-</section>
-
 <section class="catalog">
-  <p class="catalog-title">Colección 2025</p>
+  <div class="catalog-header">
+    <h1 class="catalog-school-title">WELLSPRING</h1>
+    <p class="catalog-subtitle">Seleccioná tu talle y pedí por WhatsApp. Coordinamos pago y entrega.</p>
+
+    <nav class="nivel-tabs" role="tablist">
+      <button class="nivel-tab active" data-nivel="todos" onclick="filterNivel(this)">Todos</button>
+      <button class="nivel-tab" data-nivel="kinder" onclick="filterNivel(this)">Kinder</button>
+      <button class="nivel-tab" data-nivel="primaria" onclick="filterNivel(this)">Primaria</button>
+      <button class="nivel-tab" data-nivel="secundaria" onclick="filterNivel(this)">Secundaria</button>
+    </nav>
+  </div>
+
   <div id="products-container" class="products-grid">
     <div class="status-msg">Cargando catálogo...</div>
   </div>
@@ -572,12 +562,36 @@
     try {
       const res = await fetch("/api/products");
       if (!res.ok) throw new Error("Error HTTP " + res.status);
-      const products = await res.json();
-      renderProducts(products);
+      allProducts = await res.json();
+      renderProducts(allProducts);
     } catch (err) {
       console.error(err);
       container.innerHTML = '<div class="status-msg">Error al cargar el catálogo. Intentá de nuevo.</div>';
     }
+  }
+
+  // ── Filtro por nivel ─────────────────────────────────────────────────
+  // Mapeo producto → niveles. Vacío = aparece en todos.
+  // Completar cuando se defina la categorización.
+  const NIVEL_MAP = {
+    // "chomba-blanca": ["kinder", "primaria"],
+    // "pantalon-deportivo": ["secundaria"],
+  };
+
+  let allProducts = [];
+  let activeNivel = "todos";
+
+  function filterNivel(btn) {
+    document.querySelectorAll(".nivel-tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    activeNivel = btn.dataset.nivel;
+    renderProducts(activeNivel === "todos"
+      ? allProducts
+      : allProducts.filter(p => {
+          const niveles = NIVEL_MAP[p.id];
+          return !niveles || niveles.includes(activeNivel);
+        })
+    );
   }
 
   updateCartCount();
