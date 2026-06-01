@@ -615,12 +615,8 @@
   }
 
   // ── Filtro por nivel ─────────────────────────────────────────────────
-  // Mapeo producto → niveles. Vacío = aparece en todos.
-  // Completar cuando se defina la categorización.
-  const NIVEL_MAP = {
-    // "chomba-blanca": ["kinder", "primaria"],
-    // "pantalon-deportivo": ["secundaria"],
-  };
+  // Las categorías vienen del API (campo `categorias` por producto).
+  // Si un producto no tiene categorías asignadas, aparece en TODOS pero no en filtros específicos.
 
   let allProducts = [];
   let activeNivel = "todos";
@@ -631,10 +627,9 @@
     activeNivel = btn.dataset.nivel;
     renderProducts(activeNivel === "todos"
       ? allProducts
-      : allProducts.filter(p => {
-          const niveles = NIVEL_MAP[p.id];
-          return !niveles || niveles.includes(activeNivel);
-        })
+      : allProducts.filter(p =>
+          Array.isArray(p.categorias) && p.categorias.includes(activeNivel)
+        )
     );
   }
 

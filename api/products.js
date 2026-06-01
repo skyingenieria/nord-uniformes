@@ -1,10 +1,12 @@
-// Lee la hoja "6 Stock" del ERP Nord y devuelve productos agrupados por prenda.
-// Filtra por colegio (por defecto "WS" = Wellspring).
-// Cache de 5 minutos en memoria para no agotar la cuota de la Sheets API.
+// Lee "6 Stock" (stock y precios) y "10 Listado de Prendas" (categorías) del ERP Nord.
+// Filtra por colegio (por defecto "WS" = Wellspring), une ambas hojas por nombre de prenda.
 //
-// Columnas del sheet:
-//   A=Colegio  B=Prenda  C=Talle  D=Codigo  E=Stock inicial
-//   F=Compras  G=Ventas  H=#  I=Stock actual  J=Costo Unit  K=Precio Unit
+// Columnas confirmadas "6 Stock" (UNFORMATTED_VALUE, 0-indexed desde A2):
+//   0=Colegio  1=Prenda  2=Talle  3=Codigo  4=Stock inicial
+//   5=Compras  6=Ventas  7=Stock actual  8=Costo Unit  9=Precio Unit
+//
+// Columnas "10 Listado de Prendas":
+//   0=Colegio  1=Prenda  2=Talle  3=SKU  4=Categorias (ej: "Primaria, Secundaria")
 
 const { google } = require("googleapis");
 
@@ -12,49 +14,76 @@ let cache = null;
 let cacheTime = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
-async function fetchFromSheets(colegio = "WS") {
-  const auth = new google.auth.GoogleAuth({
+function makeAuth() {
+  return new google.auth.GoogleAuth({
     credentials: {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      // Vercel guarda la clave con \n literales — los convertimos a saltos de línea reales
       private_key: process.env.GOOGLE_PRIVATE_KEY
         ?.replace(/\\n/g, "\n")
-        .replace(/^"/, "").replace(/"$/, ""), // quitar comillas extra si las hubiera
+        .replace(/^"/, "").replace(/"$/, ""),
     },
     scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
   });
+}
 
+async function fetchFromSheets(colegio = "WS") {
+  const auth  = makeAuth();
   const sheets = google.sheets({ version: "v4", auth });
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: process.env.SPREADSHEET_ID,
-    range: "'6 Stock'!A2:K2000",
-    valueRenderOption: "UNFORMATTED_VALUE",
-  });
+  const sid   = process.env.SPREADSHEET_ID;
 
-  const rows = res.data.values || [];
+  // Leer ambas hojas en paralelo
+  const [stockRes, catRes] = await Promise.all([
+    sheets.spreadsheets.values.get({
+      spreadsheetId: sid,
+      range: "'6 Stock'!A2:J2000",
+      valueRenderOption: "UNFORMATTED_VALUE",
+    }),
+    sheets.spreadsheets.values.get({
+      spreadsheetId: sid,
+      range: "'10 Listado de Prendas'!A2:E2000",
+      valueRenderOption: "FORMATTED_VALUE", // categorías son texto
+    }),
+  ]);
+
+  // ── Construir mapa de categorías: nombre → Set de categorias ──────────────
+  const catMap = {}; // { "Blusa": ["Primaria","Secundaria"], ... }
+  for (const row of (catRes.data.values || [])) {
+    const colColegio = String(row[0] || "").trim();
+    const nombre     = String(row[1] || "").trim();
+    const catRaw     = String(row[4] || "").trim(); // "Primaria, Secundaria"
+
+    if (colColegio !== colegio || !nombre || !catRaw) continue;
+
+    const cats = catRaw.split(",").map(c => c.trim().toLowerCase()).filter(Boolean);
+    if (!catMap[nombre]) catMap[nombre] = new Set();
+    cats.forEach(c => catMap[nombre].add(c));
+  }
+
+  // ── Construir productos desde stock ──────────────────────────────────────
   const productsMap = {};
 
-  for (const row of rows) {
+  for (const row of (stockRes.data.values || [])) {
     const colegioCell = String(row[0] || "").trim();
     const nombre      = String(row[1] || "").trim();
     const talle       = String(row[2] ?? "").trim();
-    const stockActual = Number(row[8]) || 0;  // columna I
-    const precioUnit  = Number(row[10]) || 0; // columna K
+    const stockActual = Math.round(Number(row[7]) || 0); // columna H = Stock actual
+    const precioUnit  = Math.round(Number(row[9]) || 0); // columna J = Precio Unit
 
     if (colegioCell !== colegio || !nombre || !talle) continue;
 
     if (!productsMap[nombre]) {
+      const categorias = catMap[nombre] ? [...catMap[nombre]] : [];
       productsMap[nombre] = {
-        id: nombre.toLowerCase().replace(/\s+/g, "-"),
+        id: nombre.toLowerCase().replace(/\s+/g, "-").replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u").replace(/[^a-z0-9-]/g,""),
         nombre,
         precio: precioUnit,
         imagen_url: "",
+        categorias, // ["primaria","secundaria"] | ["kinder"] | []
         talles: [],
       };
     }
-    // Si hay varias filas con mismo nombre pero distinto precio, usar el último no-cero
-    if (precioUnit > 0) productsMap[nombre].precio = precioUnit;
 
+    if (precioUnit > 0) productsMap[nombre].precio = precioUnit;
     productsMap[nombre].talles.push({ talle, stock: stockActual });
   }
 
@@ -63,22 +92,14 @@ async function fetchFromSheets(colegio = "WS") {
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  // Edge cache: sirve desde CDN de Vercel por 5 min, sigue siendo válido 1h mientras refresca en background
   res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=3600");
 
-  // ?debug=1 → devuelve las primeras 5 filas WS en crudo para verificar índices
+  // ?debug=1 → raw de primeras filas para diagnóstico
   if (req.query.debug === "1") {
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n").replace(/^"/, "").replace(/"$/, ""),
-      },
-      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-    });
-    const sheets = google.sheets({ version: "v4", auth });
+    const sheets = google.sheets({ version: "v4", auth: makeAuth() });
     const raw = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'6 Stock'!A1:N10",
+      range: "'6 Stock'!A1:J6",
       valueRenderOption: "UNFORMATTED_VALUE",
     });
     return res.status(200).json(raw.data.values);
