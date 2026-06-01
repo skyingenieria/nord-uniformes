@@ -64,6 +64,24 @@ async function fetchFromSheets(colegio = "WS") {
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
 
+  // ?debug=1 → devuelve las primeras 5 filas WS en crudo para verificar índices
+  if (req.query.debug === "1") {
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n").replace(/^"/, "").replace(/"$/, ""),
+      },
+      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    });
+    const sheets = google.sheets({ version: "v4", auth });
+    const raw = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SPREADSHEET_ID,
+      range: "'6 Stock'!A1:N10",
+      valueRenderOption: "UNFORMATTED_VALUE",
+    });
+    return res.status(200).json(raw.data.values);
+  }
+
   try {
     const now = Date.now();
     if (!cache || now - cacheTime > CACHE_TTL) {
