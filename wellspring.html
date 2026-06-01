@@ -150,37 +150,100 @@
       margin-bottom: 32px;
     }
 
-    /* NIVEL TABS */
-    .nivel-tabs {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
+    /* CATALOG BODY — sidebar + grid */
+    .catalog-body {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 40px;
+      align-items: start;
     }
-    .nivel-tab {
-      background: none;
-      border: 1px solid var(--niebla-200);
-      padding: 10px 24px;
-      font-family: var(--sans);
+
+    /* SIDEBAR */
+    .sidebar {
+      position: sticky;
+      top: 80px;
+    }
+    .sidebar-title {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--azul-400);
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--niebla-200);
+      margin-bottom: 24px;
+    }
+    .filter-group {
+      margin-bottom: 28px;
+    }
+    .filter-group-title {
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--azul-400);
-      cursor: pointer;
-      transition: all 0.18s;
+      color: var(--azul-900);
+      margin-bottom: 12px;
     }
-    .nivel-tab:hover { border-color: var(--azul); color: var(--azul); }
-    .nivel-tab.active {
-      background-color: var(--azul-900);
-      border-color: var(--azul-900);
+    .filter-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 10px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.15s;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--azul-600);
+      user-select: none;
+    }
+    .filter-item:hover { background: var(--crema-2); }
+    .filter-item.active {
+      background: var(--azul-900);
       color: var(--crema);
+    }
+    .filter-item.active .filter-dot { background: var(--dorado); }
+    .filter-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--niebla-200);
+      flex-shrink: 0;
+    }
+    .filter-count {
+      margin-left: auto;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--azul-400);
+      opacity: 0.6;
+    }
+    .filter-item.active .filter-count { color: var(--dorado-300); opacity: 1; }
+
+    /* Barra sobre el grid: count + (futuro: orden) */
+    .grid-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .grid-count {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--azul-400);
+      text-transform: uppercase;
     }
 
     /* PRODUCT GRID */
     .products-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 32px;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 28px;
     }
 
     /* PRODUCT CARD */
@@ -405,8 +468,18 @@
       color: rgba(138,154,181,0.5);
     }
 
-    @media (max-width: 768px) {
-      .products-grid { grid-template-columns: 1fr; }
+    @media (max-width: 900px) {
+      .catalog-body { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .filter-list { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+      .filter-item { padding: 6px 14px; border: 1px solid var(--niebla-200); }
+      .filter-item.active { background: var(--azul-900); }
+      .filter-count { display: none; }
+      .sidebar-title { display: none; }
+      .filter-group-title { display: none; }
+    }
+    @media (max-width: 600px) {
+      .products-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
       nav { display: none; }
     }
   </style>
@@ -439,20 +512,54 @@
   <div class="catalog-header">
     <h1 class="catalog-school-title">WELLSPRING</h1>
     <p class="catalog-subtitle">Seleccioná tu talle y pedí por WhatsApp. Coordinamos pago y entrega.</p>
-
-    <nav class="nivel-tabs" role="tablist">
-      <button class="nivel-tab active" data-nivel="todos" onclick="filterNivel(this)">Todos</button>
-      <button class="nivel-tab" data-nivel="kinder" onclick="filterNivel(this)">Kinder</button>
-      <button class="nivel-tab" data-nivel="primaria" onclick="filterNivel(this)">Primaria</button>
-      <button class="nivel-tab" data-nivel="secundaria" onclick="filterNivel(this)">Secundaria</button>
-    </nav>
   </div>
 
-  <div id="products-container" class="products-grid">
-    <!-- Skeletons visibles mientras carga -->
-    <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line title"></div><div class="skeleton-line price"></div><div class="skeleton-line short"></div><div class="skeleton-talles"><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div></div><div class="skeleton-btn"></div></div></div>
-    <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line title"></div><div class="skeleton-line price"></div><div class="skeleton-line short"></div><div class="skeleton-talles"><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div></div><div class="skeleton-btn"></div></div></div>
-    <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line title"></div><div class="skeleton-line price"></div><div class="skeleton-line short"></div><div class="skeleton-talles"><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div></div><div class="skeleton-btn"></div></div></div>
+  <div class="catalog-body">
+
+    <!-- SIDEBAR DE FILTROS -->
+    <aside class="sidebar">
+      <p class="sidebar-title">Filtrar</p>
+
+      <div class="filter-group">
+        <p class="filter-group-title">Nivel</p>
+        <ul class="filter-list" id="filter-nivel">
+          <li class="filter-item active" data-nivel="todos" onclick="filterNivel(this)">
+            <span class="filter-dot"></span>
+            Todos
+            <span class="filter-count" id="count-todos"></span>
+          </li>
+          <li class="filter-item" data-nivel="kinder" onclick="filterNivel(this)">
+            <span class="filter-dot"></span>
+            Kinder
+            <span class="filter-count" id="count-kinder"></span>
+          </li>
+          <li class="filter-item" data-nivel="primaria" onclick="filterNivel(this)">
+            <span class="filter-dot"></span>
+            Primaria
+            <span class="filter-count" id="count-primaria"></span>
+          </li>
+          <li class="filter-item" data-nivel="secundaria" onclick="filterNivel(this)">
+            <span class="filter-dot"></span>
+            Secundaria
+            <span class="filter-count" id="count-secundaria"></span>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- GRID DE PRODUCTOS -->
+    <div>
+      <div class="grid-toolbar">
+        <span class="grid-count" id="grid-count"></span>
+      </div>
+      <div id="products-container" class="products-grid">
+        <!-- Skeletons visibles mientras carga -->
+        <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line title"></div><div class="skeleton-line price"></div><div class="skeleton-line short"></div><div class="skeleton-talles"><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div></div><div class="skeleton-btn"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line title"></div><div class="skeleton-line price"></div><div class="skeleton-line short"></div><div class="skeleton-talles"><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div></div><div class="skeleton-btn"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line title"></div><div class="skeleton-line price"></div><div class="skeleton-line short"></div><div class="skeleton-talles"><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div></div><div class="skeleton-btn"></div></div></div>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -608,6 +715,8 @@
       if (!res.ok) throw new Error("Error HTTP " + res.status);
       allProducts = await res.json();
       renderProducts(allProducts);
+      updateCounts();
+      updateGridCount(allProducts.length);
     } catch (err) {
       console.error(err);
       container.innerHTML = '<div class="status-msg">Error al cargar el catálogo. Intentá de nuevo.</div>';
@@ -615,22 +724,36 @@
   }
 
   // ── Filtro por nivel ─────────────────────────────────────────────────
-  // Las categorías vienen del API (campo `categorias` por producto).
-  // Si un producto no tiene categorías asignadas, aparece en TODOS pero no en filtros específicos.
-
   let allProducts = [];
   let activeNivel = "todos";
 
-  function filterNivel(btn) {
-    document.querySelectorAll(".nivel-tab").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    activeNivel = btn.dataset.nivel;
-    renderProducts(activeNivel === "todos"
+  function updateCounts() {
+    const niveles = ["kinder", "primaria", "secundaria"];
+    document.getElementById("count-todos").textContent = allProducts.length;
+    niveles.forEach(n => {
+      const el = document.getElementById("count-" + n);
+      if (el) el.textContent = allProducts.filter(p =>
+        Array.isArray(p.categorias) && p.categorias.includes(n)
+      ).length || "";
+    });
+  }
+
+  function updateGridCount(count) {
+    const el = document.getElementById("grid-count");
+    if (el) el.textContent = count + (count === 1 ? " prenda" : " prendas");
+  }
+
+  function filterNivel(item) {
+    document.querySelectorAll(".filter-item").forEach(b => b.classList.remove("active"));
+    item.classList.add("active");
+    activeNivel = item.dataset.nivel;
+    const filtered = activeNivel === "todos"
       ? allProducts
       : allProducts.filter(p =>
           Array.isArray(p.categorias) && p.categorias.includes(activeNivel)
-        )
-    );
+        );
+    renderProducts(filtered);
+    updateGridCount(filtered.length);
   }
 
   updateCartCount();
