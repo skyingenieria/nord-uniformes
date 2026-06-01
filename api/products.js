@@ -16,7 +16,10 @@ async function fetchFromSheets(colegio = "WS") {
   const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      // Vercel guarda la clave con \n literales — los convertimos a saltos de línea reales
+      private_key: process.env.GOOGLE_PRIVATE_KEY
+        ?.replace(/\\n/g, "\n")
+        .replace(/^"/, "").replace(/"$/, ""), // quitar comillas extra si las hubiera
     },
     scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
   });
