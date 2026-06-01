@@ -90,9 +90,27 @@
     .sum-row.total{border-top:1px solid var(--niebla-200);margin-top:8px;padding-top:16px;font-size:20px;font-weight:800;color:var(--azul-900)}
     .sum-note{font-size:11px;color:var(--azul-400);margin-top:10px;line-height:1.5;font-style:italic}
 
+    /* PAGO DETAIL */
+    .pago-detail{display:none;margin-top:14px;padding:14px 16px;background:var(--crema-2);border:1px solid var(--niebla-200)}
+    .pago-detail.show{display:block}
+    .cbu-block{font-size:13px;line-height:2.2}
+    .cbu-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .cbu-val{font-weight:800;font-size:14px;letter-spacing:.03em}
+    .copy-btn{background:var(--azul-900);color:var(--crema);border:none;font-family:var(--sans);font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;cursor:pointer;transition:background .15s}
+    .copy-btn:hover{background:var(--dorado);color:var(--azul-900)}
+    .nave-info{font-size:13px;color:var(--azul-600);line-height:1.6}
+    .nave-logo{font-weight:900;color:#5a2d9c;font-size:16px}
+
+    /* REQUIRED mark */
+    .req{color:#c0392b;margin-left:2px}
+    .field-error{border-color:#c0392b !important}
+    .form-group input:required:invalid:not(:placeholder-shown){border-color:#c0392b}
+
     /* BUTTONS */
     .btn-wp{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;background:#25D366;color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s;text-decoration:none}
     .btn-wp:hover{background:#1ebe5d}
+    .btn-nave{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;background:#5a2d9c;color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s}
+    .btn-nave:hover{background:#4a2080}
     .note{margin-top:12px;font-size:11px;color:var(--azul-400);text-align:center;line-height:1.5}
 
     /* EMPTY */
@@ -135,10 +153,13 @@
 
 <script>
 const WHATSAPP_NUMBER = "5491122913796";
-const ENVIO_RETIRO = 0;
-const ENVIO_CORREO_TEXTO = "A calcular según destino";
+// ── Completar cuando tengas las credenciales bancarias ──────────────────────
+const CBU   = "TU_CBU_ACÁ";
+const ALIAS = "TU.ALIAS.ACÁ";
+const TITULAR = "Federico Alonso";
 
-let selectedEnvio = "retiro"; // "retiro" | "correo"
+let selectedEnvio = "retiro";   // "retiro" | "correo"
+let selectedPago  = "transferencia"; // "transferencia" | "nave"
 
 function getCart() {
   try { return JSON.parse(localStorage.getItem("nord_cart") || "[]"); } catch { return []; }
@@ -152,10 +173,15 @@ function changeQty(key, d) {
   if (!item) return;
   item.qty += d;
   if (item.qty <= 0) cart.splice(cart.indexOf(item), 1);
-  saveCart(cart);
-  render();
+  saveCart(cart); render();
 }
 function removeItem(key) { saveCart(getCart().filter(i => i.key !== key)); render(); }
+
+function copyText(txt) {
+  navigator.clipboard.writeText(txt).catch(() => {});
+  const btns = document.querySelectorAll(".copy-btn");
+  btns.forEach(b => { if (b.dataset.val === txt) { b.textContent = "✓ Copiado"; setTimeout(() => b.textContent = "Copiar", 1500); }});
+}
 
 function selectEnvio(tipo) {
   selectedEnvio = tipo;
@@ -163,54 +189,84 @@ function selectEnvio(tipo) {
     el.classList.toggle("selected", el.dataset.envio === tipo);
     el.querySelector("input").checked = el.dataset.envio === tipo;
   });
-  const addrEl = document.getElementById("addr-expand");
-  const correoInfo = document.getElementById("correo-info");
-  if (addrEl) addrEl.classList.toggle("show", tipo === "correo");
-  if (correoInfo) correoInfo.classList.toggle("show", tipo === "correo");
-  updateSummaryEnvio();
-  updateWpLink();
+  document.getElementById("addr-expand")?.classList.toggle("show", tipo === "correo");
+  document.getElementById("correo-info")?.classList.toggle("show", tipo === "correo");
+  document.getElementById("sum-envio").textContent = tipo === "retiro" ? "Gratis" : "A calcular";
+  updateCta();
 }
 
-function updateSummaryEnvio() {
-  const el = document.getElementById("sum-envio");
-  if (!el) return;
-  el.textContent = selectedEnvio === "retiro" ? "Gratis" : ENVIO_CORREO_TEXTO;
-  // total no cambia (correo es "a calcular", no suma al total)
+function selectPago(tipo) {
+  selectedPago = tipo;
+  document.querySelectorAll(".radio-option[data-pago]").forEach(el => {
+    el.classList.toggle("selected", el.dataset.pago === tipo);
+    el.querySelector("input").checked = el.dataset.pago === tipo;
+  });
+  document.getElementById("pago-transferencia")?.classList.toggle("show", tipo === "transferencia");
+  document.getElementById("pago-nave")?.classList.toggle("show", tipo === "nave");
+  updateCta();
+}
+
+function validate() {
+  const fields = ["inp-nombre","inp-apellido","inp-tel","inp-email"];
+  let ok = true;
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!el.value.trim()) { el.classList.add("field-error"); ok = false; }
+    else el.classList.remove("field-error");
+  });
+  if (!ok) { document.getElementById("inp-nombre")?.scrollIntoView({behavior:"smooth",block:"center"}); }
+  return ok;
 }
 
 function buildWpMsg() {
+  const nombre   = document.getElementById("inp-nombre")?.value.trim() || "";
+  const apellido = document.getElementById("inp-apellido")?.value.trim() || "";
+  const tel      = document.getElementById("inp-tel")?.value.trim() || "";
+  const email    = document.getElementById("inp-email")?.value.trim() || "";
   const cart = getCart();
-  const nombre = document.getElementById("inp-nombre")?.value.trim() || "";
-  const tel    = document.getElementById("inp-tel")?.value.trim() || "";
-  const email  = document.getElementById("inp-email")?.value.trim() || "";
+  const sub  = cart.reduce((s, i) => s + i.precio * i.qty, 0);
 
-  let lines = ["Hola! Quiero hacer un pedido de uniformes Wellspring:%0A"];
+  let lines = [`Hola! Soy ${nombre} ${apellido} y quiero hacer un pedido de uniformes Wellspring:%0A`];
   cart.forEach(i => lines.push(`- ${i.nombre} talle ${i.talle} x${i.qty} — ${fmt(i.precio * i.qty)}`));
-  const sub = cart.reduce((s, i) => s + i.precio * i.qty, 0);
   lines.push(`%0ASubtotal: ${fmt(sub)}`);
+  lines.push(`Pago: ${selectedPago === "transferencia" ? "Transferencia bancaria" : "Nave Galicia"}`);
 
   if (selectedEnvio === "retiro") {
-    lines.push("Envío: Retiro en Barrio Habitat (Gratis)");
+    lines.push("Envío: Retiro en Barrio Habitat");
   } else {
     const calle = document.getElementById("inp-calle")?.value.trim() || "";
     const cp    = document.getElementById("inp-cp")?.value.trim() || "";
     const loc   = document.getElementById("inp-loc")?.value.trim() || "";
-    lines.push(`Envío: Correo Argentino`);
+    lines.push("Envío: Correo Argentino");
     if (calle) lines.push(`Dirección: ${calle}`);
     if (cp)    lines.push(`CP: ${cp}`);
     if (loc)   lines.push(`Localidad: ${loc}`);
   }
-
-  lines.push(`%0ATotal productos: ${fmt(sub)}`);
-  if (nombre) lines.push(`Nombre: ${nombre}`);
-  if (tel)    lines.push(`Tel: ${tel}`);
-  if (email)  lines.push(`Email: ${email}`);
+  lines.push(`%0ATel: ${tel}`);
+  lines.push(`Email: ${email}`);
   return lines.join("%0A");
 }
 
-function updateWpLink() {
-  const btn = document.getElementById("btn-wp");
-  if (btn) btn.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${buildWpMsg()}`;
+function submitOrder() {
+  if (!validate()) return;
+  if (selectedPago === "transferencia") {
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${buildWpMsg()}`, "_blank");
+  } else {
+    alert("Integración Nave próximamente. Por ahora usá transferencia bancaria.");
+  }
+}
+
+function updateCta() {
+  const cta = document.getElementById("cta-btn");
+  if (!cta) return;
+  if (selectedPago === "nave") {
+    cta.textContent = "🔒 Pagar con Nave";
+    cta.className = "btn-nave";
+  } else {
+    cta.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> Confirmar pedido por WhatsApp`;
+    cta.className = "btn-wp";
+  }
 }
 
 function render() {
@@ -251,15 +307,28 @@ function render() {
         ${itemsHtml}
       </div>
 
-      <!-- DATOS -->
+      <!-- DATOS OBLIGATORIOS -->
       <div class="section-block">
         <p class="section-block-title">Tus datos</p>
         <div class="form-row">
-          <div class="form-group"><label>Nombre</label><input id="inp-nombre" type="text" placeholder="Tu nombre" oninput="updateWpLink()"></div>
-          <div class="form-group"><label>Teléfono</label><input id="inp-tel" type="tel" placeholder="11 1234-5678" oninput="updateWpLink()"></div>
+          <div class="form-group">
+            <label>Nombre<span class="req">*</span></label>
+            <input id="inp-nombre" type="text" placeholder="Ej: María" required oninput="this.classList.remove('field-error')">
+          </div>
+          <div class="form-group">
+            <label>Apellido de familia<span class="req">*</span></label>
+            <input id="inp-apellido" type="text" placeholder="Ej: García" required oninput="this.classList.remove('field-error')">
+          </div>
         </div>
-        <div class="form-row full">
-          <div class="form-group"><label>Email</label><input id="inp-email" type="email" placeholder="tu@email.com" oninput="updateWpLink()"></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Teléfono<span class="req">*</span></label>
+            <input id="inp-tel" type="tel" placeholder="11 1234-5678" required oninput="this.classList.remove('field-error')">
+          </div>
+          <div class="form-group">
+            <label>Email<span class="req">*</span></label>
+            <input id="inp-email" type="email" placeholder="tu@email.com" required oninput="this.classList.remove('field-error')">
+          </div>
         </div>
       </div>
 
@@ -267,37 +336,64 @@ function render() {
       <div class="section-block">
         <p class="section-block-title">Método de envío</p>
         <div class="radio-options">
-
           <label class="radio-option selected" data-envio="retiro" onclick="selectEnvio('retiro')">
             <input type="radio" name="envio" checked>
             <div class="radio-label">
-              <div class="radio-title">
-                <span>Retiro en Barrio Habitat</span>
-                <span class="badge badge-green">Gratis</span>
-              </div>
-              <p class="radio-desc">Pilar, Provincia de Buenos Aires. Coordinamos día y horario por WhatsApp.</p>
+              <div class="radio-title"><span>Retiro en Barrio Habitat</span><span class="badge badge-green">Gratis</span></div>
+              <p class="radio-desc">Pilar, Buenos Aires. Coordinamos día y horario por WhatsApp.</p>
             </div>
           </label>
-
           <label class="radio-option" data-envio="correo" onclick="selectEnvio('correo')">
             <input type="radio" name="envio">
             <div class="radio-label">
-              <div class="radio-title">
-                <span>Correo Argentino — Domicilio</span>
-                <span class="badge badge-orange">A calcular</span>
-              </div>
-              <p class="radio-desc">Envío a todo el país. El costo se calcula según tu código postal y se informa por WhatsApp.</p>
+              <div class="radio-title"><span>Correo Argentino — Domicilio</span><span class="badge badge-orange">A calcular</span></div>
+              <p class="radio-desc">Envío a todo el país. El costo se informa por WhatsApp según tu CP.</p>
               <div class="addr-expand" id="addr-expand">
                 <div class="form-row">
-                  <div class="form-group"><label>Calle y número</label><input id="inp-calle" type="text" placeholder="Ej: Av. Santa Fe 1234" oninput="updateWpLink()"></div>
-                  <div class="form-group"><label>Código postal</label><input id="inp-cp" type="text" placeholder="Ej: 1425" maxlength="8" oninput="updateWpLink()"></div>
+                  <div class="form-group"><label>Calle y número</label><input id="inp-calle" type="text" placeholder="Av. Santa Fe 1234"></div>
+                  <div class="form-group"><label>Código postal</label><input id="inp-cp" type="text" placeholder="1425" maxlength="8"></div>
                 </div>
                 <div class="form-row full">
-                  <div class="form-group"><label>Ciudad / Localidad</label><input id="inp-loc" type="text" placeholder="Ej: Buenos Aires" oninput="updateWpLink()"></div>
+                  <div class="form-group"><label>Ciudad / Localidad</label><input id="inp-loc" type="text" placeholder="Buenos Aires"></div>
                 </div>
               </div>
-              <div class="correo-info" id="correo-info">
-                📦 El costo exacto del envío te lo informamos por WhatsApp antes de confirmar el pedido. El pago del flete se coordina por separado con Correo Argentino.
+              <div class="correo-info" id="correo-info">📦 Te informamos el costo exacto por WhatsApp antes de confirmar. El flete se abona por separado.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- PAGO -->
+      <div class="section-block">
+        <p class="section-block-title">Método de pago</p>
+        <div class="radio-options">
+
+          <label class="radio-option selected" data-pago="transferencia" onclick="selectPago('transferencia')">
+            <input type="radio" name="pago" checked>
+            <div class="radio-label">
+              <div class="radio-title"><span>Transferencia bancaria</span><span class="badge badge-green">Sin comisión</span></div>
+              <p class="radio-desc">Transferí al CBU de NORD y avisanos por WhatsApp con el comprobante.</p>
+              <div class="pago-detail show" id="pago-transferencia">
+                <div class="cbu-block">
+                  <div>Titular: <strong>${TITULAR}</strong></div>
+                  <div class="cbu-row">CBU: <span class="cbu-val">${CBU}</span>
+                    <button class="copy-btn" data-val="${CBU}" onclick="copyText('${CBU}')">Copiar</button>
+                  </div>
+                  <div class="cbu-row">Alias: <span class="cbu-val">${ALIAS}</span>
+                    <button class="copy-btn" data-val="${ALIAS}" onclick="copyText('${ALIAS}')">Copiar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </label>
+
+          <label class="radio-option" data-pago="nave" onclick="selectPago('nave')">
+            <input type="radio" name="pago">
+            <div class="radio-label">
+              <div class="radio-title"><span><span class="nave-logo">nave</span> · Tarjetas y billeteras</span><span class="badge badge-orange">+comisión</span></div>
+              <p class="radio-desc">Visa, Mastercard, débito, MODO, Naranja X y más.</p>
+              <div class="pago-detail" id="pago-nave">
+                <div class="nave-info">Serás redirigido al checkout seguro de <strong>nave</strong> para completar el pago. Próximamente disponible.</div>
               </div>
             </div>
           </label>
@@ -309,20 +405,18 @@ function render() {
 
     <!-- RESUMEN -->
     <div class="summary-panel">
-      <p class="summary-title">Resumen</p>
-      <div class="sum-row"><span>${totalItems} ${totalItems === 1 ? "artículo" : "artículos"}</span><span>${fmt(sub)}</span></div>
+      <p class="summary-title">Resumen del pedido</p>
+      ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(i.precio*i.qty)}</span></div>`).join("")}
       <div class="sum-row"><span>Envío</span><span id="sum-envio">Gratis</span></div>
       <div class="sum-row total"><span>Total</span><span>${fmt(sub)}</span></div>
-      <p class="sum-note">El costo de Correo Argentino se acuerda por WhatsApp y no está incluido en el total.</p>
+      <p class="sum-note">* El costo de Correo Argentino no está incluido.</p>
 
-      <a class="btn-wp" id="btn-wp" href="#" target="_blank" rel="noopener noreferrer">
+      <button class="btn-wp" id="cta-btn" onclick="submitOrder()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        Enviar pedido por WhatsApp
-      </a>
-      <p class="note">Te confirmamos stock, costo de envío y forma de pago por chat.</p>
+        Confirmar pedido por WhatsApp
+      </button>
+      <p class="note">Todos los campos con <span style="color:#c0392b">*</span> son obligatorios.</p>
     </div>`;
-
-  updateWpLink();
 }
 
 render();
