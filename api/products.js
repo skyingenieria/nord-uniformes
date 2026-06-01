@@ -28,6 +28,7 @@ async function fetchFromSheets(colegio = "WS") {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.SPREADSHEET_ID,
     range: "'6 Stock'!A2:K2000",
+    valueRenderOption: "UNFORMATTED_VALUE",
   });
 
   const rows = res.data.values || [];
