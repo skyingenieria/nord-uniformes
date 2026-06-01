@@ -257,6 +257,7 @@
     .product-card:hover {
       box-shadow: 0 8px 32px rgba(15,23,46,0.1);
       transform: translateY(-2px);
+      cursor: pointer;
     }
     .product-img {
       aspect-ratio: 4/3;
@@ -321,55 +322,13 @@
       color: var(--azul-900);
     }
 
-    /* TALLE SELECTOR */
-    .talle-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--azul-400);
-      margin-bottom: 10px;
-    }
-    .talles-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .talle-btn {
-      border: 1px solid var(--niebla-200);
-      background: none;
-      padding: 6px 12px;
-      font-family: var(--sans);
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--azul);
-      cursor: pointer;
-      transition: all 0.15s;
-      position: relative;
-    }
-    .talle-btn:hover:not(.sin-stock) {
-      border-color: var(--azul);
-      background-color: var(--azul);
-      color: var(--crema);
-    }
-    .talle-btn.selected {
-      border-color: var(--dorado);
-      background-color: var(--dorado);
-      color: var(--azul-900);
-    }
-    .talle-btn.sin-stock {
-      opacity: 0.3;
-      cursor: not-allowed;
-      text-decoration: line-through;
-    }
-
-    /* ADD TO CART BUTTON */
+    /* ADD TO CART BUTTON en card */
     .btn-agregar {
       margin-top: auto;
       background-color: var(--azul-900);
       color: var(--crema);
       border: none;
-      padding: 14px;
+      padding: 13px;
       font-family: var(--sans);
       font-size: 12px;
       font-weight: 700;
@@ -378,15 +337,113 @@
       cursor: pointer;
       transition: background-color 0.2s;
       width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
     .btn-agregar:hover { background-color: var(--dorado); color: var(--azul-900); }
-    .btn-agregar:disabled {
-      background-color: var(--niebla-200);
-      color: var(--azul-400);
-      cursor: not-allowed;
+
+    /* ── PRODUCT MODAL ─────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(10,14,24,0.55);
+      z-index: 300;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
     }
-    .btn-agregar.added {
-      background-color: #2e7d52;
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--crema);
+      width: 100%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      position: relative;
+      transform: scale(0.95) translateY(12px);
+      transition: transform 0.25s ease;
+    }
+    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+
+    .modal-img {
+      aspect-ratio: 1;
+      background: var(--crema-2);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .modal-img img { width: 100%; height: 100%; object-fit: cover; }
+    .modal-img-placeholder {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: var(--niebla); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+    }
+    .modal-img-placeholder svg { opacity: 0.25; }
+
+    .modal-body {
+      padding: 32px 28px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .modal-close {
+      position: absolute; top: 14px; right: 14px;
+      background: var(--azul-900); color: var(--crema);
+      border: none; width: 32px; height: 32px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s; z-index: 2;
+    }
+    .modal-close:hover { background: var(--dorado); color: var(--azul-900); }
+
+    .modal-name {
+      font-size: 22px; font-weight: 900; letter-spacing: -0.01em;
+      line-height: 1.15; color: var(--azul-900);
+    }
+
+    /* Talle selector en modal */
+    .modal-talle-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--azul-400); margin-bottom: 10px;
+    }
+    .modal-talles { display: flex; flex-wrap: wrap; gap: 7px; }
+    .modal-talle-btn {
+      border: 1.5px solid var(--niebla-200);
+      background: none; padding: 7px 14px;
+      font-family: var(--sans); font-size: 13px; font-weight: 700;
+      color: var(--azul); cursor: pointer; transition: all 0.15s;
+      position: relative;
+    }
+    .modal-talle-btn:hover:not(.sin-stock) {
+      border-color: var(--azul); background: var(--azul); color: var(--crema);
+    }
+    .modal-talle-btn.selected {
+      border-color: var(--dorado); background: var(--dorado); color: var(--azul-900);
+    }
+    .modal-talle-btn.sin-stock {
+      opacity: 0.28; cursor: not-allowed; text-decoration: line-through;
+    }
+    .talle-stock-hint {
+      font-size: 11px; color: var(--azul-400); margin-top: 8px;
+    }
+
+    .btn-modal-agregar {
+      background: var(--azul-900); color: var(--crema);
+      border: none; padding: 15px;
+      font-family: var(--sans); font-size: 12px; font-weight: 800;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      cursor: pointer; transition: background 0.2s; width: 100%;
+    }
+    .btn-modal-agregar:hover { background: var(--dorado); color: var(--azul-900); }
+    .btn-modal-agregar:disabled {
+      background: var(--niebla-200); color: var(--azul-400); cursor: not-allowed;
+    }
+    .btn-modal-agregar.added { background: #2e7d52; }
+
+    @media (max-width: 600px) {
+      .modal { grid-template-columns: 1fr; }
+      .modal-img { aspect-ratio: 4/3; }
     }
 
     /* ── CART DRAWER ────────────────────────────────────────────────── */
@@ -695,6 +752,17 @@
   </div>
 </section>
 
+<!-- PRODUCT MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleModalOverlayClick(event)">
+  <div class="modal" id="product-modal">
+    <button class="modal-close" onclick="closeModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="modal-img" id="modal-img"></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
 <!-- OVERLAY -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 
@@ -806,22 +874,8 @@
             <span>Foto próximamente</span>
            </div>`;
 
-      const tallesHtml = p.talles
-        .sort((a, b) => {
-          const order = ["4","6","8","10","12","14","16","18","XS","S","M","L","XL","XXL"];
-          return (order.indexOf(a.talle) - order.indexOf(b.talle)) || a.talle.localeCompare(b.talle);
-        })
-        .map(t => `<button
-            class="talle-btn${t.stock === 0 ? " sin-stock" : ""}"
-            data-product-id="${p.id}"
-            data-talle="${t.talle}"
-            onclick="selectTalle(this, '${p.id}')"
-            ${t.stock === 0 ? "disabled" : ""}
-            title="${t.stock === 0 ? "Sin stock" : `${t.stock} disponibles`}"
-          >${t.talle}</button>`).join("");
-
       return `
-        <div class="product-card" data-product-id="${p.id}">
+        <div class="product-card" data-product-id="${p.id}" onclick="openProductModal('${p.id}')">
           <div class="product-img">${imgHtml}</div>
           <div class="product-body">
             <div>
@@ -832,49 +886,103 @@
               <div class="price-cuotas">3 cuotas sin interés de <strong>${fmt(Math.round(p.precio / 3))}</strong></div>
               ` : `<div class="price-lista" style="color:var(--azul-400);font-size:14px">Sin precio cargado</div>`}
             </div>
-            <div>
-              <p class="talle-label">Elegí tu talle</p>
-              <div class="talles-grid">${tallesHtml}</div>
-            </div>
-            <button
-              class="btn-agregar"
-              id="btn-add-${p.id}"
-              disabled
-              onclick="handleAddToCart('${p.id}', '${p.nombre}', ${p.precio})"
-            >Seleccioná un talle</button>
+            <button class="btn-agregar">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+              Agregar al carrito
+            </button>
           </div>
         </div>`;
     }).join("");
   }
 
-  function selectTalle(btn, productId) {
-    // Deselect previous in same product
-    const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
-    card.querySelectorAll(".talle-btn").forEach(b => b.classList.remove("selected"));
-    btn.classList.add("selected");
+  // ── Product Modal ────────────────────────────────────────────────────
+  let modalProduct = null;
 
-    const addBtn = document.getElementById(`btn-add-${productId}`);
-    addBtn.disabled = false;
-    addBtn.textContent = `Agregar talle ${btn.dataset.talle}`;
+  function openProductModal(productId) {
+    const p = allProducts.find(x => x.id === productId);
+    if (!p) return;
+    modalProduct = p;
+
+    // Imagen
+    const imgEl = document.getElementById("modal-img");
+    imgEl.innerHTML = p.imagen_url
+      ? `<img src="${p.imagen_url}" alt="${p.nombre}">`
+      : `<div class="modal-img-placeholder">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Foto próximamente</span>
+         </div>`;
+
+    // Talles ordenados
+    const talleOrder = ["1","2","3","4","6","8","10","12","14","16","18","XS","S","M","L","XL","XXL","38","40","42","44","46","48","50","52","54"];
+    const sorted = [...p.talles].sort((a, b) => {
+      const ia = talleOrder.indexOf(a.talle), ib = talleOrder.indexOf(b.talle);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+
+    const tallesHtml = sorted.map(t => `
+      <button class="modal-talle-btn${t.stock === 0 ? " sin-stock" : ""}"
+        data-talle="${t.talle}" data-stock="${t.stock}"
+        ${t.stock === 0 ? "disabled" : ""}
+        onclick="selectModalTalle(this)"
+        title="${t.stock === 0 ? "Sin stock" : t.stock + " disponibles"}"
+      >${t.talle}</button>`).join("");
+
+    const precioHtml = p.precio > 0 ? `
+      <div class="price-lista">${fmt(p.precio)}</div>
+      <div class="price-transferencia"><strong>${fmt(Math.round(p.precio * 0.9))}</strong> con transferencia <span style="font-size:11px;background:var(--dorado);color:var(--azul-900);padding:1px 6px;font-weight:800">10% OFF</span></div>
+      <div class="price-cuotas">3 cuotas sin interés de <strong>${fmt(Math.round(p.precio / 3))}</strong></div>
+    ` : `<div class="price-lista" style="color:var(--azul-400);font-size:14px">Sin precio cargado</div>`;
+
+    document.getElementById("modal-body").innerHTML = `
+      <div>
+        <h2 class="modal-name">${p.nombre}</h2>
+        <div style="margin-top:12px">${precioHtml}</div>
+      </div>
+      <div>
+        <p class="modal-talle-label">Elegí tu talle</p>
+        <div class="modal-talles">${tallesHtml}</div>
+        <p class="talle-stock-hint" id="modal-stock-hint">Seleccioná un talle para continuar</p>
+      </div>
+      <button class="btn-modal-agregar" id="btn-modal-add" disabled onclick="handleModalAdd()">
+        Seleccioná un talle
+      </button>`;
+
+    document.getElementById("modal-overlay").classList.add("open");
+    document.body.style.overflow = "hidden";
   }
 
-  function handleAddToCart(productId, nombre, precio) {
-    const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
-    const selected = card.querySelector(".talle-btn.selected");
-    if (!selected) return;
+  function handleModalOverlayClick(e) {
+    if (e.target === document.getElementById("modal-overlay")) closeModal();
+  }
 
-    addToCart(productId, nombre, selected.dataset.talle, precio);
+  function closeModal() {
+    document.getElementById("modal-overlay").classList.remove("open");
+    document.body.style.overflow = "";
+    modalProduct = null;
+  }
 
-    const addBtn = document.getElementById(`btn-add-${productId}`);
-    addBtn.textContent = "¡Agregado!";
+  function selectModalTalle(btn) {
+    document.querySelectorAll(".modal-talle-btn").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
+    const stock = parseInt(btn.dataset.stock);
+    const addBtn = document.getElementById("btn-modal-add");
+    addBtn.disabled = false;
+    addBtn.textContent = `Agregar talle ${btn.dataset.talle}`;
+    document.getElementById("modal-stock-hint").textContent =
+      stock <= 3 ? `⚠ Solo ${stock} disponible${stock === 1 ? "" : "s"}` : `${stock} disponibles`;
+  }
+
+  function handleModalAdd() {
+    const selected = document.querySelector(".modal-talle-btn.selected");
+    if (!selected || !modalProduct) return;
+    addToCart(modalProduct.id, modalProduct.nombre, selected.dataset.talle, modalProduct.precio);
+    const addBtn = document.getElementById("btn-modal-add");
+    addBtn.textContent = "✓ ¡Agregado!";
     addBtn.classList.add("added");
     setTimeout(() => {
-      addBtn.textContent = `Agregar talle ${selected.dataset.talle}`;
-      addBtn.classList.remove("added");
-    }, 1200);
-
-    // Abrir drawer con el carrito actualizado
-    openDrawer();
+      closeModal();
+      openDrawer();
+    }, 700);
   }
 
   // ── Cart Drawer ───────────────────────────────────────────────────────
