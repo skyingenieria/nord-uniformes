@@ -810,6 +810,31 @@
 
 <script>
   const WHATSAPP_NUMBER = "5491122913796";
+  const DESCUENTO_TRANSFERENCIA = 0.10; // 10%
+  const CUOTAS = 3;
+
+  function fmt(n) { return "$" + Math.round(Number(n)).toLocaleString("es-AR"); }
+
+  function buildModalPriceHtml(precio, esDesde = false) {
+    if (!precio) return `<div class="price-lista" style="color:var(--azul-400);font-size:14px">Sin precio cargado</div>`;
+    const precioTransf = Math.round(precio * (1 - DESCUENTO_TRANSFERENCIA));
+    const precioCuota  = Math.round(precio / CUOTAS);
+    return `
+      <div class="price-lista">${esDesde ? "Desde " : ""}${fmt(precio)}</div>
+      <div class="price-transferencia"><strong>${fmt(precioTransf)}</strong> con transferencia
+        <span style="font-size:11px;background:var(--dorado);color:var(--azul-900);padding:1px 6px;font-weight:800">${Math.round(DESCUENTO_TRANSFERENCIA*100)}% OFF</span>
+      </div>
+      <div class="price-cuotas">${CUOTAS} cuotas sin interés de <strong>${fmt(precioCuota)}</strong></div>`;
+  }
+
+  function buildCardPriceHtml(p) {
+    const precios = p.talles.map(t => t.precio).filter(x => x > 0);
+    if (!precios.length) return `<div class="price-lista" style="color:var(--azul-400);font-size:14px">Sin precio cargado</div>`;
+    const min = Math.min(...precios);
+    const max = Math.max(...precios);
+    const esDesde = min !== max;
+    return buildModalPriceHtml(min, esDesde);
+  }
 
   // ── Carrito (localStorage) ──────────────────────────────────────────
   function getCart() {
@@ -852,10 +877,7 @@
     setTimeout(() => t.classList.remove("show"), 2200);
   }
 
-  // ── Formatear precio ─────────────────────────────────────────────────
-  function fmt(n) {
-    return "$" + Number(n).toLocaleString("es-AR");
-  }
+
 
   // ── Renderizar productos ─────────────────────────────────────────────
   function renderProducts(products) {
@@ -880,11 +902,7 @@
           <div class="product-body">
             <div>
               <h2 class="product-name">${p.nombre}</h2>
-              ${p.precio > 0 ? `
-              <div class="price-lista">${fmt(p.precio)}</div>
-              <div class="price-transferencia"><strong>${fmt(Math.round(p.precio * 0.9))}</strong> con transferencia <span style="font-size:11px;background:var(--dorado);color:var(--azul-900);padding:1px 6px;font-weight:800">10% OFF</span></div>
-              <div class="price-cuotas">3 cuotas sin interés de <strong>${fmt(Math.round(p.precio / 3))}</strong></div>
-              ` : `<div class="price-lista" style="color:var(--azul-400);font-size:14px">Sin precio cargado</div>`}
+              ${buildCardPriceHtml(p)}
             </div>
             <button class="btn-agregar">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
@@ -921,22 +939,22 @@
 
     const tallesHtml = sorted.map(t => `
       <button class="modal-talle-btn${t.stock === 0 ? " sin-stock" : ""}"
-        data-talle="${t.talle}" data-stock="${t.stock}"
+        data-talle="${t.talle}" data-stock="${t.stock}" data-precio="${t.precio}"
         ${t.stock === 0 ? "disabled" : ""}
         onclick="selectModalTalle(this)"
         title="${t.stock === 0 ? "Sin stock" : t.stock + " disponibles"}"
       >${t.talle}</button>`).join("");
 
-    const precioHtml = p.precio > 0 ? `
-      <div class="price-lista">${fmt(p.precio)}</div>
-      <div class="price-transferencia"><strong>${fmt(Math.round(p.precio * 0.9))}</strong> con transferencia <span style="font-size:11px;background:var(--dorado);color:var(--azul-900);padding:1px 6px;font-weight:800">10% OFF</span></div>
-      <div class="price-cuotas">3 cuotas sin interés de <strong>${fmt(Math.round(p.precio / 3))}</strong></div>
-    ` : `<div class="price-lista" style="color:var(--azul-400);font-size:14px">Sin precio cargado</div>`;
+    // Precio inicial = mínimo disponible con stock
+    const precioInicial = sorted.find(t => t.stock > 0)?.precio || p.precio;
+    const hayVariosPrecios = sorted.filter(t=>t.precio>0).some(t=>t.precio !== sorted.find(x=>x.precio>0)?.precio);
 
     document.getElementById("modal-body").innerHTML = `
       <div>
         <h2 class="modal-name">${p.nombre}</h2>
-        <div style="margin-top:12px">${precioHtml}</div>
+        <div style="margin-top:12px" id="modal-prices">
+          ${buildModalPriceHtml(precioInicial, hayVariosPrecios)}
+        </div>
       </div>
       <div>
         <p class="modal-talle-label">Elegí tu talle</p>
@@ -964,18 +982,24 @@
   function selectModalTalle(btn) {
     document.querySelectorAll(".modal-talle-btn").forEach(b => b.classList.remove("selected"));
     btn.classList.add("selected");
-    const stock = parseInt(btn.dataset.stock);
+    const stock  = parseInt(btn.dataset.stock);
+    const precio = parseInt(btn.dataset.precio) || 0;
     const addBtn = document.getElementById("btn-modal-add");
     addBtn.disabled = false;
     addBtn.textContent = `Agregar talle ${btn.dataset.talle}`;
     document.getElementById("modal-stock-hint").textContent =
       stock <= 3 ? `⚠ Solo ${stock} disponible${stock === 1 ? "" : "s"}` : `${stock} disponibles`;
+    // Actualizar precios según el talle seleccionado
+    if (precio > 0) {
+      document.getElementById("modal-prices").innerHTML = buildModalPriceHtml(precio, false);
+    }
   }
 
   function handleModalAdd() {
     const selected = document.querySelector(".modal-talle-btn.selected");
     if (!selected || !modalProduct) return;
-    addToCart(modalProduct.id, modalProduct.nombre, selected.dataset.talle, modalProduct.precio);
+    const precio = parseInt(selected.dataset.precio) || modalProduct.precio;
+    addToCart(modalProduct.id, modalProduct.nombre, selected.dataset.talle, precio);
     const addBtn = document.getElementById("btn-modal-add");
     addBtn.textContent = "✓ ¡Agregado!";
     addBtn.classList.add("added");

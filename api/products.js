@@ -76,15 +76,22 @@ async function fetchFromSheets(colegio = "WS") {
       productsMap[nombre] = {
         id: nombre.toLowerCase().replace(/\s+/g, "-").replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u").replace(/[^a-z0-9-]/g,""),
         nombre,
-        precio: precioUnit,
+        precio: precioUnit,    // precio mínimo (se recalcula abajo)
         imagen_url: "",
-        categorias, // ["primaria","secundaria"] | ["kinder"] | []
+        categorias,
         talles: [],
       };
     }
 
-    if (precioUnit > 0) productsMap[nombre].precio = precioUnit;
-    productsMap[nombre].talles.push({ talle, stock: stockActual });
+    // El precio del producto = mínimo precio no-cero entre todos los talles
+    if (precioUnit > 0) {
+      if (productsMap[nombre].precio === 0 || precioUnit < productsMap[nombre].precio) {
+        productsMap[nombre].precio = precioUnit;
+      }
+    }
+
+    // Cada talle lleva su propio precio
+    productsMap[nombre].talles.push({ talle, stock: stockActual, precio: precioUnit });
   }
 
   return Object.values(productsMap);
