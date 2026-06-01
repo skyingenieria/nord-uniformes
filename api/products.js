@@ -69,6 +69,6 @@ module.exports = async (req, res) => {
     res.status(200).json(cache);
   } catch (err) {
     console.error("Error leyendo Sheet:", err);
-    res.status(500).json({ error: "No se pudo cargar el catálogo." });
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 };
