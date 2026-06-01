@@ -291,16 +291,34 @@
       letter-spacing: -0.01em;
       line-height: 1.2;
     }
-    .product-price {
-      font-size: 22px;
-      font-weight: 700;
+    /* PRECIOS */
+    .price-lista {
+      font-size: 20px;
+      font-weight: 800;
       color: var(--azul-900);
+      line-height: 1.2;
     }
-    .product-price span {
+    .price-transferencia {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dorado-700);
+      margin-top: 4px;
+    }
+    .price-transferencia strong {
+      font-size: 17px;
+    }
+    .price-cuotas {
+      margin-top: 8px;
+      border: 1px solid var(--niebla-200);
+      padding: 8px 10px;
       font-size: 12px;
-      font-weight: 400;
-      color: var(--azul-400);
-      margin-left: 4px;
+      font-weight: 600;
+      color: var(--azul-600);
+      line-height: 1.4;
+      background: var(--crema-2);
+    }
+    .price-cuotas strong {
+      color: var(--azul-900);
     }
 
     /* TALLE SELECTOR */
@@ -589,10 +607,12 @@
       .filter-count { display: none; }
       .sidebar-title { display: none; }
       .filter-group-title { display: none; }
+      .products-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
     }
-    @media (max-width: 600px) {
-      .products-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 500px) {
+      .products-grid { grid-template-columns: 1fr; gap: 16px; }
       nav { display: none; }
+      .catalog-school-title { font-size: clamp(40px, 14vw, 72px); }
     }
   </style>
 </head>
@@ -806,7 +826,11 @@
           <div class="product-body">
             <div>
               <h2 class="product-name">${p.nombre}</h2>
-              <p class="product-price">${fmt(p.precio)}<span>c/u</span></p>
+              ${p.precio > 0 ? `
+              <div class="price-lista">${fmt(p.precio)}</div>
+              <div class="price-transferencia"><strong>${fmt(Math.round(p.precio * 0.9))}</strong> con transferencia <span style="font-size:11px;background:var(--dorado);color:var(--azul-900);padding:1px 6px;font-weight:800">10% OFF</span></div>
+              <div class="price-cuotas">3 cuotas sin interés de <strong>${fmt(Math.round(p.precio / 3))}</strong></div>
+              ` : `<div class="price-lista" style="color:var(--azul-400);font-size:14px">Sin precio cargado</div>`}
             </div>
             <div>
               <p class="talle-label">Elegí tu talle</p>
