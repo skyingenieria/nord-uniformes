@@ -40,8 +40,8 @@ async function fetchFromSheets(colegio = "WS") {
     }),
     sheets.spreadsheets.values.get({
       spreadsheetId: sid,
-      range: "'10 Listado de Prendas'!A2:E2000",
-      valueRenderOption: "FORMATTED_VALUE", // categorías son texto
+      range: "'10 Listado de Prendas'!A2:F2000", // F = Descripcion
+      valueRenderOption: "FORMATTED_VALUE",
     }),
   ]);
 
@@ -55,8 +55,11 @@ async function fetchFromSheets(colegio = "WS") {
     if (colColegio !== colegio || !nombre || !catRaw) continue;
 
     const cats = catRaw.split(",").map(c => c.trim().toLowerCase()).filter(Boolean);
-    if (!catMap[nombre]) catMap[nombre] = new Set();
-    cats.forEach(c => catMap[nombre].add(c));
+    if (!catMap[nombre]) catMap[nombre] = { cats: new Set(), descripcion: "" };
+    cats.forEach(c => catMap[nombre].cats.add(c));
+    // Descripcion: columna F, tomar la primera no-vacía del producto
+    const desc = String(row[5] || "").trim();
+    if (desc && !catMap[nombre].descripcion) catMap[nombre].descripcion = desc;
   }
 
   // ── Construir productos desde stock ──────────────────────────────────────
@@ -72,13 +75,15 @@ async function fetchFromSheets(colegio = "WS") {
     if (colegioCell !== colegio || !nombre || !talle) continue;
 
     if (!productsMap[nombre]) {
-      const categorias = catMap[nombre] ? [...catMap[nombre]] : [];
+      const categorias   = catMap[nombre] ? [...catMap[nombre].cats] : [];
+      const descripcion  = catMap[nombre]?.descripcion || "";
       productsMap[nombre] = {
         id: nombre.toLowerCase().replace(/\s+/g, "-").replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u").replace(/[^a-z0-9-]/g,""),
         nombre,
         precio: precioUnit,    // precio mínimo (se recalcula abajo)
         imagen_url: "",
         categorias,
+        descripcion,
         talles: [],
       };
     }
