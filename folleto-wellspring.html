@@ -9,20 +9,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700;800;900&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    @page { size: A4 portrait; margin: 0; }
+    @page { size: 100mm 150mm portrait; margin: 0; }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --azul-900: #0F172E;
-      --azul:     #1E2D4A;
-      --azul-600: #34466A;
-      --azul-400: #6B7B9C;
-      --dorado:   #C8A96E;
+      --azul-900:   #0F172E;
+      --azul:       #1E2D4A;
+      --azul-600:   #34466A;
+      --azul-400:   #6B7B9C;
+      --dorado:     #C8A96E;
       --dorado-700: #A6884B;
       --dorado-300: #E0CBA0;
-      --crema:    #F4F1EA;
-      --crema-2:  #ECE7DC;
+      --crema:      #F4F1EA;
+      --crema-2:    #ECE7DC;
       --niebla-200: #D3DAE5;
       --sans:  'Mulish', sans-serif;
       --serif: 'Cormorant Garamond', serif;
@@ -30,30 +30,31 @@
 
     html, body {
       font-family: var(--sans);
-      background: #d8d5cc;
+      background: #ccc9c0;
       display: flex;
       justify-content: center;
-      padding: 40px 0 60px;
+      padding: 30px 0 40px;
     }
 
-    /* ─── PAGE ─── */
+    /* ─── CARD ─── */
     .page {
-      width: 210mm;
-      height: 297mm;
+      width: 100mm;
+      height: 150mm;
       background: var(--crema);
       display: flex;
       flex-direction: column;
-      box-shadow: 0 12px 60px rgba(15,23,46,0.30);
+      box-shadow: 0 8px 40px rgba(15,23,46,0.30);
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
+      overflow: hidden;
     }
 
     /* ─── HEADER ─── */
     .header {
       background: var(--azul-900);
-      padding: 30px 50px 26px;
+      padding: 10px 14px 9px;
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
       position: relative;
       flex-shrink: 0;
@@ -63,7 +64,7 @@
       content: '';
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      height: 2px;
+      height: 1.5px;
       background: linear-gradient(90deg, transparent 0%, var(--dorado) 25%, var(--dorado) 75%, transparent 100%);
     }
 
@@ -71,75 +72,72 @@
 
     .logo .nord {
       font-weight: 900;
-      font-size: 42px;
+      font-size: 22px;
       letter-spacing: 0.06em;
       display: block;
     }
 
     .logo .uniformes {
       font-weight: 300;
-      font-size: 10px;
+      font-size: 5.5px;
       letter-spacing: 0.55em;
       display: block;
-      margin-top: 4px;
+      margin-top: 3px;
       padding-left: 0.55em;
       color: var(--dorado-300);
     }
 
-    .header-meta {
-      text-align: right;
-      padding-top: 6px;
-    }
+    .header-meta { text-align: right; }
 
     .header-meta .season {
-      font-size: 10px;
+      font-size: 7px;
       font-weight: 700;
-      letter-spacing: 0.28em;
+      letter-spacing: 0.24em;
       text-transform: uppercase;
       color: var(--dorado);
     }
 
     .header-meta .school {
-      margin-top: 6px;
-      font-size: 13px;
+      font-size: 8px;
       font-weight: 300;
       letter-spacing: 0.06em;
       color: var(--crema);
       opacity: 0.65;
+      margin-top: 3px;
     }
 
     /* ─── HERO ─── */
     .hero {
-      padding: 42px 50px 36px;
+      padding: 12px 14px 10px;
       border-bottom: 1px solid var(--niebla-200);
       flex-shrink: 0;
     }
 
     .eyebrow {
       display: block;
-      font-size: 10px;
+      font-size: 7px;
       font-weight: 700;
-      letter-spacing: 0.32em;
+      letter-spacing: 0.28em;
       text-transform: uppercase;
       color: var(--dorado-700);
-      margin-bottom: 14px;
+      margin-bottom: 6px;
     }
 
     .hero h1 {
-      font-size: 44px;
+      font-size: 20px;
       font-weight: 900;
-      line-height: 0.96;
-      letter-spacing: -0.025em;
+      line-height: 0.97;
+      letter-spacing: -0.02em;
       color: var(--azul-900);
-      margin-bottom: 16px;
+      margin-bottom: 6px;
     }
 
     .hero .lede {
       font-family: var(--serif);
       font-style: italic;
-      font-size: 21px;
+      font-size: 11.5px;
       color: var(--azul-600);
-      line-height: 1.4;
+      line-height: 1.35;
     }
 
     /* ─── FEATURES ─── */
@@ -151,7 +149,7 @@
 
     .feature {
       flex: 1;
-      padding: 18px 26px;
+      padding: 7px 10px;
       background: var(--crema-2);
       border-right: 1px solid var(--niebla-200);
     }
@@ -159,47 +157,46 @@
     .feature:last-child { border-right: none; }
 
     .feature-num {
-      font-size: 9px;
+      font-size: 7px;
       font-weight: 700;
-      letter-spacing: 0.22em;
+      letter-spacing: 0.18em;
       color: var(--dorado-700);
-      margin-bottom: 6px;
+      margin-bottom: 3px;
     }
 
     .feature-name {
-      font-size: 11px;
+      font-size: 7.5px;
       font-weight: 800;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--azul-900);
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .feature-desc {
-      font-size: 11px;
-      font-weight: 400;
+      font-size: 7.5px;
       color: var(--azul-600);
-      line-height: 1.55;
+      line-height: 1.4;
     }
 
     /* ─── QR SECTION ─── */
     .qr-section {
       flex: 1;
-      padding: 36px 50px 32px;
+      padding: 10px 14px 8px;
       display: flex;
       flex-direction: column;
     }
 
     .section-label {
-      font-size: 9px;
+      font-size: 7px;
       font-weight: 700;
-      letter-spacing: 0.32em;
+      letter-spacing: 0.28em;
       text-transform: uppercase;
       color: var(--azul-400);
-      margin-bottom: 28px;
+      margin-bottom: 8px;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 8px;
     }
 
     .section-label::before,
@@ -212,7 +209,7 @@
 
     .qr-grid {
       display: flex;
-      gap: 24px;
+      gap: 8px;
       flex: 1;
     }
 
@@ -223,7 +220,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 30px 24px 26px;
+      justify-content: center;
+      padding: 8px 6px 7px;
       position: relative;
     }
 
@@ -231,111 +229,62 @@
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0;
-      height: 3px;
+      height: 2px;
     }
 
     .qr-card.web::before      { background: var(--azul-900); }
     .qr-card.whatsapp::before { background: var(--dorado); }
 
     .qr-type {
-      font-size: 9px;
+      font-size: 6.5px;
       font-weight: 700;
-      letter-spacing: 0.32em;
+      letter-spacing: 0.24em;
       text-transform: uppercase;
-      margin-bottom: 22px;
+      margin-bottom: 7px;
     }
 
     .qr-card.web .qr-type      { color: var(--azul-900); }
     .qr-card.whatsapp .qr-type { color: var(--dorado-700); }
 
     .qr-wrap {
-      width: 200px;
-      height: 200px;
+      width: 33mm;
+      height: 33mm;
       display: flex;
       align-items: center;
       justify-content: center;
       border: 1px solid var(--niebla-200);
-      padding: 10px;
-      margin-bottom: 22px;
+      padding: 3px;
+      margin-bottom: 7px;
       flex-shrink: 0;
     }
 
     .qr-wrap canvas,
     .qr-wrap img {
       display: block;
-      max-width: 100%;
-      max-height: 100%;
+      width: 100% !important;
+      height: 100% !important;
     }
 
     .qr-value {
-      font-size: 13px;
+      font-size: 7.5px;
       font-weight: 700;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
       color: var(--azul);
       text-align: center;
-      margin-bottom: 5px;
+      margin-bottom: 3px;
     }
 
     .qr-hint {
-      font-size: 10px;
-      font-weight: 400;
+      font-size: 6.5px;
       color: var(--azul-400);
       text-align: center;
-      line-height: 1.5;
-    }
-
-    /* ─── HOW IT WORKS ─── */
-    .how {
-      padding: 0 50px 28px;
-      flex-shrink: 0;
-    }
-
-    .how-steps {
-      display: flex;
-      gap: 0;
-      border: 1px solid var(--niebla-200);
-    }
-
-    .step {
-      flex: 1;
-      padding: 14px 20px;
-      border-right: 1px solid var(--niebla-200);
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
-    .step:last-child { border-right: none; }
-
-    .step-n {
-      font-size: 22px;
-      font-weight: 900;
-      color: var(--niebla-200);
-      line-height: 1;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    .step-text strong {
-      display: block;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--azul-900);
-      margin-bottom: 2px;
-    }
-
-    .step-text span {
-      font-size: 10px;
-      color: var(--azul-400);
-      line-height: 1.45;
+      line-height: 1.4;
     }
 
     /* ─── FOOTER ─── */
     .footer {
       background: var(--azul-900);
-      padding: 20px 50px;
+      padding: 8px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -351,27 +300,25 @@
       background: linear-gradient(90deg, transparent 0%, var(--dorado) 25%, var(--dorado) 75%, transparent 100%);
     }
 
-    .footer .logo .nord      { font-size: 22px; }
-    .footer .logo .uniformes { font-size: 6px; }
+    .footer .logo .nord      { font-size: 14px; }
+    .footer .logo .uniformes { font-size: 4px; }
 
     .footer-tagline {
       font-family: var(--serif);
       font-style: italic;
-      font-size: 16px;
+      font-size: 10px;
       color: var(--dorado-300);
     }
 
-    .footer-contact {
-      text-align: right;
-    }
+    .footer-contact { text-align: right; }
 
     .footer-contact span {
       display: block;
-      font-size: 10px;
+      font-size: 7px;
       color: var(--crema);
       opacity: 0.6;
-      line-height: 1.75;
-      letter-spacing: 0.04em;
+      line-height: 1.7;
+      letter-spacing: 0.03em;
     }
 
     /* ─── PRINT ─── */
@@ -383,8 +330,8 @@
       }
       .page {
         box-shadow: none;
-        width: 210mm;
-        height: 297mm;
+        width: 100mm;
+        height: 150mm;
       }
     }
   </style>
@@ -406,9 +353,9 @@
 
   <!-- HERO -->
   <section class="hero">
-    <span class="eyebrow">Uniformes reglamentarios · Zona Norte GBA</span>
+    <span class="eyebrow">Uniformes reglamentarios · Zona Norte</span>
     <h1>Tu uniforme,<br>cuando lo necesitás.</h1>
-    <p class="lede">Comprá online, retirá en el colegio. Sin filas ni esperas.</p>
+    <p class="lede">Comprá online, retirá en el colegio.</p>
   </section>
 
   <!-- FEATURES -->
@@ -416,17 +363,17 @@
     <div class="feature">
       <div class="feature-num">01</div>
       <div class="feature-name">Catálogo online</div>
-      <div class="feature-desc">Todas las prendas y talles del Wellspring con stock actualizado.</div>
+      <div class="feature-desc">Todas las prendas con stock en tiempo real.</div>
     </div>
     <div class="feature">
       <div class="feature-num">02</div>
       <div class="feature-name">Retiro en el colegio</div>
-      <div class="feature-desc">Lockers con código en Wellspring y punto de retiro en Barrio Habitat.</div>
+      <div class="feature-desc">Lockers con código en Wellspring.</div>
     </div>
     <div class="feature">
       <div class="feature-num">03</div>
       <div class="feature-name">Pago en cuotas</div>
-      <div class="feature-desc">Transferencia bancaria o en cuotas con Nave, sin tarjeta de crédito.</div>
+      <div class="feature-desc">Transferencia o cuotas con Nave.</div>
     </div>
   </div>
 
@@ -439,45 +386,18 @@
         <div class="qr-type">Catálogo Wellspring</div>
         <div class="qr-wrap" id="qr-web"></div>
         <div class="qr-value">norduniformes.com.ar</div>
-        <div class="qr-hint">Buscá por talle, prenda o nivel</div>
+        <div class="qr-hint">Buscá por talle y nivel</div>
       </div>
 
       <div class="qr-card whatsapp">
         <div class="qr-type">WhatsApp</div>
         <div class="qr-wrap" id="qr-wa"></div>
         <div class="qr-value">+54 9 11 2291-3796</div>
-        <div class="qr-hint">Consultas, talles y seguimiento de pedidos</div>
+        <div class="qr-hint">Consultas y pedidos</div>
       </div>
 
     </div>
   </section>
-
-  <!-- HOW IT WORKS -->
-  <div class="how">
-    <div class="how-steps">
-      <div class="step">
-        <div class="step-n">1</div>
-        <div class="step-text">
-          <strong>Entrá al catálogo</strong>
-          <span>Elegí las prendas y talles para cada nivel.</span>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-n">2</div>
-        <div class="step-text">
-          <strong>Pagá online</strong>
-          <span>Transferencia o cuotas. Confirmación por WhatsApp.</span>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-n">3</div>
-        <div class="step-text">
-          <strong>Retirá en el colegio</strong>
-          <span>Código al locker enviado por WhatsApp. Listo.</span>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- FOOTER -->
   <footer class="footer">
@@ -496,10 +416,12 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    var size = Math.round(33 / 25.4 * 96);
+
     new QRCode(document.getElementById('qr-web'), {
       text: 'https://norduniformes.com.ar/wellspring',
-      width: 178,
-      height: 178,
+      width: size,
+      height: size,
       colorDark: '#0F172E',
       colorLight: '#FFFFFF',
       correctLevel: QRCode.CorrectLevel.H
@@ -507,8 +429,8 @@
 
     new QRCode(document.getElementById('qr-wa'), {
       text: 'https://wa.me/5491122913796?text=Hola%21%20Vi%20el%20folleto%20de%20NORD%20Uniformes%20y%20quería%20consultar.',
-      width: 178,
-      height: 178,
+      width: size,
+      height: size,
       colorDark: '#A6884B',
       colorLight: '#FFFFFF',
       correctLevel: QRCode.CorrectLevel.H
