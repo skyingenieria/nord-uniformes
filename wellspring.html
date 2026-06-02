@@ -370,17 +370,65 @@
     }
     .modal-overlay.open .modal { transform: scale(1) translateY(0); }
 
+    /* CARRUSEL EN MODAL */
     .modal-img {
       aspect-ratio: 1;
       background: var(--crema-2);
-      display: flex; align-items: center; justify-content: center;
+      position: relative;
       overflow: hidden;
     }
-    .modal-img img { width: 100%; height: 100%; object-fit: cover; }
+    .carousel {
+      width: 100%; height: 100%;
+      position: relative;
+    }
+    .carousel-track {
+      display: flex;
+      height: 100%;
+      transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+    }
+    .carousel-slide {
+      min-width: 100%; height: 100%;
+      flex-shrink: 0;
+    }
+    .carousel-slide img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .carousel-slide.placeholder {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+      color: var(--niebla); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+    }
+    .carousel-slide.placeholder svg { opacity: 0.25; }
+
+    .carousel-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(15,23,46,0.55); color: #fff;
+      border: none; width: 36px; height: 36px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      z-index: 2; transition: background 0.15s;
+    }
+    .carousel-btn:hover { background: rgba(15,23,46,0.85); }
+    .carousel-btn.prev { left: 8px; }
+    .carousel-btn.next { right: 8px; }
+    .carousel-btn.hidden { display: none; }
+
+    .carousel-dots {
+      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 6px; z-index: 2;
+    }
+    .carousel-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(255,255,255,0.5); border: none; cursor: pointer;
+      padding: 0; transition: background 0.15s;
+    }
+    .carousel-dot.active { background: #fff; }
+
     .modal-img-placeholder {
       display: flex; flex-direction: column; align-items: center; gap: 8px;
       color: var(--niebla); font-size: 11px; font-weight: 600;
       letter-spacing: 0.14em; text-transform: uppercase;
+      height: 100%; justify-content: center;
     }
     .modal-img-placeholder svg { opacity: 0.25; }
 
@@ -889,12 +937,10 @@
     }
 
     container.innerHTML = products.map(p => {
-      const imgHtml = p.imagen_url
-        ? `<img src="${p.imagen_url}" alt="${p.nombre}" loading="lazy">`
-        : `<div class="product-img-placeholder">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <span>Foto próximamente</span>
-           </div>`;
+      // Primera imagen: del Sheet si existe, sino placeholder determinista
+      const firstImg = (p.imagenes && p.imagenes[0]) || p.imagen_url
+        || getPlaceholderImages(p.id, 1)[0];
+      const imgHtml = `<img src="${firstImg}" alt="${p.nombre}" loading="lazy">`;
 
       return `
         <div class="product-card" data-product-id="${p.id}" onclick="openProductModal('${p.id}')">
@@ -913,6 +959,70 @@
     }).join("");
   }
 
+  // ── Placeholders deterministas por producto ───────────────────────────
+  // Usamos picsum.photos con seed basado en el nombre para que siempre sean las mismas fotos
+  function strToSeed(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+    return Math.abs(h);
+  }
+  function getPlaceholderImages(productId, count = 3) {
+    const seed = strToSeed(productId);
+    return Array.from({ length: count }, (_, i) =>
+      `https://picsum.photos/seed/${seed + i * 17}/600/600`
+    );
+  }
+
+  // ── Carrusel ──────────────────────────────────────────────────────────
+  let carouselIndex = 0;
+  let carouselTotal = 0;
+
+  function buildCarousel(container, imagenes, nombre) {
+    carouselIndex = 0;
+    carouselTotal = imagenes.length;
+    const slidesHtml = imagenes.map(url =>
+      `<div class="carousel-slide"><img src="${url}" alt="${nombre}" loading="lazy"></div>`
+    ).join("");
+    const dotsHtml = imagenes.length > 1
+      ? `<div class="carousel-dots">${imagenes.map((_, i) =>
+          `<button class="carousel-dot${i === 0 ? " active" : ""}" onclick="goToSlide(${i})"></button>`
+        ).join("")}</div>`
+      : "";
+    container.innerHTML = `
+      <div class="carousel">
+        <div class="carousel-track" id="carousel-track">${slidesHtml}</div>
+        ${imagenes.length > 1 ? `
+        <button class="carousel-btn prev hidden" id="carousel-prev" onclick="carouselMove(-1)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="carousel-btn next" id="carousel-next" onclick="carouselMove(1)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        ${dotsHtml}` : ""}
+      </div>`;
+  }
+
+  function updateCarouselUI() {
+    const track = document.getElementById("carousel-track");
+    if (track) track.style.transform = `translateX(-${carouselIndex * 100}%)`;
+    document.querySelectorAll(".carousel-dot").forEach((d, i) =>
+      d.classList.toggle("active", i === carouselIndex));
+    const prev = document.getElementById("carousel-prev");
+    const next = document.getElementById("carousel-next");
+    if (prev) prev.classList.toggle("hidden", carouselIndex === 0);
+    if (next) next.classList.toggle("hidden", carouselIndex === carouselTotal - 1);
+  }
+
+  function carouselMove(dir) {
+    carouselIndex = Math.max(0, Math.min(carouselTotal - 1, carouselIndex + dir));
+    updateCarouselUI();
+  }
+
+  function goToSlide(i) {
+    carouselIndex = i;
+    updateCarouselUI();
+  }
+
   // ── Product Modal ────────────────────────────────────────────────────
   let modalProduct = null;
 
@@ -921,14 +1031,14 @@
     if (!p) return;
     modalProduct = p;
 
-    // Imagen
+    // ── Carrusel ─────────────────────────────────────────────────────
+    // Imágenes del producto: p.imagenes es array, o fallback a placeholders random
+    const imagenes = (p.imagenes && p.imagenes.length)
+      ? p.imagenes
+      : getPlaceholderImages(p.id, 3);
+
     const imgEl = document.getElementById("modal-img");
-    imgEl.innerHTML = p.imagen_url
-      ? `<img src="${p.imagen_url}" alt="${p.nombre}">`
-      : `<div class="modal-img-placeholder">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          <span>Foto próximamente</span>
-         </div>`;
+    buildCarousel(imgEl, imagenes, p.nombre);
 
     // Talles ordenados
     const talleOrder = ["1","2","3","4","6","8","10","12","14","16","18","XS","S","M","L","XL","XXL","38","40","42","44","46","48","50","52","54"];
