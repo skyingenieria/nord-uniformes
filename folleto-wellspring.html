@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NORD Uniformes — Colegio Wellspring 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700;800;900&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    @page { size: A4 portrait; margin: 0; }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --azul-900: #0F172E;
+      --azul:     #1E2D4A;
+      --azul-600: #34466A;
+      --azul-400: #6B7B9C;
+      --dorado:   #C8A96E;
+      --dorado-700: #A6884B;
+      --dorado-300: #E0CBA0;
+      --crema:    #F4F1EA;
+      --crema-2:  #ECE7DC;
+      --niebla-200: #D3DAE5;
+      --sans:  'Mulish', sans-serif;
+      --serif: 'Cormorant Garamond', serif;
+    }
+
+    html, body {
+      font-family: var(--sans);
+      background: #d8d5cc;
+      display: flex;
+      justify-content: center;
+      padding: 40px 0 60px;
+    }
+
+    /* ─── PAGE ─── */
+    .page {
+      width: 210mm;
+      height: 297mm;
+      background: var(--crema);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 12px 60px rgba(15,23,46,0.30);
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
+    /* ─── HEADER ─── */
+    .header {
+      background: var(--azul-900);
+      padding: 30px 50px 26px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, var(--dorado) 25%, var(--dorado) 75%, transparent 100%);
+    }
+
+    .logo { color: var(--crema); line-height: 0.88; }
+
+    .logo .nord {
+      font-weight: 900;
+      font-size: 42px;
+      letter-spacing: 0.06em;
+      display: block;
+    }
+
+    .logo .uniformes {
+      font-weight: 300;
+      font-size: 10px;
+      letter-spacing: 0.55em;
+      display: block;
+      margin-top: 4px;
+      padding-left: 0.55em;
+      color: var(--dorado-300);
+    }
+
+    .header-meta {
+      text-align: right;
+      padding-top: 6px;
+    }
+
+    .header-meta .season {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--dorado);
+    }
+
+    .header-meta .school {
+      margin-top: 6px;
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      color: var(--crema);
+      opacity: 0.65;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      padding: 42px 50px 36px;
+      border-bottom: 1px solid var(--niebla-200);
+      flex-shrink: 0;
+    }
+
+    .eyebrow {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--dorado-700);
+      margin-bottom: 14px;
+    }
+
+    .hero h1 {
+      font-size: 44px;
+      font-weight: 900;
+      line-height: 0.96;
+      letter-spacing: -0.025em;
+      color: var(--azul-900);
+      margin-bottom: 16px;
+    }
+
+    .hero .lede {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 21px;
+      color: var(--azul-600);
+      line-height: 1.4;
+    }
+
+    /* ─── FEATURES ─── */
+    .features {
+      display: flex;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--niebla-200);
+    }
+
+    .feature {
+      flex: 1;
+      padding: 18px 26px;
+      background: var(--crema-2);
+      border-right: 1px solid var(--niebla-200);
+    }
+
+    .feature:last-child { border-right: none; }
+
+    .feature-num {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      color: var(--dorado-700);
+      margin-bottom: 6px;
+    }
+
+    .feature-name {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--azul-900);
+      margin-bottom: 4px;
+    }
+
+    .feature-desc {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--azul-600);
+      line-height: 1.55;
+    }
+
+    /* ─── QR SECTION ─── */
+    .qr-section {
+      flex: 1;
+      padding: 36px 50px 32px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .section-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--azul-400);
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .section-label::before,
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--niebla-200);
+    }
+
+    .qr-grid {
+      display: flex;
+      gap: 24px;
+      flex: 1;
+    }
+
+    .qr-card {
+      flex: 1;
+      background: #fff;
+      border: 1px solid var(--niebla-200);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 24px 26px;
+      position: relative;
+    }
+
+    .qr-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+
+    .qr-card.web::before      { background: var(--azul-900); }
+    .qr-card.whatsapp::before { background: var(--dorado); }
+
+    .qr-type {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+
+    .qr-card.web .qr-type      { color: var(--azul-900); }
+    .qr-card.whatsapp .qr-type { color: var(--dorado-700); }
+
+    .qr-wrap {
+      width: 200px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--niebla-200);
+      padding: 10px;
+      margin-bottom: 22px;
+      flex-shrink: 0;
+    }
+
+    .qr-wrap canvas,
+    .qr-wrap img {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .qr-value {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--azul);
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    .qr-hint {
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--azul-400);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* ─── HOW IT WORKS ─── */
+    .how {
+      padding: 0 50px 28px;
+      flex-shrink: 0;
+    }
+
+    .how-steps {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--niebla-200);
+    }
+
+    .step {
+      flex: 1;
+      padding: 14px 20px;
+      border-right: 1px solid var(--niebla-200);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .step:last-child { border-right: none; }
+
+    .step-n {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--niebla-200);
+      line-height: 1;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-text strong {
+      display: block;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--azul-900);
+      margin-bottom: 2px;
+    }
+
+    .step-text span {
+      font-size: 10px;
+      color: var(--azul-400);
+      line-height: 1.45;
+    }
+
+    /* ─── FOOTER ─── */
+    .footer {
+      background: var(--azul-900);
+      padding: 20px 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .footer::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, var(--dorado) 25%, var(--dorado) 75%, transparent 100%);
+    }
+
+    .footer .logo .nord      { font-size: 22px; }
+    .footer .logo .uniformes { font-size: 6px; }
+
+    .footer-tagline {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 16px;
+      color: var(--dorado-300);
+    }
+
+    .footer-contact {
+      text-align: right;
+    }
+
+    .footer-contact span {
+      display: block;
+      font-size: 10px;
+      color: var(--crema);
+      opacity: 0.6;
+      line-height: 1.75;
+      letter-spacing: 0.04em;
+    }
+
+    /* ─── PRINT ─── */
+    @media print {
+      html, body {
+        background: none;
+        padding: 0;
+        display: block;
+      }
+      .page {
+        box-shadow: none;
+        width: 210mm;
+        height: 297mm;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">
+      <span class="nord">NORD</span>
+      <span class="uniformes">UNIFORMES</span>
+    </div>
+    <div class="header-meta">
+      <div class="season">Temporada 2026</div>
+      <div class="school">Colegio Wellspring</div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <span class="eyebrow">Uniformes reglamentarios · Zona Norte GBA</span>
+    <h1>Tu uniforme,<br>cuando lo necesitás.</h1>
+    <p class="lede">Comprá online, retirá en el colegio. Sin filas ni esperas.</p>
+  </section>
+
+  <!-- FEATURES -->
+  <div class="features">
+    <div class="feature">
+      <div class="feature-num">01</div>
+      <div class="feature-name">Catálogo online</div>
+      <div class="feature-desc">Todas las prendas y talles del Wellspring con stock actualizado.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-num">02</div>
+      <div class="feature-name">Retiro en el colegio</div>
+      <div class="feature-desc">Lockers con código en Wellspring y punto de retiro en Barrio Habitat.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-num">03</div>
+      <div class="feature-name">Pago en cuotas</div>
+      <div class="feature-desc">Transferencia bancaria o en cuotas con Nave, sin tarjeta de crédito.</div>
+    </div>
+  </div>
+
+  <!-- QR CODES -->
+  <section class="qr-section">
+    <div class="section-label">Escaneá para acceder</div>
+    <div class="qr-grid">
+
+      <div class="qr-card web">
+        <div class="qr-type">Catálogo Wellspring</div>
+        <div class="qr-wrap" id="qr-web"></div>
+        <div class="qr-value">norduniformes.com.ar</div>
+        <div class="qr-hint">Buscá por talle, prenda o nivel</div>
+      </div>
+
+      <div class="qr-card whatsapp">
+        <div class="qr-type">WhatsApp</div>
+        <div class="qr-wrap" id="qr-wa"></div>
+        <div class="qr-value">+54 9 11 2291-3796</div>
+        <div class="qr-hint">Consultas, talles y seguimiento de pedidos</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <div class="how">
+    <div class="how-steps">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-text">
+          <strong>Entrá al catálogo</strong>
+          <span>Elegí las prendas y talles para cada nivel.</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-text">
+          <strong>Pagá online</strong>
+          <span>Transferencia o cuotas. Confirmación por WhatsApp.</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-text">
+          <strong>Retirá en el colegio</strong>
+          <span>Código al locker enviado por WhatsApp. Listo.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="logo">
+      <span class="nord">NORD</span>
+      <span class="uniformes">UNIFORMES</span>
+    </div>
+    <div class="footer-tagline">Hecho para durar.</div>
+    <div class="footer-contact">
+      <span>norduniformes.com.ar</span>
+      <span>contacto@norduniformes.com</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    new QRCode(document.getElementById('qr-web'), {
+      text: 'https://norduniformes.com.ar/wellspring',
+      width: 178,
+      height: 178,
+      colorDark: '#0F172E',
+      colorLight: '#FFFFFF',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    new QRCode(document.getElementById('qr-wa'), {
+      text: 'https://wa.me/5491122913796?text=Hola%21%20Vi%20el%20folleto%20de%20NORD%20Uniformes%20y%20quería%20consultar.',
+      width: 178,
+      height: 178,
+      colorDark: '#A6884B',
+      colorLight: '#FFFFFF',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  });
+</script>
+</body>
+</html>
