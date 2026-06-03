@@ -1,6 +1,8 @@
 {
   "rewrites": [
     { "source": "/wellspring", "destination": "/wellspring.html" },
-    { "source": "/carrito",    "destination": "/carrito.html" }
+    { "source": "/carrito",    "destination": "/carrito.html" },
+    { "source": "/confirmacion", "destination": "/confirmacion.html" },
+    { "source": "/admin",      "destination": "/admin.html" }
   ]
 }

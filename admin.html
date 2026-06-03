@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — NORD Uniformes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --azul:#1E2D4A;--azul-900:#0F172E;--azul-600:#34466A;--azul-400:#6B7B9C;
+      --dorado:#C8A96E;--niebla-200:#D3DAE5;
+      --crema:#F4F1EA;--crema-2:#ECE7DC;--blanco:#fff;
+      --sans:"Mulish",system-ui,sans-serif;
+      --max:1400px;--pad:clamp(16px,3vw,40px);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--sans);background:#0d1117;color:#e6edf3;min-height:100vh;-webkit-font-smoothing:antialiased}
+    a{text-decoration:none}
+
+    /* LOGIN */
+    #login-screen{
+      display:flex;align-items:center;justify-content:center;
+      min-height:100vh;padding:24px;
+    }
+    .login-box{background:#161b22;border:1px solid #30363d;padding:40px;width:100%;max-width:360px;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+    .login-box h1{font-size:22px;font-weight:900;letter-spacing:-.01em;margin-bottom:6px}
+    .login-box p{font-size:13px;color:#8b949e;margin-bottom:28px}
+    .login-box input{
+      width:100%;background:#0d1117;border:1px solid #30363d;
+      color:#e6edf3;padding:11px 14px;font-family:var(--sans);font-size:14px;
+      outline:none;margin-bottom:12px;border-radius:6px;transition:border-color .2s, box-shadow .2s;
+    }
+    .login-box input:focus{border-color:var(--dorado);box-shadow:0 0 0 3px rgba(200,169,110,.15)}
+    .btn-login{
+      width:100%;background:var(--azul-900);color:var(--crema);border:none;
+      padding:13px;font-family:var(--sans);font-size:12px;font-weight:800;
+      letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:background .2s, box-shadow .2s;
+      border-radius:8px;box-shadow:0 2px 8px rgba(15,23,46,.3);
+    }
+    .btn-login:hover{background:var(--dorado);color:var(--azul-900);box-shadow:0 4px 12px rgba(200,169,110,.3)}
+    .login-error{font-size:12px;color:#f85149;margin-top:10px;display:none}
+
+    /* APP */
+    #app-screen{display:none}
+    .topbar{
+      background:#161b22;border-bottom:1px solid #30363d;
+      padding:0 var(--pad);height:56px;
+      display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:100;
+    }
+    .topbar-brand{font-size:16px;font-weight:900;letter-spacing:.04em;color:#e6edf3}
+    .topbar-brand span{font-weight:300;font-size:9px;letter-spacing:.4em;display:block;margin-top:1px;color:#8b949e;padding-left:.4em}
+    .topbar-right{display:flex;align-items:center;gap:16px}
+    .btn-logout{background:none;border:1px solid #30363d;color:#8b949e;padding:6px 14px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+    .btn-logout:hover{border-color:#f85149;color:#f85149}
+
+    .container{max-width:var(--max);margin:0 auto;padding:32px var(--pad)}
+
+    /* STAT CARDS */
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px}
+    .stat{background:#161b22;border:1px solid #30363d;padding:20px 24px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    .stat-label{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8b949e;margin-bottom:8px}
+    .stat-value{font-size:28px;font-weight:900;color:#e6edf3;letter-spacing:-.02em}
+    .stat-sub{font-size:11px;color:#8b949e;margin-top:4px}
+    .stat.highlight .stat-value{color:var(--dorado)}
+
+    /* FILTERS */
+    .filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+    .filter-btn{background:none;border:1px solid #30363d;color:#8b949e;padding:7px 16px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .15s;border-radius:6px}
+    .filter-btn:hover,.filter-btn.active{background:var(--azul-900);border-color:var(--azul-900);color:#e6edf3}
+    .search-admin{flex:1;min-width:200px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:8px 14px;font-family:var(--sans);font-size:13px;outline:none;border-radius:6px;transition:border-color .2s, box-shadow .2s}
+    .search-admin:focus{border-color:var(--dorado);box-shadow:0 0 0 3px rgba(200,169,110,.15)}
+    .search-admin::placeholder{color:#8b949e}
+
+    /* TABLE */
+    .table-wrap{background:#161b22;border:1px solid #30363d;overflow:auto;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{background:#0d1117;color:#8b949e;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:10px 16px;text-align:left;white-space:nowrap}
+    td{padding:12px 16px;border-top:1px solid #21262d;vertical-align:top;color:#e6edf3}
+    tr:hover td{background:#1c2128;cursor:pointer}
+    .badge{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:2px}
+    .badge-pendiente{background:#fff3cd;color:#856404}
+    .badge-confirmada{background:#d1ecf1;color:#0c5460}
+    .badge-enviada{background:#d4edda;color:#155724}
+    .badge-cancelada{background:#f8d7da;color:#721c24}
+    .badge-pago-transferencia{background:#e8f4f8;color:var(--azul)}
+    .badge-pago-nave{background:#ede7f6;color:#5a2d9c}
+
+    /* ORDER DETAIL PANEL */
+    .detail-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;
+      display:flex;justify-content:flex-end;
+      opacity:0;pointer-events:none;transition:opacity .25s;
+    }
+    .detail-overlay.open{opacity:1;pointer-events:all}
+    .detail-panel{
+      width:480px;max-width:100vw;background:#161b22;
+      border-left:1px solid #30363d;overflow-y:auto;
+      transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+    }
+    .detail-overlay.open .detail-panel{transform:translateX(0)}
+    .detail-header{padding:20px 24px;border-bottom:1px solid #30363d;display:flex;justify-content:space-between;align-items:center}
+    .detail-title{font-size:15px;font-weight:800}
+    .detail-close{background:none;border:none;color:#8b949e;cursor:pointer;padding:4px;display:flex}
+    .detail-body{padding:24px}
+    .detail-section{margin-bottom:24px}
+    .detail-section-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8b949e;margin-bottom:12px}
+    .detail-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid #21262d;color:#8b949e}
+    .detail-row:last-child{border-bottom:none}
+    .detail-row span:last-child{color:#e6edf3;font-weight:600;text-align:right;max-width:60%}
+    .detail-item{padding:8px 0;border-bottom:1px solid #21262d;font-size:13px}
+    .detail-item:last-child{border-bottom:none}
+    .detail-item-name{color:#e6edf3;font-weight:700}
+    .detail-item-sub{color:#8b949e;font-size:11px;margin-top:2px}
+    .detail-total{display:flex;justify-content:space-between;font-size:18px;font-weight:800;padding-top:12px;margin-top:8px;border-top:1px solid #30363d}
+    .detail-total span:last-child{color:var(--dorado)}
+
+    /* Estado selector */
+    .status-select{
+      width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;
+      padding:10px 14px;font-family:var(--sans);font-size:13px;font-weight:700;
+      outline:none;margin-top:12px;cursor:pointer;border-radius:6px;transition:border-color .2s
+    }
+    .status-select:focus{border-color:var(--dorado)}
+    .btn-update{
+      width:100%;background:var(--dorado);color:var(--azul-900);border:none;
+      padding:12px;font-family:var(--sans);font-size:12px;font-weight:800;
+      letter-spacing:.14em;text-transform:uppercase;cursor:pointer;margin-top:8px;
+      transition:background .2s, box-shadow .2s;border-radius:6px;
+      box-shadow:0 2px 8px rgba(200,169,110,.2);
+    }
+    .btn-update:hover{background:#b8944e;box-shadow:0 4px 12px rgba(200,169,110,.3)}
+    .update-msg{font-size:12px;color:#3fb950;margin-top:8px;text-align:center;display:none}
+
+    /* ANALYTICS */
+    .analytics-section{margin-top:40px}
+    .analytics-title{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#8b949e;margin-bottom:20px}
+    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .chart-card{background:#161b22;border:1px solid #30363d;padding:20px 24px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    .chart-card-title{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#8b949e;margin-bottom:16px}
+    .bar-list{display:flex;flex-direction:column;gap:10px}
+    .bar-item{display:flex;align-items:center;gap:10px;font-size:12px}
+    .bar-label{min-width:140px;color:#e6edf3;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .bar-track{flex:1;background:#21262d;height:8px;border-radius:2px;overflow:hidden}
+    .bar-fill{height:100%;background:var(--dorado);border-radius:2px;transition:width .4s ease}
+    .bar-val{min-width:80px;text-align:right;color:#8b949e;font-weight:700}
+
+    @media(max-width:700px){
+      .charts-grid{grid-template-columns:1fr}
+      .detail-panel{width:100vw}
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>Panel Admin</h1>
+    <p>NORD Uniformes — Acceso restringido</p>
+    <input type="password" id="pwd-input" placeholder="Contraseña" onkeydown="if(event.key==='Enter')login()">
+    <button class="btn-login" onclick="login()">Ingresar</button>
+    <p class="login-error" id="login-error">Contraseña incorrecta</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div class="topbar">
+    <div class="topbar-brand">NORD <span>ADMIN</span></div>
+    <div class="topbar-right">
+      <button class="btn-logout" onclick="logout()">Salir</button>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- STATS -->
+    <div class="stats" id="stats-container">
+      <div class="stat"><div class="stat-label">Órdenes totales</div><div class="stat-value" id="s-total">—</div></div>
+      <div class="stat"><div class="stat-label">Pendientes</div><div class="stat-value" id="s-pendiente" style="color:#ffc107">—</div></div>
+      <div class="stat"><div class="stat-label">Confirmadas</div><div class="stat-value" id="s-confirmada" style="color:#17a2b8">—</div></div>
+      <div class="stat highlight"><div class="stat-label">Facturación total</div><div class="stat-value" id="s-revenue">—</div></div>
+      <div class="stat"><div class="stat-label">Ticket promedio</div><div class="stat-value" id="s-ticket">—</div></div>
+    </div>
+
+    <!-- FILTERS + SEARCH -->
+    <div class="filters">
+      <button class="filter-btn active" data-status="todas" onclick="setFilter(this)">Todas</button>
+      <button class="filter-btn" data-status="pendiente" onclick="setFilter(this)">Pendientes</button>
+      <button class="filter-btn" data-status="confirmada" onclick="setFilter(this)">Confirmadas</button>
+      <button class="filter-btn" data-status="enviada" onclick="setFilter(this)">Enviadas</button>
+      <button class="filter-btn" data-status="cancelada" onclick="setFilter(this)">Canceladas</button>
+      <input class="search-admin" placeholder="Buscar por nombre, email, ID..." oninput="handleSearch(this.value)">
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Fecha</th><th>Cliente</th><th>Prendas</th>
+            <th>Total</th><th>Pago</th><th>Envío</th><th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="orders-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="analytics-section">
+      <p class="analytics-title">Analytics</p>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <p class="chart-card-title">Prendas más vendidas</p>
+          <div class="bar-list" id="chart-prendas"></div>
+        </div>
+        <div class="chart-card">
+          <p class="chart-card-title">Métodos de pago</p>
+          <div class="bar-list" id="chart-pagos"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-overlay" id="detail-overlay" onclick="handleOverlayClick(event)">
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-header">
+      <span class="detail-title" id="detail-title">Orden</span>
+      <button class="detail-close" onclick="closeDetail()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+  </div>
+</div>
+
+<script>
+let TOKEN = sessionStorage.getItem("nord_admin_token") || "";
+let allOrders = [];
+let currentFilter = "todas";
+let searchQuery = "";
+
+function fmt(n) { return "$" + Math.round(Number(n)||0).toLocaleString("es-AR"); }
+
+// ── AUTH ─────────────────────────────────────────────────────────────────
+async function login() {
+  const pwd = document.getElementById("pwd-input").value;
+  const r = await fetch("/api/admin/auth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: pwd }),
+  });
+  const data = await r.json();
+  if (data.ok) {
+    TOKEN = data.token;
+    sessionStorage.setItem("nord_admin_token", TOKEN);
+    showApp();
+  } else {
+    document.getElementById("login-error").style.display = "block";
+  }
+}
+
+function logout() {
+  sessionStorage.removeItem("nord_admin_token");
+  TOKEN = "";
+  document.getElementById("app-screen").style.display = "none";
+  document.getElementById("login-screen").style.display = "flex";
+}
+
+function showApp() {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("app-screen").style.display = "block";
+  loadOrders();
+}
+
+// ── ORDERS ───────────────────────────────────────────────────────────────
+async function loadOrders() {
+  const r = await fetch("/api/admin/orders", {
+    headers: { Authorization: "Bearer " + TOKEN },
+  });
+  if (r.status === 401) { logout(); return; }
+  allOrders = await r.json();
+  renderStats();
+  renderTable();
+  renderCharts();
+}
+
+function renderStats() {
+  const conf = allOrders.filter(o => o.estado !== "cancelada");
+  document.getElementById("s-total").textContent      = allOrders.length;
+  document.getElementById("s-pendiente").textContent  = allOrders.filter(o => o.estado === "pendiente").length;
+  document.getElementById("s-confirmada").textContent = allOrders.filter(o => o.estado === "confirmada").length;
+  const rev = conf.reduce((s, o) => s + (Number(o.total) || 0), 0);
+  document.getElementById("s-revenue").textContent    = fmt(rev);
+  document.getElementById("s-ticket").textContent     = conf.length ? fmt(rev / conf.length) : "—";
+}
+
+function getFiltered() {
+  return allOrders.filter(o => {
+    const statusOk = currentFilter === "todas" || o.estado === currentFilter;
+    const q = searchQuery.toLowerCase();
+    const searchOk = !q || [o.id, o.nombre, o.apellido, o.email].some(v => v?.toLowerCase().includes(q));
+    return statusOk && searchOk;
+  });
+}
+
+function setFilter(btn) {
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentFilter = btn.dataset.status;
+  renderTable();
+}
+
+function handleSearch(val) {
+  searchQuery = val.trim();
+  renderTable();
+}
+
+function renderTable() {
+  const filtered = getFiltered();
+  const tbody = document.getElementById("orders-tbody");
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#8b949e;padding:32px">Sin órdenes</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(o => {
+    const items = Array.isArray(o.items) ? o.items : [];
+    const prendas = items.map(i => `${i.nombre} (${i.talle})`).join(", ") || "—";
+    return `<tr onclick="openDetail('${o.id}')">
+      <td style="font-family:monospace;font-size:11px;color:#8b949e">${o.id}</td>
+      <td style="color:#8b949e;white-space:nowrap">${o.fecha?.split(",")[0] || "—"}</td>
+      <td><div style="font-weight:700">${o.nombre} ${o.apellido}</div><div style="font-size:11px;color:#8b949e">${o.email}</div></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8b949e;font-size:12px">${prendas}</td>
+      <td style="font-weight:800;white-space:nowrap">${fmt(o.total)}</td>
+      <td><span class="badge badge-pago-${o.pago}">${o.pago === "transferencia" ? "Transf." : "Nave"}</span></td>
+      <td style="font-size:12px;color:#8b949e">${o.envio === "retiro" ? "Retiro" : "Correo"}</td>
+      <td><span class="badge badge-${o.estado}">${o.estado}</span></td>
+    </tr>`;
+  }).join("");
+}
+
+// ── DETAIL ────────────────────────────────────────────────────────────────
+function openDetail(orderId) {
+  const o = allOrders.find(x => x.id === orderId);
+  if (!o) return;
+  document.getElementById("detail-title").textContent = "Pedido #" + o.id;
+  const items = Array.isArray(o.items) ? o.items : [];
+  document.getElementById("detail-body").innerHTML = `
+    <div class="detail-section">
+      <p class="detail-section-title">Cliente</p>
+      <div class="detail-row"><span>Nombre</span><span>${o.nombre} ${o.apellido}</span></div>
+      <div class="detail-row"><span>Email</span><span>${o.email}</span></div>
+      <div class="detail-row"><span>Teléfono</span><span>${o.telefono}</span></div>
+    </div>
+    <div class="detail-section">
+      <p class="detail-section-title">Prendas</p>
+      ${items.map(i => `<div class="detail-item">
+        <div class="detail-item-name">${i.nombre}</div>
+        <div class="detail-item-sub">Talle ${i.talle} × ${i.qty} — ${fmt(i.precio * i.qty)}</div>
+      </div>`).join("")}
+      <div class="detail-total"><span>Total</span><span>${fmt(o.total)}</span></div>
+    </div>
+    <div class="detail-section">
+      <p class="detail-section-title">Envío</p>
+      <div class="detail-row"><span>Método</span><span>${o.envio === "retiro" ? "Retiro Habitat" : "Correo Argentino"}</span></div>
+      ${o.direccion ? `<div class="detail-row"><span>Dirección</span><span>${o.direccion}</span></div>` : ""}
+      ${o.cp       ? `<div class="detail-row"><span>CP</span><span>${o.cp}</span></div>` : ""}
+      ${o.localidad? `<div class="detail-row"><span>Localidad</span><span>${o.localidad}</span></div>` : ""}
+    </div>
+    <div class="detail-section">
+      <p class="detail-section-title">Actualizar estado</p>
+      <select class="status-select" id="status-select">
+        ${["pendiente","confirmada","enviada","cancelada"].map(s =>
+          `<option value="${s}" ${s === o.estado ? "selected" : ""}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
+        ).join("")}
+      </select>
+      <button class="btn-update" onclick="updateStatus('${o.id}')">Actualizar estado</button>
+      <p class="update-msg" id="update-msg">✓ Estado actualizado</p>
+    </div>`;
+  document.getElementById("detail-overlay").classList.add("open");
+}
+
+async function updateStatus(orderId) {
+  const estado = document.getElementById("status-select").value;
+  const r = await fetch(`/api/admin/orders?id=${orderId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + TOKEN },
+    body: JSON.stringify({ estado }),
+  });
+  if (r.ok) {
+    const o = allOrders.find(x => x.id === orderId);
+    if (o) o.estado = estado;
+    document.getElementById("update-msg").style.display = "block";
+    setTimeout(() => document.getElementById("update-msg").style.display = "none", 2000);
+    renderTable();
+    renderStats();
+  }
+}
+
+function closeDetail() { document.getElementById("detail-overlay").classList.remove("open"); }
+function handleOverlayClick(e) { if (e.target === document.getElementById("detail-overlay")) closeDetail(); }
+
+// ── CHARTS ────────────────────────────────────────────────────────────────
+function renderCharts() {
+  // Prendas más vendidas
+  const prendaCounts = {};
+  allOrders.filter(o => o.estado !== "cancelada").forEach(o => {
+    (o.items || []).forEach(i => {
+      prendaCounts[i.nombre] = (prendaCounts[i.nombre] || 0) + (i.qty || 1);
+    });
+  });
+  const topPrendas = Object.entries(prendaCounts).sort((a,b) => b[1]-a[1]).slice(0, 8);
+  const maxP = topPrendas[0]?.[1] || 1;
+  document.getElementById("chart-prendas").innerHTML = topPrendas.map(([n,v]) => `
+    <div class="bar-item">
+      <div class="bar-label" title="${n}">${n}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(v/maxP*100).toFixed(1)}%"></div></div>
+      <div class="bar-val">${v} und.</div>
+    </div>`).join("") || "<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
+
+  // Métodos de pago
+  const pagoCounts = {};
+  allOrders.filter(o => o.estado !== "cancelada").forEach(o => {
+    pagoCounts[o.pago] = (pagoCounts[o.pago] || 0) + 1;
+  });
+  const pagos = Object.entries(pagoCounts).sort((a,b) => b[1]-a[1]);
+  const maxPago = pagos[0]?.[1] || 1;
+  document.getElementById("chart-pagos").innerHTML = pagos.map(([n,v]) => `
+    <div class="bar-item">
+      <div class="bar-label">${n === "transferencia" ? "Transferencia" : "Nave"}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(v/maxPago*100).toFixed(1)}%"></div></div>
+      <div class="bar-val">${v} órd.</div>
+    </div>`).join("") || "<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+if (TOKEN) showApp();
+document.getElementById("pwd-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") login();
+});
+</script>
+</body>
+</html>

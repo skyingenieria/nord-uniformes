@@ -337,10 +337,13 @@
       display: flex;
       flex-direction: column;
       transition: box-shadow 0.2s, transform 0.2s;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(30,45,74,0.06);
     }
     .product-card:hover {
-      box-shadow: 0 8px 32px rgba(15,23,46,0.1);
-      transform: translateY(-2px);
+      box-shadow: 0 12px 36px rgba(15,23,46,0.15);
+      transform: translateY(-4px);
       cursor: pointer;
     }
     .product-img {
@@ -350,6 +353,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      border-radius: 14px 14px 0 0;
     }
     .product-img img {
       width: 100%;
@@ -401,6 +405,7 @@
       color: var(--azul-600);
       line-height: 1.4;
       background: var(--crema-2);
+      border-radius: 6px;
     }
     .price-cuotas strong {
       color: var(--azul-900);
@@ -419,14 +424,16 @@
       letter-spacing: 0.16em;
       text-transform: uppercase;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: background-color 0.2s, box-shadow 0.2s;
       width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      border-radius: 8px;
+      margin: 20px 24px 24px 24px;
     }
-    .btn-agregar:hover { background-color: var(--dorado); color: var(--azul-900); }
+    .btn-agregar:hover { background-color: var(--dorado); color: var(--azul-900); box-shadow: 0 4px 12px rgba(200,169,110,0.3); }
 
     /* ── PRODUCT MODAL ─────────────────────────────────────────────── */
     .modal-overlay {

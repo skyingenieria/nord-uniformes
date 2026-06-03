@@ -37,7 +37,8 @@
     .left{display:flex;flex-direction:column;gap:28px}
 
     /* SECTION */
-    .section-block{background:var(--blanco);border:1px solid var(--niebla-200);padding:24px 28px}
+    .section-block{background:var(--blanco);border:1px solid var(--niebla-200);padding:24px 28px;border-radius:14px;box-shadow:0 2px 12px rgba(30,45,74,.06);transition:box-shadow .3s}
+    .section-block:hover{box-shadow:0 4px 20px rgba(30,45,74,.1)}
     .section-block-title{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--azul-400);margin-bottom:18px}
 
     /* ITEMS */
@@ -47,7 +48,7 @@
     .item-name{font-size:14px;font-weight:700}
     .item-talle{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--azul-400);margin-top:2px}
     .qty-wrap{display:flex;align-items:center;gap:10px}
-    .qty-btn{width:27px;height:27px;border:1px solid var(--niebla-200);background:none;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--azul);transition:all .15s}
+    .qty-btn{width:27px;height:27px;border:1px solid var(--niebla-200);background:none;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--azul);transition:all .15s;border-radius:6px}
     .qty-btn:hover{background:var(--azul-900);color:var(--crema);border-color:var(--azul-900)}
     .qty-num{font-size:14px;font-weight:700;min-width:18px;text-align:center}
     .item-price{font-size:15px;font-weight:700;white-space:nowrap}
@@ -58,15 +59,15 @@
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
     .form-row.full{grid-template-columns:1fr}
     .form-group label{display:block;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--azul-400);margin-bottom:6px}
-    .form-group input{width:100%;border:1px solid var(--niebla-200);background:var(--crema);padding:11px 13px;font-family:var(--sans);font-size:14px;color:var(--azul-900);outline:none;transition:border-color .15s}
-    .form-group input:focus{border-color:var(--azul)}
+    .form-group input{width:100%;border:1px solid var(--niebla-200);background:var(--crema);padding:11px 13px;font-family:var(--sans);font-size:14px;color:var(--azul-900);outline:none;transition:border-color .15s, box-shadow .15s;border-radius:8px}
+    .form-group input:focus{border-color:var(--azul);box-shadow:0 0 0 3px rgba(200,169,110,.1)}
     .form-group input::placeholder{color:#b0bac9}
 
     /* RADIO OPTIONS */
     .radio-options{display:flex;flex-direction:column;gap:8px}
-    .radio-option{border:1.5px solid var(--niebla-200);padding:15px 16px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;transition:border-color .15s,background .15s}
-    .radio-option:hover{border-color:var(--azul-400)}
-    .radio-option.selected{border-color:var(--azul-900);background:#f0f2f6}
+    .radio-option{border:1.5px solid var(--niebla-200);padding:15px 16px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;transition:border-color .15s,background .15s, box-shadow .15s;border-radius:10px;box-shadow:0 1px 4px rgba(30,45,74,.04)}
+    .radio-option:hover{border-color:var(--azul-400);box-shadow:0 2px 8px rgba(30,45,74,.08)}
+    .radio-option.selected{border-color:var(--azul-900);background:#f0f2f6;box-shadow:0 2px 8px rgba(30,45,74,.12)}
     .radio-option input[type=radio]{margin-top:3px;accent-color:var(--azul-900);width:15px;height:15px;flex-shrink:0}
     .radio-label{flex:1}
     .radio-title{font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
@@ -80,18 +81,18 @@
     .addr-expand.show{display:block}
 
     /* INFO BOX correo */
-    .correo-info{margin-top:12px;padding:12px 14px;background:var(--crema-2);border-left:3px solid var(--dorado);font-size:12px;color:var(--azul-600);line-height:1.6;display:none}
+    .correo-info{margin-top:12px;padding:12px 14px;background:var(--crema-2);border-left:3px solid var(--dorado);font-size:12px;color:var(--azul-600);line-height:1.6;display:none;border-radius:8px}
     .correo-info.show{display:block}
 
     /* SUMMARY */
-    .summary-panel{background:var(--blanco);border:1px solid var(--niebla-200);padding:28px;position:sticky;top:80px}
+    .summary-panel{background:var(--blanco);border:1px solid var(--niebla-200);padding:28px;position:sticky;top:80px;border-radius:14px;box-shadow:0 2px 12px rgba(30,45,74,.06)}
     .summary-title{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--azul-400);margin-bottom:20px}
     .sum-row{display:flex;justify-content:space-between;font-size:14px;padding:7px 0;color:var(--azul-600)}
     .sum-row.total{border-top:1px solid var(--niebla-200);margin-top:8px;padding-top:16px;font-size:20px;font-weight:800;color:var(--azul-900)}
     .sum-note{font-size:11px;color:var(--azul-400);margin-top:10px;line-height:1.5;font-style:italic}
 
     /* PAGO DETAIL */
-    .pago-detail{display:none;margin-top:14px;padding:14px 16px;background:var(--crema-2);border:1px solid var(--niebla-200)}
+    .pago-detail{display:none;margin-top:14px;padding:14px 16px;background:var(--crema-2);border:1px solid var(--niebla-200);border-radius:8px}
     .pago-detail.show{display:block}
     .cbu-block{font-size:13px;line-height:2.2}
     .cbu-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -107,17 +108,17 @@
     .form-group input:required:invalid:not(:placeholder-shown){border-color:#c0392b}
 
     /* BUTTONS */
-    .btn-wp{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;background:#25D366;color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s;text-decoration:none}
-    .btn-wp:hover{background:#1ebe5d}
-    .btn-nave{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;background:#5a2d9c;color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s}
-    .btn-nave:hover{background:#4a2080}
+    .btn-wp{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;background:#25D366;color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s, box-shadow .2s;text-decoration:none;border-radius:10px;box-shadow:0 4px 12px rgba(37,211,102,.2)}
+    .btn-wp:hover{background:#1ebe5d;box-shadow:0 6px 16px rgba(37,211,102,.3)}
+    .btn-nave{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;background:#5a2d9c;color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s, box-shadow .2s;border-radius:10px;box-shadow:0 4px 12px rgba(90,45,156,.2)}
+    .btn-nave:hover{background:#4a2080;box-shadow:0 6px 16px rgba(90,45,156,.3)}
     .note{margin-top:12px;font-size:11px;color:var(--azul-400);text-align:center;line-height:1.5}
 
     /* EMPTY */
     .cart-empty{text-align:center;padding:80px 0;grid-column:1/-1}
     .cart-empty p{font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--azul-400);margin-bottom:24px}
-    .btn-outline{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--azul);color:var(--azul);padding:12px 28px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;transition:all .2s}
-    .btn-outline:hover{background:var(--azul-900);color:var(--crema);border-color:var(--azul-900)}
+    .btn-outline{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--azul);color:var(--azul);padding:12px 28px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;transition:all .2s;border-radius:10px}
+    .btn-outline:hover{background:var(--azul-900);color:var(--crema);border-color:var(--azul-900);box-shadow:0 4px 12px rgba(15,23,46,.2)}
 
     @media(max-width:900px){
       .checkout-grid{grid-template-columns:1fr}
@@ -219,41 +220,93 @@ function validate() {
   return ok;
 }
 
-function buildWpMsg() {
-  const nombre   = document.getElementById("inp-nombre")?.value.trim() || "";
-  const apellido = document.getElementById("inp-apellido")?.value.trim() || "";
-  const tel      = document.getElementById("inp-tel")?.value.trim() || "";
-  const email    = document.getElementById("inp-email")?.value.trim() || "";
-  const cart = getCart();
-  const sub  = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+let currentDiscount = { codigo: "", monto: 0 };
 
-  let lines = [`Hola! Soy ${nombre} ${apellido} y quiero hacer un pedido de uniformes Wellspring:%0A`];
-  cart.forEach(i => lines.push(`- ${i.nombre} talle ${i.talle} x${i.qty} — ${fmt(i.precio * i.qty)}`));
-  lines.push(`%0ASubtotal: ${fmt(sub)}`);
-  lines.push(`Pago: ${selectedPago === "transferencia" ? "Transferencia bancaria" : "Nave Galicia"}`);
+async function validateCode() {
+  const inputEl = document.getElementById("inp-codigo");
+  const code = (inputEl?.value || "").trim().toUpperCase();
+  const msgEl = document.getElementById("codigo-msg");
 
-  if (selectedEnvio === "retiro") {
-    lines.push("Envío: Retiro en Barrio Habitat");
-  } else {
-    const calle = document.getElementById("inp-calle")?.value.trim() || "";
-    const cp    = document.getElementById("inp-cp")?.value.trim() || "";
-    const loc   = document.getElementById("inp-loc")?.value.trim() || "";
-    lines.push("Envío: Correo Argentino");
-    if (calle) lines.push(`Dirección: ${calle}`);
-    if (cp)    lines.push(`CP: ${cp}`);
-    if (loc)   lines.push(`Localidad: ${loc}`);
+  if (!code) {
+    msgEl.innerHTML = "";
+    currentDiscount = { codigo: "", monto: 0 };
+    render();
+    return;
   }
-  lines.push(`%0ATel: ${tel}`);
-  lines.push(`Email: ${email}`);
-  return lines.join("%0A");
+
+  msgEl.innerHTML = "Validando...";
+  try {
+    const r = await fetch(`/api/validate-code?code=${encodeURIComponent(code)}`);
+    const data = await r.json();
+
+    if (data.valid) {
+      const cart = getCart();
+      const sub = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+      const descuento = Math.round(sub * (data.descuento / 100));
+      currentDiscount = { codigo: data.codigo, monto: descuento };
+      msgEl.innerHTML = `<span style="color:#2e7d52">✓ Descuento aplicado: ${data.descuento}%</span>`;
+    } else {
+      currentDiscount = { codigo: "", monto: 0 };
+      msgEl.innerHTML = `<span style="color:#c0392b">✗ ${data.error}</span>`;
+    }
+  } catch (err) {
+    msgEl.innerHTML = `<span style="color:#c0392b">Error validando código</span>`;
+    currentDiscount = { codigo: "", monto: 0 };
+  }
+  render();
 }
 
-function submitOrder() {
+async function submitOrder() {
   if (!validate()) return;
-  if (selectedPago === "transferencia") {
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${buildWpMsg()}`, "_blank");
-  } else {
-    alert("Integración Nave próximamente. Por ahora usá transferencia bancaria.");
+  if (selectedPago === "nave") { alert("Integración Nave próximamente. Por ahora usá transferencia bancaria."); return; }
+
+  const nombre   = document.getElementById("inp-nombre").value.trim();
+  const apellido = document.getElementById("inp-apellido").value.trim();
+  const tel      = document.getElementById("inp-tel").value.trim();
+  const email    = document.getElementById("inp-email").value.trim();
+  const cart     = getCart();
+  const sub      = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+  const total    = sub - currentDiscount.monto;
+
+  const direccion = selectedEnvio === "correo" ? document.getElementById("inp-calle")?.value.trim() || "" : "";
+  const cp        = selectedEnvio === "correo" ? document.getElementById("inp-cp")?.value.trim() || "" : "";
+  const localidad = selectedEnvio === "correo" ? document.getElementById("inp-loc")?.value.trim() || "" : "";
+
+  try {
+    const r = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nombre, apellido, email, telefono: tel,
+        items: cart,
+        subtotal: sub,
+        descuento: currentDiscount.monto,
+        codigo: currentDiscount.codigo,
+        total,
+        pago: selectedPago,
+        envio: selectedEnvio,
+        direccion, cp, localidad,
+      }),
+    });
+
+    const data = await r.json();
+    if (data.orderId) {
+      sessionStorage.setItem("nord_last_order", JSON.stringify({
+        orderId: data.orderId,
+        items: cart,
+        subtotal: sub,
+        descuento: currentDiscount.monto,
+        codigo: currentDiscount.codigo,
+        total,
+        pago: selectedPago,
+        envio: selectedEnvio,
+      }));
+      window.location.href = "/confirmacion";
+    } else {
+      alert("Error guardando la orden: " + (data.error || "desconocido"));
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
   }
 }
 
@@ -363,6 +416,18 @@ function render() {
         </div>
       </div>
 
+      <!-- CÓDIGO DESCUENTO -->
+      <div class="section-block">
+        <p class="section-block-title">Código descuento</p>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>¿Tenés un código promocional?</label>
+            <input id="inp-codigo" type="text" placeholder="Ingresá tu código aquí" onkeyup="validateCode()" style="text-transform:uppercase">
+            <div id="codigo-msg" style="font-size:11px;margin-top:6px"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- PAGO -->
       <div class="section-block">
         <p class="section-block-title">Método de pago</p>
@@ -408,7 +473,8 @@ function render() {
       <p class="summary-title">Resumen del pedido</p>
       ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(i.precio*i.qty)}</span></div>`).join("")}
       <div class="sum-row"><span>Envío</span><span id="sum-envio">Gratis</span></div>
-      <div class="sum-row total"><span>Total</span><span>${fmt(sub)}</span></div>
+      ${currentDiscount.monto > 0 ? `<div class="sum-row"><span>Descuento (${currentDiscount.codigo})</span><span style="color:#2e7d52">-${fmt(currentDiscount.monto)}</span></div>` : ""}
+      <div class="sum-row total"><span>Total</span><span>${fmt(sub - currentDiscount.monto)}</span></div>
       <p class="sum-note">* El costo de Correo Argentino no está incluido.</p>
 
       <button class="btn-wp" id="cta-btn" onclick="submitOrder()">
