@@ -258,7 +258,6 @@ async function validateCode() {
 
 async function submitOrder() {
   if (!validate()) return;
-  if (selectedPago === "nave") { alert("Integración Nave próximamente. Por ahora usá transferencia bancaria."); return; }
 
   const nombre   = document.getElementById("inp-nombre").value.trim();
   const apellido = document.getElementById("inp-apellido").value.trim();
@@ -273,7 +272,8 @@ async function submitOrder() {
   const localidad = selectedEnvio === "correo" ? document.getElementById("inp-loc")?.value.trim() || "" : "";
 
   try {
-    const r = await fetch("/api/orders", {
+    // 1. Guardar orden en Sheets
+    const orderRes = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -289,10 +289,53 @@ async function submitOrder() {
       }),
     });
 
-    const data = await r.json();
-    if (data.orderId) {
+    const orderData = await orderRes.json();
+    if (!orderData.orderId) {
+      alert("Error guardando la orden: " + (orderData.error || "desconocido"));
+      return;
+    }
+
+    const orderId = orderData.orderId;
+
+    // 2. Si es Nave, crear intención de pago
+    if (selectedPago === "nave") {
+      const naveRes = await fetch("/api/nave/create-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId,
+          total: Math.round(total),
+          nombreCliente: nombre + " " + apellido,
+          email,
+          telefono: tel,
+          items: cart,
+        }),
+      });
+
+      const naveData = await naveRes.json();
+      if (!naveData.success) {
+        alert("Error con Nave: " + (naveData.error || "desconocido"));
+        return;
+      }
+
+      // Guardar datos para después
       sessionStorage.setItem("nord_last_order", JSON.stringify({
-        orderId: data.orderId,
+        orderId,
+        items: cart,
+        subtotal: sub,
+        descuento: currentDiscount.monto,
+        codigo: currentDiscount.codigo,
+        total,
+        pago: selectedPago,
+        envio: selectedEnvio,
+      }));
+
+      // Redirigir a Nave
+      window.location.href = naveData.checkout_url;
+    } else {
+      // 3. Si es transferencia, guardar y ir a confirmación
+      sessionStorage.setItem("nord_last_order", JSON.stringify({
+        orderId,
         items: cart,
         subtotal: sub,
         descuento: currentDiscount.monto,
@@ -302,8 +345,6 @@ async function submitOrder() {
         envio: selectedEnvio,
       }));
       window.location.href = "/confirmacion";
-    } else {
-      alert("Error guardando la orden: " + (data.error || "desconocido"));
     }
   } catch (err) {
     alert("Error: " + err.message);
@@ -458,7 +499,7 @@ function render() {
               <div class="radio-title"><span><span class="nave-logo">nave</span> · Tarjetas y billeteras</span><span class="badge badge-orange">+comisión</span></div>
               <p class="radio-desc">Visa, Mastercard, débito, MODO, Naranja X y más.</p>
               <div class="pago-detail" id="pago-nave">
-                <div class="nave-info">Serás redirigido al checkout seguro de <strong>nave</strong> para completar el pago. Próximamente disponible.</div>
+                <div class="nave-info">Serás redirigido al checkout seguro de <strong>nave</strong> para completar el pago. Disponible ahora. ✓</div>
               </div>
             </div>
           </label>
