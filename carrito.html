@@ -430,19 +430,19 @@ function render() {
       <div class="section-block">
         <p class="section-block-title">Método de envío</p>
         <div class="radio-options">
-          <label class="radio-option selected" data-envio="retiro" onclick="selectEnvio('retiro')">
-            <input type="radio" name="envio" checked>
+          <label class="radio-option ${selectedEnvio === 'retiro' ? 'selected' : ''}" data-envio="retiro" onclick="selectEnvio('retiro')">
+            <input type="radio" name="envio" ${selectedEnvio === 'retiro' ? 'checked' : ''}>
             <div class="radio-label">
               <div class="radio-title"><span>Retiro en Barrio Habitat</span><span class="badge badge-green">Gratis</span></div>
               <p class="radio-desc">Pilar, Buenos Aires. Coordinamos día y horario por WhatsApp.</p>
             </div>
           </label>
-          <label class="radio-option" data-envio="correo" onclick="selectEnvio('correo')">
-            <input type="radio" name="envio">
+          <label class="radio-option ${selectedEnvio === 'correo' ? 'selected' : ''}" data-envio="correo" onclick="selectEnvio('correo')">
+            <input type="radio" name="envio" ${selectedEnvio === 'correo' ? 'checked' : ''}>
             <div class="radio-label">
               <div class="radio-title"><span>Correo Argentino — Domicilio</span><span class="badge badge-orange">A calcular</span></div>
               <p class="radio-desc">Envío a todo el país. El costo se informa por WhatsApp según tu CP.</p>
-              <div class="addr-expand" id="addr-expand">
+              <div class="addr-expand ${selectedEnvio === 'correo' ? 'show' : ''}" id="addr-expand">
                 <div class="form-row">
                   <div class="form-group"><label>Calle y número</label><input id="inp-calle" type="text" placeholder="Av. Santa Fe 1234"></div>
                   <div class="form-group"><label>Código postal</label><input id="inp-cp" type="text" placeholder="1425" maxlength="8"></div>
@@ -451,7 +451,7 @@ function render() {
                   <div class="form-group"><label>Ciudad / Localidad</label><input id="inp-loc" type="text" placeholder="Buenos Aires"></div>
                 </div>
               </div>
-              <div class="correo-info" id="correo-info">📦 Te informamos el costo exacto por WhatsApp antes de confirmar. El flete se abona por separado.</div>
+              <div class="correo-info ${selectedEnvio === 'correo' ? 'show' : ''}" id="correo-info">📦 Te informamos el costo exacto por WhatsApp antes de confirmar. El flete se abona por separado.</div>
             </div>
           </label>
         </div>
@@ -474,12 +474,12 @@ function render() {
         <p class="section-block-title">Método de pago</p>
         <div class="radio-options">
 
-          <label class="radio-option selected" data-pago="transferencia" onclick="selectPago('transferencia')">
-            <input type="radio" name="pago" checked>
+          <label class="radio-option ${selectedPago === 'transferencia' ? 'selected' : ''}" data-pago="transferencia" onclick="selectPago('transferencia')">
+            <input type="radio" name="pago" ${selectedPago === 'transferencia' ? 'checked' : ''}>
             <div class="radio-label">
               <div class="radio-title"><span>Transferencia bancaria</span><span class="badge badge-green">Sin comisión</span></div>
               <p class="radio-desc">Transferí al CBU de NORD y avisanos por WhatsApp con el comprobante.</p>
-              <div class="pago-detail show" id="pago-transferencia">
+              <div class="pago-detail ${selectedPago === 'transferencia' ? 'show' : ''}" id="pago-transferencia">
                 <div class="cbu-block">
                   <div>Titular: <strong>${TITULAR}</strong></div>
                   <div class="cbu-row">CBU: <span class="cbu-val">${CBU}</span>
@@ -493,12 +493,12 @@ function render() {
             </div>
           </label>
 
-          <label class="radio-option" data-pago="nave" onclick="selectPago('nave')">
-            <input type="radio" name="pago">
+          <label class="radio-option ${selectedPago === 'nave' ? 'selected' : ''}" data-pago="nave" onclick="selectPago('nave')">
+            <input type="radio" name="pago" ${selectedPago === 'nave' ? 'checked' : ''}>
             <div class="radio-label">
               <div class="radio-title"><span><span class="nave-logo">nave</span> · Tarjetas y billeteras</span><span class="badge badge-orange">+comisión</span></div>
               <p class="radio-desc">Visa, Mastercard, débito, MODO, Naranja X y más.</p>
-              <div class="pago-detail" id="pago-nave">
+              <div class="pago-detail ${selectedPago === 'nave' ? 'show' : ''}" id="pago-nave">
                 <div class="nave-info">Serás redirigido al checkout seguro de <strong>nave</strong> para completar el pago. Disponible ahora. ✓</div>
               </div>
             </div>
