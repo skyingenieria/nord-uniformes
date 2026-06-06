@@ -31,7 +31,7 @@ async function patchOrder(req, res) {
 
   const result = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.SPREADSHEET_ID,
-    range: "Órdenes!A:Q",
+    range: "'7 Ordenes'!A:Q",
   });
   const rows = result.data.values || [];
   const rowIdx = rows.findIndex(r => r[0] === id);
@@ -39,7 +39,7 @@ async function patchOrder(req, res) {
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: process.env.SPREADSHEET_ID,
-    range: `Órdenes!Q${rowIdx + 1}`,
+    range: `'7 Ordenes'!Q${rowIdx + 1}`,
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [[estado]] },
   });
@@ -62,7 +62,7 @@ module.exports = async (req, res) => {
     const sheets = google.sheets({ version: "v4", auth: makeAuth() });
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "Órdenes!A2:Q2000",
+      range: "'7 Ordenes'!A2:Q2000",
     });
 
     const rows  = result.data.values || [];

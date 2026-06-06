@@ -1,4 +1,4 @@
-// POST /api/orders — guarda orden en "7 Órdenes" (detallado) y "3 Pedidos" (consolidado)
+// POST /api/orders — guarda orden en "7 Ordenes" (detallado) y "3 Pedidos" (consolidado)
 // Body: { idPedido, codigoCliente, nombre, apellido, email, telefono, items,
 //         subtotal, descuento, codigo, total, pago, envio, direccion, cp, localidad }
 
@@ -40,7 +40,7 @@ module.exports = async (req, res) => {
     const sheets = google.sheets({ version: "v4", auth: makeAuth() });
     const cantPrendas = items.reduce((sum, i) => sum + (i.qty || 0), 0);
 
-    // 1. Guardar en "7 Órdenes" (DETALLES)
+    // 1. Guardar en "7 Ordenes" (DETALLES)
     const orden7Ordenes = [
       idPedido,           // A: ID Pedido
       codigoCliente,      // B: Código Cliente
@@ -64,7 +64,7 @@ module.exports = async (req, res) => {
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'7 Órdenes'!A:R",
+      range: "'7 Ordenes'!A:R",
       valueInputOption: "USER_ENTERED",
       requestBody: { values: [orden7Ordenes] },
     });

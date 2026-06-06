@@ -48,7 +48,7 @@ module.exports = async (req, res) => {
     const sheets = google.sheets({ version: "v4", auth: makeAuth() });
     const ordersResult = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "Órdenes!A:Q",
+      range: "'7 Ordenes'!A:Q",
     });
 
     const rows = ordersResult.data.values || [];
@@ -58,7 +58,7 @@ module.exports = async (req, res) => {
       // Actualizar estado (columna Q, índice 16)
       await sheets.spreadsheets.values.update({
         spreadsheetId: process.env.SPREADSHEET_ID,
-        range: `Órdenes!Q${rowIdx + 1}`,
+        range: `'7 Ordenes'!Q${rowIdx + 1}`,
         valueInputOption: "USER_ENTERED",
         requestBody: { values: [[sheetStatus]] },
       });
