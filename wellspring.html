@@ -780,10 +780,6 @@
       font-weight: 600;
       color: var(--azul-900);
       transition: all 0.2s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
     }
     .modal-talle-btn:hover {
       border-color: var(--azul-600);
@@ -793,16 +789,6 @@
       background: var(--azul-900);
       color: white;
       border-color: var(--azul-900);
-    }
-
-    .talle-price {
-      font-size: 10px;
-      color: var(--dorado);
-      font-weight: 700;
-    }
-
-    .modal-talle-btn.selected .talle-price {
-      color: var(--dorado-300);
     }
 
     .btn-agregar-modal {
@@ -823,6 +809,27 @@
     .btn-agregar-modal:disabled {
       opacity: 0.4;
       cursor: not-allowed;
+    }
+
+    .modal-guide-section {
+      border-top: 1px solid var(--niebla-200);
+      padding-top: 16px;
+      margin-top: 12px;
+    }
+
+    .guide-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--azul-900);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0 0 8px 0;
+    }
+
+    .guide-content {
+      font-size: 12px;
+      color: var(--azul-600);
+      line-height: 1.6;
     }
 
     @media (max-width: 768px) {
@@ -1009,6 +1016,12 @@
         <div class="modal-talles-grid" id="modal-talles-grid"></div>
       </div>
 
+      <!-- Guía de talles -->
+      <div class="modal-guide-section" id="modal-guide-section" style="display: none;">
+        <p class="guide-title">Guía de talles</p>
+        <div class="guide-content" id="guide-content"></div>
+      </div>
+
       <!-- Botón agregar -->
       <button
         class="btn-agregar-modal"
@@ -1109,20 +1122,15 @@
             <div>
               <h2 class="product-name" onclick="openProductModal('${p.id}')" style="cursor: pointer;">${p.nombre}</h2>
               ${p.precio > 0 ? `
-              <div class="price-transferencia"><strong>$${fmt(Math.round(p.precio * 0.9))}</strong></div>
+              <div class="price-transferencia"><strong>${fmt(Math.round(p.precio * 0.9))}</strong></div>
               <div class="price-cuotas">3 cuotas sin interés de <strong>${fmt(Math.round(p.precio / 3))}</strong></div>
               ` : `<div class="price-lista" style="color:var(--azul-400);font-size:14px">Sin precio cargado</div>`}
-            </div>
-            <div>
-              <p class="talle-label">Elegí tu talle</p>
-              <div class="talles-grid">${tallesHtml}</div>
             </div>
             <button
               class="btn-agregar"
               id="btn-add-${p.id}"
-              disabled
-              onclick="handleAddToCart('${p.id}', '${p.nombre}', ${p.precio})"
-            >Seleccioná un talle</button>
+              onclick="openProductModal('${p.id}')"
+            >Selecciona un talle</button>
           </div>
         </div>`;
     }).join("");
@@ -1323,7 +1331,6 @@
         return (order.indexOf(a.talle) - order.indexOf(b.talle)) || a.talle.localeCompare(b.talle);
       })
       .map(t => {
-        const tallePrice = Math.round(t.precio * 0.9);
         return `<button
           class="modal-talle-btn${t.stock === 0 ? " sin-stock" : ""}"
           data-talle="${t.talle}"
@@ -1332,10 +1339,40 @@
           ${t.stock === 0 ? "disabled" : ""}
           title="${t.stock === 0 ? "Sin stock" : `${t.stock} disponibles`}"
         >
-          <span>${t.talle}</span>
-          <span class="talle-price">$${fmt(tallePrice)}</span>
+          ${t.talle}
         </button>`;
       }).join("");
+
+    // Generar guía de talles
+    const guideMap = {
+      "4": "Talle 4: Para niños de 4 años",
+      "6": "Talle 6: Para niños de 6 años",
+      "8": "Talle 8: Para niños de 8 años",
+      "10": "Talle 10: Para niños de 10 años",
+      "12": "Talle 12: Para niños de 12 años",
+      "14": "Talle 14: Para niños de 14 años",
+      "16": "Talle 16: Para adolescentes de 16 años",
+      "18": "Talle 18: Para adolescentes de 18 años",
+      "XS": "Talle XS: Extra pequeño",
+      "S": "Talle S: Pequeño",
+      "M": "Talle M: Mediano",
+      "L": "Talle L: Grande",
+      "XL": "Talle XL: Extra grande",
+      "XXL": "Talle XXL: Extra extra grande"
+    };
+
+    const guideTalles = (product.talles || [])
+      .map(t => guideMap[t.talle] || `Talle ${t.talle}`)
+      .join("<br>");
+
+    const guideSection = document.getElementById("modal-guide-section");
+    const guideContent = document.getElementById("guide-content");
+    if (guideTalles) {
+      guideContent.innerHTML = guideTalles;
+      guideSection.style.display = "block";
+    } else {
+      guideSection.style.display = "none";
+    }
 
     // Mostrar modal
     overlay.classList.add("active");
