@@ -314,7 +314,16 @@ async function submitOrder() {
 
       const naveData = await naveRes.json();
       if (!naveData.success) {
-        alert("Error con Nave: " + (naveData.error || "desconocido"));
+        let errMsg = naveData.error || "desconocido";
+        if (naveData.details) {
+          if (typeof naveData.details === "string") {
+            errMsg += "\n" + naveData.details;
+          } else {
+            errMsg += "\n" + JSON.stringify(naveData.details, null, 2);
+          }
+        }
+        console.error("Nave error:", naveData);
+        alert("Error con Nave:\n" + errMsg);
         return;
       }
 
