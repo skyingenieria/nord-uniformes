@@ -352,9 +352,37 @@
       color: var(--azul-900);
     }
     .talle-btn.sin-stock {
-      opacity: 0.3;
+      opacity: 0.45;
       cursor: not-allowed;
-      text-decoration: line-through;
+      color: var(--niebla);
+      border-color: var(--niebla-200);
+      background: var(--crema-2);
+      position: relative;
+      overflow: hidden;
+    }
+    /* Línea diagonal sobre talle sin stock */
+    .talle-btn.sin-stock::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top right,
+        transparent calc(50% - 0.5px),
+        var(--niebla) calc(50% - 0.5px),
+        var(--niebla) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      );
+    }
+
+    /* Tarjeta completamente sin stock */
+    .product-card.agotado {
+      opacity: 0.5;
+      filter: grayscale(40%);
+    }
+    .product-card.agotado .btn-agregar {
+      background: var(--niebla);
+      cursor: default;
+      pointer-events: none;
     }
 
     /* ADD TO CART BUTTON */
@@ -826,6 +854,26 @@
       color: white;
       border-color: var(--azul-900);
     }
+    .modal-talle-btn.sin-stock {
+      opacity: 0.45;
+      cursor: not-allowed;
+      color: var(--niebla);
+      border-color: var(--niebla-200);
+      position: relative;
+      overflow: hidden;
+    }
+    .modal-talle-btn.sin-stock::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top right,
+        transparent calc(50% - 0.5px),
+        var(--niebla) calc(50% - 0.5px),
+        var(--niebla) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      );
+    }
 
     .btn-agregar-modal {
       padding: 14px 20px;
@@ -1286,38 +1334,33 @@
             <span>Foto próximamente</span>
            </div>`;
 
-      const tallesHtml = p.talles
-        .sort((a, b) => {
-          const order = ["4","6","8","10","12","14","16","18","XS","S","M","L","XL","XXL"];
-          return (order.indexOf(a.talle) - order.indexOf(b.talle)) || a.talle.localeCompare(b.talle);
-        })
-        .map(t => `<button
-            class="talle-btn${t.stock === 0 ? " sin-stock" : ""}"
-            data-product-id="${p.id}"
-            data-talle="${t.talle}"
-            onclick="selectTalle(this, '${p.id}')"
-            ${t.stock === 0 ? "disabled" : ""}
-            title="${t.stock === 0 ? "Sin stock" : `${t.stock} disponibles`}"
-          >${t.talle}</button>`).join("");
+      // ¿Tiene al menos un talle con stock?
+      const hayStock = p.talles.some(t => t.stock > 0);
+
+      // Precio: usar p.precio (mínimo entre talles) aunque todos estén sin stock
+      const precioMostrar = p.precio > 0
+        ? p.precio
+        : (p.talles.find(t => t.precio > 0)?.precio || 0);
 
       return `
-        <div class="product-card" data-product-id="${p.id}">
-          <div class="product-img" onclick="openProductModal('${p.id}')" style="cursor: pointer;">
+        <div class="product-card${hayStock ? "" : " agotado"}" data-product-id="${p.id}">
+          <div class="product-img" onclick="${hayStock ? `openProductModal('${p.id}')` : ""}" style="cursor:${hayStock ? "pointer" : "default"};">
             ${imgHtml}
+            ${!hayStock ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(15,23,46,0.6);color:white;font-size:11px;font-weight:700;letter-spacing:.1em;text-align:center;padding:8px;text-transform:uppercase">Sin stock</div>` : ""}
           </div>
           <div class="product-body">
             <div>
-              <h2 class="product-name" onclick="openProductModal('${p.id}')" style="cursor: pointer;">${p.nombre}</h2>
-              ${p.precio > 0 ? `
-              <div class="price-transferencia"><strong>${fmt(Math.round(p.precio * 0.9))}</strong></div>
-              <div class="price-cuotas">3 cuotas sin interés de <strong>${fmt(Math.round(p.precio / 3))}</strong></div>
-              ` : `<div class="price-lista" style="color:var(--azul-400);font-size:14px">Sin precio cargado</div>`}
+              <h2 class="product-name" onclick="${hayStock ? `openProductModal('${p.id}')` : ""}" style="cursor:${hayStock ? "pointer" : "default"};">${p.nombre}</h2>
+              ${precioMostrar > 0
+                ? `<div class="price-transferencia"><strong>${fmt(Math.round(precioMostrar * 0.9))}</strong></div>`
+                : `<div class="price-transferencia" style="color:var(--azul-400);font-size:13px">Sin precio</div>`
+              }
             </div>
             <button
               class="btn-agregar"
               id="btn-add-${p.id}"
-              onclick="openProductModal('${p.id}')"
-            >Selecciona un talle</button>
+              ${hayStock ? `onclick="openProductModal('${p.id}')"` : "disabled"}
+            >${hayStock ? "Selecciona un talle" : "Sin stock"}</button>
           </div>
         </div>`;
     }).join("");
