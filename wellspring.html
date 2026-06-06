@@ -9,10 +9,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --azul:#1E2D4A;--azul-900:#0F172E;--azul-600:#34466A;--azul-400:#6B7B9C;
+      --azul:#1E2D4A;--azul-900:#0F172E;--azul-400:#6B7B9C;
       --dorado:#C8A96E;--dorado-700:#A6884B;--dorado-300:#E0CBA0;
-      --niebla:#8A9AB5;--niebla-200:#D3DAE5;
-      --crema:#F4F1EA;--crema-2:#ECE7DC;--blanco:#FFFFFF;
+      --niebla-200:#D3DAE5;--crema:#F4F1EA;--crema-2:#ECE7DC;--blanco:#FFFFFF;
       --sans:"Mulish",system-ui,sans-serif;--serif:"Cormorant Garamond",serif;
       --pad-x:clamp(20px,5vw,80px);--max:1280px;
     }
@@ -25,12 +24,11 @@
     .header-container{max-width:var(--max);margin:0 auto;padding:0 var(--pad-x);height:64px;display:flex;justify-content:space-between;align-items:center}
     .brand-logo .nord{font-weight:900;font-size:22px;letter-spacing:.06em;display:block;color:var(--azul-900)}
     .brand-logo .uniformes{font-weight:300;font-size:6px;letter-spacing:.55em;display:block;margin-top:2px;padding-left:.55em;color:var(--azul-900)}
-    .cart-btn{background:none;border:1px solid rgba(30,45,74,.2);padding:10px 14px;cursor:pointer;border-radius:8px;font-weight:700;font-size:11px;color:var(--azul);position:relative}
+    .cart-btn{background:none;border:1px solid rgba(30,45,74,.2);padding:10px 14px;cursor:pointer;border-radius:8px;font-weight:700;font-size:11px;color:var(--azul-900);position:relative}
     .cart-badge{position:absolute;top:-8px;right:-8px;background:var(--dorado);color:var(--azul-900);font-weight:800;font-size:10px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 
-    .hero{max-width:var(--max);margin:0 auto;padding:60px var(--pad-x);display:grid;grid-template-columns:2fr 1fr;gap:40px;align-items:center}
-    .hero-content h1{font-size:clamp(32px,6vw,56px);font-weight:900;letter-spacing:-.02em;margin-bottom:24px;line-height:1.1}
-    .hero-content p{font-size:18px;color:var(--azul-600);margin-bottom:32px;line-height:1.6}
+    .hero{max-width:var(--max);margin:0 auto;padding:80px var(--pad-x);display:grid;grid-template-columns:2fr 1fr;gap:40px;align-items:center;min-height:60vh}
+    .hero h1{font-size:clamp(32px,6vw,56px);font-weight:900;letter-spacing:-.02em;line-height:1.1}
     .hero-sidebar{background:var(--azul-900);color:var(--crema);padding:40px 32px;border-radius:14px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:20px}
     .hero-sidebar h3{font-size:24px;font-weight:900;font-family:var(--serif);font-style:italic}
     .hero-sidebar p{font-size:14px;color:var(--crema);margin-bottom:20px}
@@ -38,32 +36,42 @@
     .hero-sidebar a:hover{background:var(--dorado-700)}
 
     .catalog{max-width:var(--max);margin:0 auto;padding:0 var(--pad-x) 80px}
-    .catalog-title{font-size:28px;font-weight:900;margin-bottom:40px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:28px}
+    .catalog-title{font-size:28px;font-weight:900;margin-bottom:40px;text-align:center}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:28px}
 
-    .card{background:var(--blanco);border:1px solid var(--niebla-200);border-radius:14px;overflow:hidden;transition:box-shadow .2s,transform .2s}
-    .card:hover{box-shadow:0 4px 20px rgba(30,45,74,.1);transform:translateY(-2px)}
-    .card-img{width:100%;height:200px;object-fit:cover;background:var(--crema-2)}
-    .card-body{padding:20px}
-    .card-name{font-size:14px;font-weight:700;margin-bottom:8px}
-    .card-price{font-size:16px;font-weight:800;color:var(--dorado);margin-bottom:16px}
-    .card-talle{font-size:11px;color:var(--azul-400);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;font-weight:600}
-    .talle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
-    .talle-btn{background:var(--crema-2);border:1px solid var(--niebla-200);padding:8px;font-size:10px;cursor:pointer;border-radius:6px;font-weight:600;transition:all .15s}
+    .card{background:var(--blanco);border:1px solid var(--niebla-200);border-radius:14px;overflow:hidden;cursor:pointer;transition:box-shadow .2s,transform .2s}
+    .card:hover{box-shadow:0 8px 24px rgba(30,45,74,.12);transform:translateY(-4px)}
+    .card-img{width:100%;height:240px;object-fit:cover;background:var(--crema-2)}
+    .card-body{padding:24px}
+    .card-name{font-size:16px;font-weight:700;margin-bottom:8px}
+    .card-price{font-size:18px;font-weight:800;color:var(--dorado);margin-bottom:4px}
+    .card-desc{font-size:12px;color:var(--azul-400);line-height:1.4}
+
+    .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+    .modal.active{display:flex}
+    .modal-content{background:var(--blanco);border-radius:14px;padding:40px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;position:relative}
+    .modal-close{position:absolute;top:20px;right:20px;background:none;border:none;font-size:24px;cursor:pointer;color:var(--azul-400)}
+    .modal-img{width:100%;height:280px;object-fit:cover;border-radius:10px;margin-bottom:24px}
+    .modal-name{font-size:22px;font-weight:900;margin-bottom:8px}
+    .modal-price{font-size:20px;font-weight:800;color:var(--dorado);margin-bottom:24px}
+    .talle-label{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--azul-400);margin-bottom:12px}
+    .talle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+    .talle-btn{background:var(--crema-2);border:1px solid var(--niebla-200);padding:12px;font-size:11px;cursor:pointer;border-radius:8px;font-weight:700;transition:all .15s}
     .talle-btn:hover{background:var(--azul-900);color:var(--crema);border-color:var(--azul-900)}
     .talle-btn.selected{background:var(--azul-900);color:var(--crema);border-color:var(--azul-900)}
-    .qty-wrap{display:flex;gap:6px;align-items:center;margin-bottom:12px}
-    .qty-btn{width:24px;height:24px;border:1px solid var(--niebla-200);background:none;cursor:pointer;border-radius:4px;font-weight:600;transition:all .15s}
+    .qty-label{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--azul-400);margin-bottom:12px}
+    .qty-wrap{display:flex;gap:8px;align-items:center;margin-bottom:24px}
+    .qty-btn{width:32px;height:32px;border:1px solid var(--niebla-200);background:none;cursor:pointer;border-radius:6px;font-weight:700;font-size:14px;transition:all .15s}
     .qty-btn:hover{background:var(--azul-900);color:var(--crema);border-color:var(--azul-900)}
-    .qty-num{flex:1;text-align:center;font-weight:600}
-    .btn-add{width:100%;background:var(--dorado);color:var(--azul-900);border:none;padding:11px;font-weight:800;cursor:pointer;border-radius:8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;transition:background .2s}
+    .qty-num{flex:1;text-align:center;font-weight:700;font-size:16px}
+    .btn-add{width:100%;background:var(--dorado);color:var(--azul-900);border:none;padding:14px;font-weight:800;cursor:pointer;border-radius:10px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:background .2s}
     .btn-add:hover{background:var(--dorado-700)}
-    .btn-add:disabled{background:var(--niebla-200);color:var(--azul-400);cursor:not-allowed}
 
     @media(max-width:900px){
-      .hero{grid-template-columns:1fr}
+      .hero{grid-template-columns:1fr;min-height:auto}
       .hero-sidebar{grid-row:1}
-      .grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+      .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px}
+      .card-img{height:160px}
     }
   </style>
 </head>
@@ -83,9 +91,8 @@
 </header>
 
 <div class="hero">
-  <div class="hero-content">
+  <div>
     <h1>Uniformes escolares de calidad</h1>
-    <p>Diseñados para comodidad y durabilidad. Elegí talle, cantidad y confirmá tu compra.</p>
   </div>
   <div class="hero-sidebar">
     <h3>Wellspring</h3>
@@ -97,6 +104,27 @@
 <div class="catalog">
   <h2 class="catalog-title" id="productos">Nuestros productos</h2>
   <div class="grid" id="grid"></div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <img id="modal-img" class="modal-img">
+    <h3 id="modal-name" class="modal-name"></h3>
+    <div id="modal-price" class="modal-price"></div>
+
+    <div class="talle-label">Selecciona talle:</div>
+    <div class="talle-grid" id="modal-talles"></div>
+
+    <div class="qty-label">Cantidad:</div>
+    <div class="qty-wrap">
+      <button class="qty-btn" onclick="changeModalQty(-1)">−</button>
+      <span class="qty-num" id="modal-qty">1</span>
+      <button class="qty-btn" onclick="changeModalQty(1)">+</button>
+    </div>
+
+    <button class="btn-add" onclick="addFromModal()">Agregar al carrito</button>
+  </div>
 </div>
 
 <script>
@@ -111,90 +139,95 @@ function updateCartBadge() {
   else badge.style.display = "none";
 }
 
+let modalProduct = null;
+let modalTalle = null;
+let modalQty = 1;
+
 async function render() {
   try {
     const res = await fetch("/api/products");
     const products = await res.json();
 
-    const html = products.map(p => {
-      const key = `${p.id}-TALLE`;
-      return `
-        <div class="card">
-          <img src="${p.imagen}" class="card-img" onerror="this.src='https://via.placeholder.com/240x200?text=${encodeURIComponent(p.nombre)}'">
-          <div class="card-body">
-            <div class="card-name">${p.nombre}</div>
-            <div class="card-price">${fmt(p.precio)}</div>
-            <div class="card-talle">Selecciona talle:</div>
-            <div class="talle-grid" id="talles-${p.id}"></div>
-            <div class="qty-wrap">
-              <button class="qty-btn" onclick="changeQty('${p.id}', -1)">−</button>
-              <span class="qty-num" id="qty-${p.id}">1</span>
-              <button class="qty-btn" onclick="changeQty('${p.id}', 1)">+</button>
-            </div>
-            <button class="btn-add" id="btn-${p.id}" onclick="addToCart('${p.id}')">Agregar</button>
-          </div>
-        </div>`;
-    }).join("");
+    const html = products.map(p => `
+      <div class="card" onclick="openModal('${p.id}')">
+        <img src="${p.imagen}" class="card-img" onerror="this.src='https://via.placeholder.com/280x240?text=${encodeURIComponent(p.nombre)}'">
+        <div class="card-body">
+          <div class="card-name">${p.nombre}</div>
+          <div class="card-price">${fmt(p.precio)}</div>
+          <div class="card-desc">Haz clic para ver talles disponibles</div>
+        </div>
+      </div>`).join("");
     document.getElementById("grid").innerHTML = html;
-
-    // Talles y eventos
-    products.forEach(p => {
-      const tallDiv = document.getElementById(`talles-${p.id}`);
-      p.talles.forEach(t => {
-        const btn = document.createElement("button");
-        btn.className = "talle-btn selected";
-        btn.textContent = t;
-        btn.type = "button";
-        btn.onclick = (e) => {
-          e.preventDefault();
-          document.querySelectorAll(`#talles-${p.id} .talle-btn`).forEach(b => b.classList.remove("selected"));
-          btn.classList.add("selected");
-          window.selectedTalles = window.selectedTalles || {};
-          window.selectedTalles[p.id] = t;
-        };
-        tallDiv.appendChild(btn);
-        if (!window.selectedTalles) window.selectedTalles = {};
-        if (!window.selectedTalles[p.id]) window.selectedTalles[p.id] = t;
-      });
-    });
-
     updateCartBadge();
   } catch (err) { document.getElementById("grid").innerHTML = "<p>Error cargando productos</p>"; }
 }
 
-window.qty = {};
-function changeQty(pid, d) {
-  window.qty[pid] = (window.qty[pid] || 1) + d;
-  if (window.qty[pid] < 1) window.qty[pid] = 1;
-  document.getElementById(`qty-${pid}`).textContent = window.qty[pid];
+async function openModal(productId) {
+  try {
+    const res = await fetch("/api/products");
+    const products = await res.json();
+    const p = products.find(x => x.id === productId);
+    if (!p) return;
+
+    modalProduct = p;
+    modalTalle = p.talles[0];
+    modalQty = 1;
+
+    document.getElementById("modal-img").src = p.imagen;
+    document.getElementById("modal-name").textContent = p.nombre;
+    document.getElementById("modal-price").textContent = fmt(p.precio);
+    document.getElementById("modal-qty").textContent = "1";
+
+    const tallesDiv = document.getElementById("modal-talles");
+    tallesDiv.innerHTML = p.talles.map(t => `
+      <button class="talle-btn ${t === p.talles[0] ? 'selected' : ''}" onclick="selectTalle('${t}')">
+        ${t}
+      </button>`).join("");
+
+    document.getElementById("modal").classList.add("active");
+  } catch (err) { alert("Error cargando producto"); }
 }
 
-function addToCart(pid) {
-  const products = document.querySelectorAll(".card");
-  let p = null;
-  products.forEach(card => {
-    if (card.querySelector(`#btn-${pid}`)) {
-      p = {
-        id: pid,
-        nombre: card.querySelector(".card-name").textContent,
-        precio: parseInt(card.querySelector(".card-price").textContent.replace(/\D/g, "")),
-        imagen: card.querySelector(".card-img").src,
-      };
-    }
-  });
+function closeModal() {
+  document.getElementById("modal").classList.remove("active");
+  modalProduct = null;
+}
 
-  if (!p) return;
-  p.talle = window.selectedTalles?.[pid] || "S";
-  p.qty = window.qty[pid] || 1;
-  p.key = `${p.id}-${p.talle}`;
+function selectTalle(talle) {
+  modalTalle = talle;
+  document.querySelectorAll(".talle-btn").forEach(btn => {
+    btn.classList.toggle("selected", btn.textContent.trim() === talle);
+  });
+}
+
+function changeModalQty(d) {
+  modalQty += d;
+  if (modalQty < 1) modalQty = 1;
+  document.getElementById("modal-qty").textContent = modalQty;
+}
+
+function addFromModal() {
+  if (!modalProduct) return;
+
+  const item = {
+    id: modalProduct.id,
+    nombre: modalProduct.nombre,
+    precio: modalProduct.precio,
+    imagen: modalProduct.imagen,
+    talle: modalTalle,
+    qty: modalQty,
+    key: `${modalProduct.id}-${modalTalle}`,
+  };
 
   const cart = getCart();
-  const existing = cart.find(i => i.key === p.key);
-  if (existing) existing.qty += p.qty;
-  else cart.push(p);
+  const existing = cart.find(i => i.key === item.key);
+  if (existing) existing.qty += item.qty;
+  else cart.push(item);
   saveCart(cart);
   updateCartBadge();
-  alert(`✓ Agregado: ${p.nombre} (Talle ${p.talle}) x${p.qty}`);
+
+  alert(`✓ Agregado: ${item.nombre} (${item.talle}) x${item.qty}`);
+  closeModal();
 }
 
 render();
