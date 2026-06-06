@@ -127,20 +127,25 @@
       border-bottom: 1px solid var(--niebla-200);
       padding-bottom: 32px;
     }
+    .catalog-header {
+      background: var(--azul-900);
+      margin: 0;
+      padding: clamp(28px, 5vw, 48px) var(--pad-x);
+    }
     .catalog-school-title {
       font-size: clamp(48px, 10vw, 100px);
       font-weight: 900;
       letter-spacing: -0.03em;
       line-height: 0.9;
-      color: var(--azul-900);
-      margin-bottom: 12px;
+      color: white;
+      margin-bottom: 16px;
     }
     .catalog-subtitle {
-      font-family: var(--serif);
-      font-style: italic;
-      font-size: clamp(15px, 1.8vw, 19px);
-      color: var(--azul-400);
-      margin-bottom: 32px;
+      font-size: clamp(13px, 1.6vw, 16px);
+      color: rgba(255,255,255,0.7);
+      max-width: 600px;
+      line-height: 1.5;
+      margin-bottom: 0;
     }
 
     /* CATALOG BODY — sidebar + grid */
@@ -702,7 +707,7 @@
 
     /* Columna izquierda: imagen */
     .modal-image-section {
-      background: var(--azul-900);
+      background: white;
       border-radius: 14px 0 0 14px;
       display: flex;
       flex-direction: column;
@@ -739,8 +744,8 @@
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      background: rgba(255,255,255,0.15);
-      color: white;
+      background: var(--crema);
+      color: var(--azul-900);
       border: none;
       width: 38px;
       height: 38px;
@@ -752,11 +757,12 @@
       justify-content: center;
       transition: background 0.2s;
       z-index: 2;
-      backdrop-filter: blur(4px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      opacity: 0.85;
     }
     .carousel-arrow.left  { left: 12px; }
     .carousel-arrow.right { right: 12px; }
-    .carousel-arrow:hover { background: rgba(255,255,255,0.3); }
+    .carousel-arrow:hover { opacity: 1; background: white; }
 
     .modal-thumbnails {
       display: flex;
@@ -1103,7 +1109,7 @@
 <section class="catalog">
   <div class="catalog-header">
     <h1 class="catalog-school-title">WELLSPRING</h1>
-    <p class="catalog-subtitle">Seleccioná tu talle y pedí por WhatsApp. Coordinamos pago y entrega.</p>
+    <p class="catalog-subtitle">Seleccioná tu talle, pagá tu pedido por transferencia y coordinamos la entrega por WhatsApp.</p>
   </div>
 
   <div class="catalog-body">
@@ -1236,7 +1242,7 @@
       <div class="modal-talles-header">
         <p class="talle-label">Seleccioná tu talle</p>
         <button class="modal-guide-btn" id="modal-guide-btn" onclick="openGuideModal()" style="display: none;">
-          Guía de talles
+          GUÍA DE TALLES
         </button>
       </div>
 
@@ -1249,21 +1255,23 @@
         id="btn-add-modal"
         disabled
         onclick="handleAddFromModal()"
-      >Agregar al carrito</button>
+      >SELECCIONÁ UN TALLE</button>
     </div>
   </div>
 </div>
 
 <!-- MODAL DE GUÍA DE TALLES -->
 <div class="guide-modal-overlay" id="guide-modal-overlay" onclick="closeGuideModal()"></div>
-<div class="guide-modal" id="guide-modal">
-  <button class="guide-modal-close" onclick="closeGuideModal()">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-    </svg>
-  </button>
-  <div class="guide-modal-content">
-    <h3>Guía de talles</h3>
+<div class="guide-modal" id="guide-modal" onclick="closeGuideModal()">
+  <div class="guide-modal-content" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;">Guía de talles</h3>
+      <button class="guide-modal-close" onclick="closeGuideModal()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
     <table class="guide-table" id="guide-table"></table>
   </div>
 </div>
@@ -1476,11 +1484,10 @@
     updateCartCount();
   }
 
-  // Atajo: el botón del carrito en el header abre el drawer si hay items
+  // El botón del carrito siempre abre el drawer (nunca redirige directo)
   document.querySelector(".cart-btn").addEventListener("click", (e) => {
     e.preventDefault();
-    if (getCart().length > 0) openDrawer();
-    else window.location.href = "/carrito";
+    openDrawer();
   });
 
   // ── Fetch productos ──────────────────────────────────────────────────
@@ -1653,7 +1660,7 @@
 
     // Resetear selección de talle
     document.getElementById("btn-add-modal").disabled = true;
-    document.getElementById("btn-add-modal").textContent = "Seleccioná un talle";
+    document.getElementById("btn-add-modal").textContent = "SELECCIONÁ UN TALLE";
   }
 
   function closeProductModal() {
@@ -1676,7 +1683,7 @@
     // Habilitar botón de agregar
     const addBtn = document.getElementById("btn-add-modal");
     addBtn.disabled = false;
-    addBtn.textContent = `Agregar talle ${btn.dataset.talle} al carrito`;
+    addBtn.textContent = `AGREGAR TALLE ${btn.dataset.talle} AL CARRITO`;
   }
 
   function handleAddFromModal() {

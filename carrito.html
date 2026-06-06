@@ -76,9 +76,22 @@
     .req{color:#c0392b;margin-left:2px}
     .field-error{border-color:#c0392b !important}
 
-    .btn-wp{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;background:#25D366;color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s, box-shadow .2s;text-decoration:none;border-radius:10px;box-shadow:0 4px 12px rgba(37,211,102,.2)}
-    .btn-wp:hover{background:#1ebe5d;box-shadow:0 6px 16px rgba(37,211,102,.3)}
+    .btn-pagar{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;background:var(--azul-900);color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s;border-radius:10px}
+    .btn-pagar:hover{background:var(--azul)}
+    .btn-wp{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:10px;background:#25D366;color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s;text-decoration:none;border-radius:10px}
+    .btn-wp:hover{background:#1ebe5d}
     .note{margin-top:12px;font-size:11px;color:var(--azul-400);text-align:center;line-height:1.5}
+    .datos-pago{display:none;background:var(--crema);border:1px solid var(--niebla-200);border-radius:10px;padding:18px;margin-top:16px}
+    .datos-pago.visible{display:block}
+    .dato-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--niebla-200);font-size:13px}
+    .dato-row:last-child{border-bottom:none}
+    .dato-label{color:var(--azul-400);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+    .dato-val{font-weight:700;font-size:14px;color:var(--azul-900)}
+    .btn-copy{background:none;border:1px solid var(--niebla-200);border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--azul-600);transition:all .2s}
+    .btn-copy:hover{background:var(--azul-900);color:white;border-color:var(--azul-900)}
+    .retiro-info{background:var(--crema-2);border-radius:10px;padding:16px;margin-top:12px;font-size:13px;color:var(--azul-600);line-height:1.5}
+    .retiro-info strong{color:var(--azul-900);display:block;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+    .retiro-link{color:var(--azul-900);font-weight:700;text-decoration:underline}
 
     .cart-empty{text-align:center;padding:80px 0;grid-column:1/-1}
     .cart-empty p{font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--azul-400);margin-bottom:24px}
@@ -147,96 +160,6 @@ function validate() {
   return ok;
 }
 
-async function submitOrder() {
-  if (!validate()) return;
-
-  const nombre   = document.getElementById("inp-nombre").value.trim();
-  const apellido = document.getElementById("inp-apellido").value.trim();
-  const tel      = document.getElementById("inp-tel").value.trim();
-  const email    = document.getElementById("inp-email").value.trim();
-  const cart     = getCart();
-  const sub      = cart.reduce((s, i) => s + i.precio * i.qty, 0);
-  const total    = sub;
-
-  try {
-    // 0. Registrar/obtener cliente
-    const clienteRes = await fetch("/api/cliente/check-or-create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre, apellido, email, telefono: tel }),
-    });
-
-    const clienteData = await clienteRes.json();
-    if (!clienteData.codigo) {
-      alert("Error registrando cliente: " + (clienteData.error || "desconocido"));
-      return;
-    }
-
-    const codigoCliente = clienteData.codigo;
-
-    // 1. Obtener siguiente ID Pedido
-    const pedidoIdRes = await fetch("/api/pedidos/next-id");
-    const pedidoIdData = await pedidoIdRes.json();
-    if (!pedidoIdData.nextId) {
-      alert("Error generando ID Pedido: " + (pedidoIdData.error || "desconocido"));
-      return;
-    }
-
-    const idPedido = pedidoIdData.nextId;
-
-    // 2. Guardar orden en Sheets
-    const orderRes = await fetch("/api/orders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        idPedido, codigoCliente,
-        nombre, apellido, email, telefono: tel,
-        items: cart,
-        subtotal: sub,
-        descuento: 0,
-        codigo: "",
-        total,
-        pago: "transferencia",
-        envio: "retiro",
-        direccion: "", cp: "", localidad: "",
-      }),
-    });
-
-    const orderData = await orderRes.json();
-    if (!orderData.success) {
-      alert("Error guardando la orden: " + (orderData.error || "desconocido"));
-      return;
-    }
-
-    // 3. Enviar notificación por email
-    await fetch("/api/mail/send-order-notification", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        idPedido, codigoCliente,
-        nombre, apellido, email,
-        items: cart,
-        subtotal: sub,
-        descuento: 0,
-        total,
-        pago: "transferencia",
-        envio: "retiro",
-      }),
-    }).catch(() => {});
-
-    // 4. Guardar en sessionStorage
-    sessionStorage.setItem("nord_last_order", JSON.stringify({
-      idPedido, codigoCliente, items: cart,
-      subtotal: sub, descuento, total,
-      pago: "transferencia", envio: "retiro",
-    }));
-
-    // 5. Redirigir a pago
-    window.location.href = "/pago-transferencia";
-  } catch (err) {
-    alert("Error: " + err.message);
-  }
-}
 
 function render() {
   const cart = getCart();
@@ -284,7 +207,7 @@ function render() {
             <input id="inp-nombre" type="text" placeholder="Ej: María" required oninput="this.classList.remove('field-error')">
           </div>
           <div class="form-group">
-            <label>Apellido<span class="req">*</span></label>
+            <label>Apellido de familia<span class="req">*</span></label>
             <input id="inp-apellido" type="text" placeholder="Ej: García" required oninput="this.classList.remove('field-error')">
           </div>
         </div>
@@ -307,12 +230,140 @@ function render() {
       ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(i.precio*i.qty)}</span></div>`).join("")}
       <div class="sum-row total"><span>Total</span><span>${fmt(sub)}</span></div>
 
-      <button class="btn-wp" onclick="submitOrder()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        Confirmar pedido
+      <!-- Info retiro -->
+      <div class="retiro-info">
+        <strong>📍 Punto de retiro</strong>
+        Barrio Habitat Residencias · Horario a coordinar por WhatsApp.<br>
+        <a href="https://maps.app.goo.gl/x2ec2a3AeP1LGCzJ7" target="_blank" class="retiro-link">Ver en Google Maps →</a>
+      </div>
+
+      <!-- Botón IR A PAGAR -->
+      <button class="btn-pagar" onclick="irAPagar()">
+        IR A PAGAR
       </button>
+
+      <!-- Datos de transferencia (se muestran al hacer click en IR A PAGAR) -->
+      <div class="datos-pago" id="datos-pago">
+        <p style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--azul-400);margin-bottom:12px;">Datos para la transferencia</p>
+        <div class="dato-row">
+          <span class="dato-label">Alias</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="dato-val">nord.uniformes</span>
+            <button class="btn-copy" onclick="copiar('nord.uniformes', this)">Copiar</button>
+          </div>
+        </div>
+        <div class="dato-row">
+          <span class="dato-label">CBU</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="dato-val" style="font-size:12px">0070999030004239948231</span>
+            <button class="btn-copy" onclick="copiar('0070999030004239948231', this)">Copiar</button>
+          </div>
+        </div>
+        <div class="dato-row">
+          <span class="dato-label">Total a transferir</span>
+          <span class="dato-val" id="total-a-pagar">—</span>
+        </div>
+
+        <!-- Botón enviar comprobante por WhatsApp -->
+        <button class="btn-wp" onclick="enviarComprobante()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          ENVIAR COMPROBANTE POR WHATSAPP
+        </button>
+      </div>
+
       <p class="note">Todos los campos con <span style="color:#c0392b">*</span> son obligatorios.</p>
     </div>`;
+}
+
+// ── IR A PAGAR: guarda la orden y muestra datos de transferencia ──────────
+let _savedOrderId = null;
+
+async function irAPagar() {
+  if (!validate()) return;
+
+  const nombre   = document.getElementById("inp-nombre").value.trim();
+  const apellido = document.getElementById("inp-apellido").value.trim();
+  const tel      = document.getElementById("inp-tel").value.trim();
+  const email    = document.getElementById("inp-email").value.trim();
+  const cart     = getCart();
+  const sub      = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+
+  const btn = document.querySelector(".btn-pagar");
+  btn.textContent = "Guardando pedido…";
+  btn.disabled = true;
+
+  try {
+    const clienteRes = await fetch("/api/cliente/check-or-create", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre, apellido, email, telefono: tel }),
+    });
+    const clienteData = await clienteRes.json();
+    if (!clienteData.codigo) throw new Error(clienteData.error || "Error cliente");
+
+    const pedidoIdRes = await fetch("/api/pedidos/next-id");
+    const pedidoIdData = await pedidoIdRes.json();
+    if (!pedidoIdData.nextId) throw new Error(pedidoIdData.error || "Error ID");
+
+    const idPedido = pedidoIdData.nextId;
+    _savedOrderId = idPedido;
+
+    await fetch("/api/orders", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        idPedido, codigoCliente: clienteData.codigo,
+        nombre, apellido, email, telefono: tel,
+        items: cart, subtotal: sub, descuento: 0, codigo: "", total: sub,
+        pago: "transferencia", envio: "retiro",
+        direccion: "", cp: "", localidad: "",
+      }),
+    });
+
+    fetch("/api/mail/send-order-notification", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idPedido, codigoCliente: clienteData.codigo, nombre, apellido, email, items: cart, subtotal: sub, descuento: 0, total: sub, pago: "transferencia", envio: "retiro" }),
+    }).catch(() => {});
+
+    // Mostrar datos de pago
+    document.getElementById("total-a-pagar").textContent = fmt(sub);
+    document.getElementById("datos-pago").classList.add("visible");
+    btn.textContent = "✓ PEDIDO REGISTRADO";
+    btn.style.background = "#2e7d52";
+    btn.disabled = true;
+    document.getElementById("datos-pago").scrollIntoView({ behavior: "smooth", block: "start" });
+
+    // Guardar en session
+    sessionStorage.setItem("nord_last_order", JSON.stringify({
+      idPedido, nombre, apellido, items: cart, total: sub,
+    }));
+
+  } catch (err) {
+    btn.textContent = "IR A PAGAR";
+    btn.disabled = false;
+    alert("Error: " + err.message);
+  }
+}
+
+function copiar(texto, btn) {
+  navigator.clipboard.writeText(texto).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = "✓ Copiado";
+    btn.style.background = "var(--azul-900)";
+    btn.style.color = "white";
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ""; btn.style.color = ""; }, 1800);
+  });
+}
+
+function enviarComprobante() {
+  const cart = getCart();
+  const sub  = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+  const nombre   = document.getElementById("inp-nombre")?.value.trim() || "";
+  const apellido = document.getElementById("inp-apellido")?.value.trim() || "";
+  const idPedido = _savedOrderId || "—";
+
+  const items = cart.map(i => `• ${i.nombre} talle ${i.talle} x${i.qty}: ${fmt(i.precio * i.qty)}`).join("\n");
+  const msg = `Hola NORD Uniformes! Acá va mi comprobante de pago 🧾\n\n*Pedido #${idPedido}*\n*Familia: ${apellido} - ${nombre}*\n\n${items}\n\n*Total transferido: ${fmt(sub)}*\n\nAlias: nord.uniformes\n\n¡Gracias! 🙌`;
+
+  window.open(`https://wa.me/5491122913796?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
 render();
