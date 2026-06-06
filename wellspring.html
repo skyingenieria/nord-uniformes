@@ -1102,12 +1102,12 @@
 
       return `
         <div class="product-card" data-product-id="${p.id}">
-          <div class="product-img" onclick="openProductModal(${JSON.stringify(p).replace(/"/g, '&quot;')})" style="cursor: pointer;">
+          <div class="product-img" onclick="openProductModal('${p.id}')" style="cursor: pointer;">
             ${imgHtml}
           </div>
           <div class="product-body">
             <div>
-              <h2 class="product-name" onclick="openProductModal(${JSON.stringify(p).replace(/"/g, '&quot;')})" style="cursor: pointer;">${p.nombre}</h2>
+              <h2 class="product-name" onclick="openProductModal('${p.id}')" style="cursor: pointer;">${p.nombre}</h2>
               ${p.precio > 0 ? `
               <div class="price-transferencia"><strong>$${fmt(Math.round(p.precio * 0.9))}</strong></div>
               <div class="price-cuotas">3 cuotas sin interés de <strong>${fmt(Math.round(p.precio / 3))}</strong></div>
@@ -1288,7 +1288,14 @@
   let currentModalImageIndex = 0;
   let modalTalleImages = [];
 
-  function openProductModal(product) {
+  function openProductModal(productId) {
+    // Buscar el producto en allProducts
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) {
+      console.error("Producto no encontrado:", productId);
+      return;
+    }
+
     currentModalProduct = product;
     currentModalImageIndex = 0;
 
