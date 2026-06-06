@@ -237,11 +237,37 @@ async function submitOrder() {
   const localidad = selectedEnvio === "correo" ? document.getElementById("inp-loc")?.value.trim() || "" : "";
 
   try {
-    // 1. Guardar orden en Sheets
+    // 0. Registrar/obtener cliente
+    const clienteRes = await fetch("/api/cliente/check-or-create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre, apellido, email, telefono: tel }),
+    });
+
+    const clienteData = await clienteRes.json();
+    if (!clienteData.codigo) {
+      alert("Error registrando cliente: " + (clienteData.error || "desconocido"));
+      return;
+    }
+
+    const codigoCliente = clienteData.codigo;
+
+    // 1. Obtener siguiente ID Pedido
+    const pedidoIdRes = await fetch("/api/pedidos/next-id");
+    const pedidoIdData = await pedidoIdRes.json();
+    if (!pedidoIdData.nextId) {
+      alert("Error generando ID Pedido: " + (pedidoIdData.error || "desconocido"));
+      return;
+    }
+
+    const idPedido = pedidoIdData.nextId;
+
+    // 2. Guardar orden en Sheets (7 Órdenes y 3 Pedidos)
     const orderRes = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        idPedido, codigoCliente,
         nombre, apellido, email, telefono: tel,
         items: cart,
         subtotal: sub,
@@ -255,20 +281,18 @@ async function submitOrder() {
     });
 
     const orderData = await orderRes.json();
-    if (!orderData.orderId) {
+    if (!orderData.success) {
       alert("Error guardando la orden: " + (orderData.error || "desconocido"));
       return;
     }
 
-    const orderId = orderData.orderId;
-
-    // 2. Si es Nave, crear intención de pago
+    // 3. Si es Nave, crear intención de pago
     if (selectedPago === "nave") {
       const naveRes = await fetch("/api/nave/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          orderId,
+          orderId: idPedido,
           total: Math.round(total),
           nombreCliente: nombre + " " + apellido,
           email,
@@ -294,7 +318,8 @@ async function submitOrder() {
 
       // Guardar datos para después
       sessionStorage.setItem("nord_last_order", JSON.stringify({
-        orderId,
+        idPedido,
+        codigoCliente,
         items: cart,
         subtotal: sub,
         descuento: 0,
@@ -307,9 +332,10 @@ async function submitOrder() {
       // Redirigir a Nave
       window.location.href = naveData.checkout_url;
     } else {
-      // 3. Si es transferencia, guardar y ir a confirmación
+      // 4. Si es transferencia, guardar y ir a confirmación
       sessionStorage.setItem("nord_last_order", JSON.stringify({
-        orderId,
+        idPedido,
+        codigoCliente,
         items: cart,
         subtotal: sub,
         descuento: 0,
