@@ -228,7 +228,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
       margin-bottom: 24px;
+      flex-wrap: wrap;
     }
     .grid-count {
       font-size: 12px;
@@ -237,6 +239,134 @@
       color: var(--azul-400);
       text-transform: uppercase;
     }
+    /* Buscador */
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      border: 1px solid var(--niebla-200);
+      border-radius: 8px;
+      padding: 6px 12px;
+      flex: 1;
+      max-width: 260px;
+    }
+    .search-wrap svg { color: var(--azul-400); flex-shrink: 0; }
+    .search-wrap input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-family: var(--sans);
+      font-size: 13px;
+      color: var(--azul-900);
+      width: 100%;
+    }
+    .search-wrap input::placeholder { color: var(--niebla); }
+
+    /* Género tag en tarjeta */
+    .product-genero {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+    .genero-unisex  { background: rgba(31,45,74,.08); color: var(--azul-600); }
+    .genero-varon   { background: rgba(30,100,200,.08); color: #1a5cc8; }
+    .genero-mujer   { background: rgba(180,50,120,.08); color: #b43278; }
+
+    /* WhatsApp flotante */
+    .wa-float {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .wa-card {
+      background: white;
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      font-size: 13px;
+      color: var(--azul-900);
+      line-height: 1.65;
+      display: none;
+      max-width: 230px;
+    }
+    .wa-card.visible { display: block; }
+    .wa-card strong { display: block; font-size: 11px; font-weight: 800; letter-spacing: .1em; margin-bottom: 6px; text-transform: uppercase; color: var(--azul-400); }
+    .wa-card a { color: var(--azul); text-decoration: none; font-weight: 600; }
+    .wa-btn {
+      width: 56px;
+      height: 56px;
+      background: #25D366;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(37,211,102,.4);
+      cursor: pointer;
+      border: none;
+      transition: transform .2s;
+    }
+    .wa-btn:hover { transform: scale(1.08); }
+
+    /* Políticas */
+    .politicas-section {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 48px var(--pad-x);
+      border-top: 1px solid var(--niebla-200);
+    }
+    .politicas-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--azul-400);
+      margin-bottom: 20px;
+    }
+    .politicas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .politica-item {
+      background: white;
+      border: 1px solid var(--niebla-200);
+      border-radius: 12px;
+      padding: 18px 20px;
+    }
+    .politica-item h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--azul-900);
+      margin-bottom: 6px;
+    }
+    .politica-item p {
+      font-size: 12px;
+      color: var(--azul-600);
+      line-height: 1.55;
+    }
+
+    /* Descripción extra en modal */
+    .modal-desc-extra {
+      font-size: 13px;
+      color: var(--azul-600);
+      line-height: 1.55;
+      padding: 10px 14px;
+      background: rgba(31,45,74,.04);
+      border-radius: 8px;
+      display: none;
+    }
+    .modal-desc-extra.visible { display: block; }
 
     /* PRODUCT GRID */
     .products-grid {
@@ -349,14 +479,15 @@
       position: relative;
     }
     .talle-btn:hover:not(.sin-stock) {
-      border-color: var(--azul);
-      background-color: var(--azul);
-      color: var(--crema);
+      border-color: var(--niebla);
+      background-color: var(--niebla-200);
+      color: var(--azul-900);
     }
     .talle-btn.selected {
       border-color: var(--dorado);
       background-color: var(--dorado);
       color: var(--azul-900);
+      font-weight: 800;
     }
     .talle-btn.sin-stock {
       opacity: 0.45;
@@ -861,9 +992,10 @@
       background: rgba(31, 45, 74, 0.03);
     }
     .modal-talle-btn.selected {
-      background: var(--azul-900);
-      color: white;
-      border-color: var(--azul-900);
+      background: var(--dorado);
+      color: var(--azul-900);
+      border-color: var(--dorado);
+      font-weight: 800;
     }
     .modal-talle-btn.sin-stock {
       opacity: 0.45;
@@ -1109,6 +1241,7 @@
 </header>
 
 <div class="catalog-header">
+  <img src="/images/logo_wellspring_2.png" alt="Wellspring" style="height:clamp(56px,10vw,90px);margin-bottom:14px;filter:brightness(0) invert(1);opacity:.9;">
   <h1 class="catalog-school-title">WELLSPRING</h1>
   <p class="catalog-subtitle">Seleccioná tu talle, pagá tu pedido por transferencia y coordinamos la entrega por WhatsApp.</p>
 </div>
@@ -1145,12 +1278,38 @@
           </li>
         </ul>
       </div>
+
+      <div class="filter-group" style="margin-top:20px;">
+        <p class="filter-group-title">Género</p>
+        <ul class="filter-list" id="filter-genero">
+          <li class="filter-item active" data-genero="todos" onclick="filterGenero(this)">
+            <span class="filter-dot"></span>
+            Todos
+          </li>
+          <li class="filter-item" data-genero="varon" onclick="filterGenero(this)">
+            <span class="filter-dot"></span>
+            Varón
+          </li>
+          <li class="filter-item" data-genero="mujer" onclick="filterGenero(this)">
+            <span class="filter-dot"></span>
+            Mujer
+          </li>
+          <li class="filter-item" data-genero="unisex" onclick="filterGenero(this)">
+            <span class="filter-dot"></span>
+            Unisex
+          </li>
+        </ul>
+      </div>
     </aside>
 
     <!-- GRID DE PRODUCTOS -->
     <div>
       <div class="grid-toolbar">
         <span class="grid-count" id="grid-count"></span>
+        <div class="search-wrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="search-input" type="text" placeholder="Buscar prenda..." oninput="applyFilters()">
+        </div>
       </div>
       <div id="products-container" class="products-grid">
         <!-- Skeletons visibles mientras carga -->
@@ -1195,6 +1354,29 @@
   </div>
 </div>
 
+<!-- Políticas de cambios -->
+<div class="politicas-section">
+  <p class="politicas-title">Políticas de cambios</p>
+  <div class="politicas-grid">
+    <div class="politica-item">
+      <h4>📦 Cambios de talle</h4>
+      <p>Aceptamos cambios de talle dentro de los 30 días de recibido el pedido, con la prenda sin uso y en su estado original.</p>
+    </div>
+    <div class="politica-item">
+      <h4>🔄 Proceso de cambio</h4>
+      <p>Contactanos por WhatsApp con el número de pedido y el talle que necesitás. Coordinamos el cambio en el punto de retiro.</p>
+    </div>
+    <div class="politica-item">
+      <h4>⚠️ Condiciones</h4>
+      <p>Las prendas deben estar sin uso, sin lavado y con todas las etiquetas. No se aceptan cambios por uso o lavado incorrecto.</p>
+    </div>
+    <div class="politica-item">
+      <h4>📍 Punto de retiro</h4>
+      <p>Barrio Habitat Residencias, Zona Norte GBA. Horario a coordinar por WhatsApp. <a href="https://maps.app.goo.gl/x2ec2a3AeP1LGCzJ7" target="_blank" style="color:var(--azul-900);font-weight:700;">Ver en Google Maps →</a></p>
+    </div>
+  </div>
+</div>
+
 <footer>
   <div class="footer-inner">
     <div class="footer-brand">
@@ -1202,9 +1384,34 @@
       <div class="uniformes">UNIFORMES</div>
       <p class="footer-text">Uniformes escolares para Zona Norte del Gran Buenos Aires.</p>
     </div>
+    <div style="font-size:13px;line-height:1.8;color:var(--niebla);">
+      <p style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--azul-400);margin-bottom:8px;">Contacto</p>
+      <p>NORD Uniformes</p>
+      <p><a href="https://wa.me/5491135057838" style="color:var(--niebla);text-decoration:none;" target="_blank">+54 9 11 3505-7838</a></p>
+      <p><a href="mailto:norduniformes@gmail.com" style="color:var(--niebla);text-decoration:none;">norduniformes@gmail.com</a></p>
+    </div>
+    <div style="font-size:13px;line-height:1.8;color:var(--niebla);">
+      <p style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--azul-400);margin-bottom:8px;">Retiro</p>
+      <p>Barrio Habitat Residencias</p>
+      <p>Zona Norte · Gran Buenos Aires</p>
+      <p><a href="https://maps.app.goo.gl/x2ec2a3AeP1LGCzJ7" target="_blank" style="color:var(--niebla);text-decoration:none;">Ver en Google Maps →</a></p>
+    </div>
   </div>
   <div class="footer-bottom">© 2025 NORD Uniformes · norduniformes.com.ar</div>
 </footer>
+
+<!-- WhatsApp flotante -->
+<div class="wa-float">
+  <div class="wa-card" id="wa-card">
+    <strong>Contacto</strong>
+    NORD Uniformes<br>
+    <a href="https://wa.me/5491135057838" target="_blank">+54 9 11 3505-7838</a><br>
+    <a href="mailto:norduniformes@gmail.com">norduniformes@gmail.com</a>
+  </div>
+  <button class="wa-btn" onclick="document.getElementById('wa-card').classList.toggle('visible')" aria-label="WhatsApp">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </button>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -1232,7 +1439,10 @@
         </svg>
       </button>
 
-      <h2 id="modal-product-name" class="modal-product-name"></h2>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <h2 id="modal-product-name" class="modal-product-name"></h2>
+        <span id="modal-genero-tag"></span>
+      </div>
       <p id="modal-product-description" class="modal-product-description"></p>
 
       <div class="modal-price-section">
@@ -1250,6 +1460,8 @@
 
       <!-- Grid de talles -->
       <div class="modal-talles-grid" id="modal-talles-grid"></div>
+      <!-- Descripción extra debajo del precio -->
+      <div class="modal-desc-extra" id="modal-desc-extra"></div>
 
       <!-- Botón agregar -->
       <button
@@ -1363,6 +1575,11 @@
         ? p.precio
         : (p.talles.find(t => t.precio > 0)?.precio || 0);
 
+      const generoRaw = (p.genero || "").toLowerCase();
+      const generoLabel = generoRaw === "varon" ? "Varón" : generoRaw === "mujer" ? "Mujer" : generoRaw === "unisex" ? "Unisex" : "";
+      const generoClass = generoRaw === "varon" ? "genero-varon" : generoRaw === "mujer" ? "genero-mujer" : "genero-unisex";
+      const generoTag = generoLabel ? `<span class="product-genero ${generoClass}">${generoLabel}</span>` : "";
+
       return `
         <div class="product-card${hayStock ? "" : " agotado"}" data-product-id="${p.id}">
           <div class="product-img" onclick="${hayStock ? `openProductModal('${p.id}')` : ""}" style="cursor:${hayStock ? "pointer" : "default"};">
@@ -1371,6 +1588,7 @@
           </div>
           <div class="product-body">
             <div>
+              ${generoTag}
               <h2 class="product-name" onclick="${hayStock ? `openProductModal('${p.id}')` : ""}" style="cursor:${hayStock ? "pointer" : "default"};">${p.nombre}</h2>
               ${precioMostrar > 0
                 ? `<div class="price-transferencia"><strong>${fmt(Math.round(precioMostrar * 0.9))}</strong></div>`
@@ -1503,9 +1721,10 @@
     }
   }
 
-  // ── Filtro por nivel ─────────────────────────────────────────────────
+  // ── Filtros ──────────────────────────────────────────────────────────
   let allProducts = [];
-  let activeNivel = "todos";
+  let activeNivel  = "todos";
+  let activeGenero = "todos";
 
   function updateCounts() {
     const niveles = ["kinder", "primaria", "secundaria"];
@@ -1523,17 +1742,30 @@
     if (el) el.textContent = count + (count === 1 ? " prenda" : " prendas");
   }
 
-  function filterNivel(item) {
-    document.querySelectorAll(".filter-item").forEach(b => b.classList.remove("active"));
-    item.classList.add("active");
-    activeNivel = item.dataset.nivel;
-    const filtered = activeNivel === "todos"
-      ? allProducts
-      : allProducts.filter(p =>
-          Array.isArray(p.categorias) && p.categorias.includes(activeNivel)
-        );
+  function applyFilters() {
+    const q = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
+    const filtered = allProducts.filter(p => {
+      const matchNivel  = activeNivel  === "todos" || (Array.isArray(p.categorias) && p.categorias.includes(activeNivel));
+      const matchGenero = activeGenero === "todos" || (p.genero || "unisex").toLowerCase() === activeGenero;
+      const matchSearch = !q || p.nombre.toLowerCase().includes(q);
+      return matchNivel && matchGenero && matchSearch;
+    });
     renderProducts(filtered);
     updateGridCount(filtered.length);
+  }
+
+  function filterNivel(item) {
+    document.querySelectorAll("#filter-nivel .filter-item").forEach(b => b.classList.remove("active"));
+    item.classList.add("active");
+    activeNivel = item.dataset.nivel;
+    applyFilters();
+  }
+
+  function filterGenero(item) {
+    document.querySelectorAll("#filter-genero .filter-item").forEach(b => b.classList.remove("active"));
+    item.classList.add("active");
+    activeGenero = item.dataset.genero;
+    applyFilters();
   }
 
   // ── MODAL DE PRODUCTO ──────────────────────────────────────────────────
@@ -1564,6 +1796,25 @@
     // Llenar datos
     document.getElementById("modal-product-name").textContent = product.nombre;
     document.getElementById("modal-product-description").textContent = product.descripcion || "";
+
+    // Tag de género
+    const gRaw = (product.genero || "").toLowerCase();
+    const gLabel = gRaw === "varon" ? "Varón" : gRaw === "mujer" ? "Mujer" : gRaw === "unisex" ? "Unisex" : "";
+    const gClass = gRaw === "varon" ? "genero-varon" : gRaw === "mujer" ? "genero-mujer" : "genero-unisex";
+    const gTag = document.getElementById("modal-genero-tag");
+    if (gTag) gTag.innerHTML = gLabel ? `<span class="product-genero ${gClass}">${gLabel}</span>` : "";
+
+    // Descripción extra (debajo del precio) — misma descripcion si la hay
+    const descExtra = document.getElementById("modal-desc-extra");
+    if (descExtra) {
+      if (product.descripcion) {
+        descExtra.textContent = product.descripcion;
+        descExtra.classList.add("visible");
+      } else {
+        descExtra.textContent = "";
+        descExtra.classList.remove("visible");
+      }
+    }
 
     // Cargar imagen principal
     goToImage(0);

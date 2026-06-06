@@ -6,7 +6,7 @@
 //   5=Compras  6=Ventas  7=Stock actual  8=Costo Unit  9=Precio Unit
 //
 // Columnas "10 Listado de Prendas":
-//   0=Colegio  1=Prenda  2=Talle  3=SKU  4=Categorias  5=Descripcion  6=Foto1  7=Foto2
+//   0=Colegio  1=Prenda  2=Talle  3=SKU  4=Categorias  5=Descripcion  6=Foto1  7=Foto2  8=Genero
 
 const { google } = require("googleapis");
 
@@ -40,7 +40,7 @@ async function fetchFromSheets(colegio = "WS") {
     }),
     sheets.spreadsheets.values.get({
       spreadsheetId: sid,
-      range: "'10 Listado de Prendas'!A2:H2000", // H = Foto2
+      range: "'10 Listado de Prendas'!A2:I2000", // I = Genero
       valueRenderOption: "FORMATTED_VALUE",
     }),
   ]);
@@ -55,7 +55,7 @@ async function fetchFromSheets(colegio = "WS") {
     if (colColegio !== colegio || !nombre) continue;
 
     const cats = catRaw.split(",").map(c => c.trim().toLowerCase()).filter(Boolean);
-    if (!catMap[nombre]) catMap[nombre] = { cats: new Set(), descripcion: "", fotos: [] };
+    if (!catMap[nombre]) catMap[nombre] = { cats: new Set(), descripcion: "", fotos: [], genero: "" };
     cats.forEach(c => catMap[nombre].cats.add(c));
 
     // Descripcion: columna F (índice 5)
@@ -67,6 +67,8 @@ async function fetchFromSheets(colegio = "WS") {
     const foto2 = String(row[7] || "").trim();
     if (foto1 && !catMap[nombre].fotos.includes(foto1)) catMap[nombre].fotos.push(foto1);
     if (foto2 && !catMap[nombre].fotos.includes(foto2)) catMap[nombre].fotos.push(foto2);
+    const genero = String(row[8] || "").trim();
+    if (genero && !catMap[nombre].genero) catMap[nombre].genero = genero;
   }
 
   // ── Construir productos desde stock ──────────────────────────────────────
@@ -85,12 +87,14 @@ async function fetchFromSheets(colegio = "WS") {
       const categorias  = catMap[nombre] ? [...catMap[nombre].cats] : [];
       const descripcion = catMap[nombre]?.descripcion || "";
       const fotos       = catMap[nombre]?.fotos || [];
+      const genero      = catMap[nombre]?.genero || "";
       productsMap[nombre] = {
         id: nombre.toLowerCase().replace(/\s+/g, "-").replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u").replace(/[^a-z0-9-]/g,""),
         nombre,
         precio: precioUnit,
         imagen_url: fotos[0] || "",   // primera foto para la tarjeta
-        fotos,                         // todas las fotos para el carousel
+        fotos,
+        genero,
         categorias,
         descripcion,
         talles: [],
