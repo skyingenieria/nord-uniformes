@@ -220,41 +220,6 @@ function validate() {
   return ok;
 }
 
-let currentDiscount = { codigo: "", monto: 0 };
-
-async function validateCode() {
-  const inputEl = document.getElementById("inp-codigo");
-  const code = (inputEl?.value || "").trim().toUpperCase();
-  const msgEl = document.getElementById("codigo-msg");
-
-  if (!code) {
-    msgEl.innerHTML = "";
-    currentDiscount = { codigo: "", monto: 0 };
-    render();
-    return;
-  }
-
-  msgEl.innerHTML = "Validando...";
-  try {
-    const r = await fetch(`/api/validate-code?code=${encodeURIComponent(code)}`);
-    const data = await r.json();
-
-    if (data.valid) {
-      const cart = getCart();
-      const sub = cart.reduce((s, i) => s + i.precio * i.qty, 0);
-      const descuento = Math.round(sub * (data.descuento / 100));
-      currentDiscount = { codigo: data.codigo, monto: descuento };
-      msgEl.innerHTML = `<span style="color:#2e7d52">✓ Descuento aplicado: ${data.descuento}%</span>`;
-    } else {
-      currentDiscount = { codigo: "", monto: 0 };
-      msgEl.innerHTML = `<span style="color:#c0392b">✗ ${data.error}</span>`;
-    }
-  } catch (err) {
-    msgEl.innerHTML = `<span style="color:#c0392b">Error validando código</span>`;
-    currentDiscount = { codigo: "", monto: 0 };
-  }
-  render();
-}
 
 async function submitOrder() {
   if (!validate()) return;
@@ -265,7 +230,7 @@ async function submitOrder() {
   const email    = document.getElementById("inp-email").value.trim();
   const cart     = getCart();
   const sub      = cart.reduce((s, i) => s + i.precio * i.qty, 0);
-  const total    = sub - currentDiscount.monto;
+  const total    = sub;
 
   const direccion = selectedEnvio === "correo" ? document.getElementById("inp-calle")?.value.trim() || "" : "";
   const cp        = selectedEnvio === "correo" ? document.getElementById("inp-cp")?.value.trim() || "" : "";
@@ -280,8 +245,8 @@ async function submitOrder() {
         nombre, apellido, email, telefono: tel,
         items: cart,
         subtotal: sub,
-        descuento: currentDiscount.monto,
-        codigo: currentDiscount.codigo,
+        descuento: 0,
+        codigo: "",
         total,
         pago: selectedPago,
         envio: selectedEnvio,
@@ -332,8 +297,8 @@ async function submitOrder() {
         orderId,
         items: cart,
         subtotal: sub,
-        descuento: currentDiscount.monto,
-        codigo: currentDiscount.codigo,
+        descuento: 0,
+        codigo: "",
         total,
         pago: selectedPago,
         envio: selectedEnvio,
@@ -347,8 +312,8 @@ async function submitOrder() {
         orderId,
         items: cart,
         subtotal: sub,
-        descuento: currentDiscount.monto,
-        codigo: currentDiscount.codigo,
+        descuento: 0,
+        codigo: "",
         total,
         pago: selectedPago,
         envio: selectedEnvio,
@@ -466,18 +431,6 @@ function render() {
         </div>
       </div>
 
-      <!-- CÓDIGO DESCUENTO -->
-      <div class="section-block">
-        <p class="section-block-title">Código descuento</p>
-        <div class="form-row full">
-          <div class="form-group">
-            <label>¿Tenés un código promocional?</label>
-            <input id="inp-codigo" type="text" placeholder="Ingresá tu código aquí" onkeyup="validateCode()" style="text-transform:uppercase">
-            <div id="codigo-msg" style="font-size:11px;margin-top:6px"></div>
-          </div>
-        </div>
-      </div>
-
       <!-- PAGO -->
       <div class="section-block">
         <p class="section-block-title">Método de pago</p>
@@ -523,8 +476,7 @@ function render() {
       <p class="summary-title">Resumen del pedido</p>
       ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(i.precio*i.qty)}</span></div>`).join("")}
       <div class="sum-row"><span>Envío</span><span id="sum-envio">Gratis</span></div>
-      ${currentDiscount.monto > 0 ? `<div class="sum-row"><span>Descuento (${currentDiscount.codigo})</span><span style="color:#2e7d52">-${fmt(currentDiscount.monto)}</span></div>` : ""}
-      <div class="sum-row total"><span>Total</span><span>${fmt(sub - currentDiscount.monto)}</span></div>
+      <div class="sum-row total"><span>Total</span><span>${fmt(sub)}</span></div>
       <p class="sum-note">* El costo de Correo Argentino no está incluido.</p>
 
       <button class="btn-wp" id="cta-btn" onclick="submitOrder()">
