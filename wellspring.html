@@ -638,7 +638,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 40px;
-      max-width: 900px;
+      max-width: 1200px;
       max-height: 90vh;
       overflow-y: auto;
       padding: 40px;
@@ -811,25 +811,49 @@
       cursor: not-allowed;
     }
 
-    .modal-guide-section {
+    .modal-guide-btn {
+      background: transparent;
+      border: 1px solid var(--niebla-200);
+      padding: 12px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--azul-900);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      margin-top: 12px;
+    }
+    .modal-guide-btn:hover {
+      background: rgba(31, 45, 74, 0.03);
+      border-color: var(--azul-600);
+    }
+
+    .modal-guide-btn.expanded {
+      background: rgba(31, 45, 74, 0.05);
+      border-color: var(--azul-900);
+    }
+
+    .guide-btn-icon {
+      transition: transform 0.2s;
+    }
+    .modal-guide-btn.expanded .guide-btn-icon {
+      transform: rotate(180deg);
+    }
+
+    .modal-guide-content {
       border-top: 1px solid var(--niebla-200);
       padding-top: 16px;
       margin-top: 12px;
     }
 
-    .guide-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--azul-900);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin: 0 0 8px 0;
-    }
-
     .guide-content {
       font-size: 12px;
       color: var(--azul-600);
-      line-height: 1.6;
+      line-height: 1.8;
     }
 
     @media (max-width: 768px) {
@@ -1016,9 +1040,14 @@
         <div class="modal-talles-grid" id="modal-talles-grid"></div>
       </div>
 
-      <!-- Guía de talles -->
-      <div class="modal-guide-section" id="modal-guide-section" style="display: none;">
-        <p class="guide-title">Guía de talles</p>
+      <!-- Guía de talles (expandible) -->
+      <button class="modal-guide-btn" id="modal-guide-btn" onclick="toggleGuide()" style="display: none;">
+        <span class="guide-btn-text">Ver guía de talles</span>
+        <svg class="guide-btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      <div class="modal-guide-content" id="modal-guide-content" style="display: none;">
         <div class="guide-content" id="guide-content"></div>
       </div>
 
@@ -1365,13 +1394,13 @@
       .map(t => guideMap[t.talle] || `Talle ${t.talle}`)
       .join("<br>");
 
-    const guideSection = document.getElementById("modal-guide-section");
+    const guideBtn = document.getElementById("modal-guide-btn");
     const guideContent = document.getElementById("guide-content");
     if (guideTalles) {
       guideContent.innerHTML = guideTalles;
-      guideSection.style.display = "block";
+      guideBtn.style.display = "block";
     } else {
-      guideSection.style.display = "none";
+      guideBtn.style.display = "none";
     }
 
     // Mostrar modal
@@ -1398,7 +1427,7 @@
 
     // Actualizar precio mostrado
     const tallePrice = Math.round(precio * 0.9);
-    document.getElementById("modal-product-price").textContent = `$${fmt(tallePrice)}`;
+    document.getElementById("modal-product-price").textContent = fmt(tallePrice);
 
     // Habilitar botón de agregar
     const addBtn = document.getElementById("btn-add-modal");
@@ -1437,6 +1466,18 @@
     showToast(`${currentModalProduct.nombre} talle ${talle} agregado al carrito`);
     closeProductModal();
     openDrawer();
+  }
+
+  function toggleGuide() {
+    const btn = document.getElementById("modal-guide-btn");
+    const content = document.getElementById("modal-guide-content");
+
+    btn.classList.toggle("expanded");
+    if (content.style.display === "none") {
+      content.style.display = "block";
+    } else {
+      content.style.display = "none";
+    }
   }
 
   function prevImage() {
