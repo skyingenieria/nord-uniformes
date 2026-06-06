@@ -6,7 +6,7 @@
 //   5=Compras  6=Ventas  7=Stock actual  8=Costo Unit  9=Precio Unit
 //
 // Columnas "10 Listado de Prendas":
-//   0=Colegio  1=Prenda  2=Talle  3=SKU  4=Categorias (ej: "Primaria, Secundaria")
+//   0=Colegio  1=Prenda  2=Talle  3=SKU  4=Categorias  5=Descripcion  6=Foto1  7=Foto2
 
 const { google } = require("googleapis");
 
@@ -40,26 +40,33 @@ async function fetchFromSheets(colegio = "WS") {
     }),
     sheets.spreadsheets.values.get({
       spreadsheetId: sid,
-      range: "'10 Listado de Prendas'!A2:F2000", // F = Descripcion
+      range: "'10 Listado de Prendas'!A2:H2000", // H = Foto2
       valueRenderOption: "FORMATTED_VALUE",
     }),
   ]);
 
   // ── Construir mapa de categorías: nombre → Set de categorias ──────────────
-  const catMap = {}; // { "Blusa": ["Primaria","Secundaria"], ... }
+  const catMap = {}; // { "Blusa": { cats, descripcion, fotos }, ... }
   for (const row of (catRes.data.values || [])) {
     const colColegio = String(row[0] || "").trim();
     const nombre     = String(row[1] || "").trim();
     const catRaw     = String(row[4] || "").trim(); // "Primaria, Secundaria"
 
-    if (colColegio !== colegio || !nombre || !catRaw) continue;
+    if (colColegio !== colegio || !nombre) continue;
 
     const cats = catRaw.split(",").map(c => c.trim().toLowerCase()).filter(Boolean);
-    if (!catMap[nombre]) catMap[nombre] = { cats: new Set(), descripcion: "" };
+    if (!catMap[nombre]) catMap[nombre] = { cats: new Set(), descripcion: "", fotos: [] };
     cats.forEach(c => catMap[nombre].cats.add(c));
-    // Descripcion: columna F, tomar la primera no-vacía del producto
+
+    // Descripcion: columna F (índice 5)
     const desc = String(row[5] || "").trim();
     if (desc && !catMap[nombre].descripcion) catMap[nombre].descripcion = desc;
+
+    // Fotos: columnas G y H (índices 6 y 7)
+    const foto1 = String(row[6] || "").trim();
+    const foto2 = String(row[7] || "").trim();
+    if (foto1 && !catMap[nombre].fotos.includes(foto1)) catMap[nombre].fotos.push(foto1);
+    if (foto2 && !catMap[nombre].fotos.includes(foto2)) catMap[nombre].fotos.push(foto2);
   }
 
   // ── Construir productos desde stock ──────────────────────────────────────
@@ -75,13 +82,15 @@ async function fetchFromSheets(colegio = "WS") {
     if (colegioCell !== colegio || !nombre || !talle) continue;
 
     if (!productsMap[nombre]) {
-      const categorias   = catMap[nombre] ? [...catMap[nombre].cats] : [];
-      const descripcion  = catMap[nombre]?.descripcion || "";
+      const categorias  = catMap[nombre] ? [...catMap[nombre].cats] : [];
+      const descripcion = catMap[nombre]?.descripcion || "";
+      const fotos       = catMap[nombre]?.fotos || [];
       productsMap[nombre] = {
         id: nombre.toLowerCase().replace(/\s+/g, "-").replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u").replace(/[^a-z0-9-]/g,""),
         nombre,
-        precio: precioUnit,    // precio mínimo (se recalcula abajo)
-        imagen_url: "",
+        precio: precioUnit,
+        imagen_url: fotos[0] || "",   // primera foto para la tarjeta
+        fotos,                         // todas las fotos para el carousel
         categorias,
         descripcion,
         talles: [],

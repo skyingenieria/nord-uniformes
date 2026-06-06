@@ -668,47 +668,68 @@
     .modal-image-section {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
-    .modal-image-container {
+    .modal-image-main {
       background: white;
       border-radius: 8px;
       overflow: hidden;
-      aspect-ratio: 1;
+      aspect-ratio: 4/3;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .modal-image-container img {
+    .modal-image-main img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      transition: opacity 0.2s;
     }
 
-    .modal-image-controls {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-    }
-
-    .carousel-btn {
-      background: var(--azul-900);
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(15, 23, 46, 0.55);
       color: white;
       border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
       cursor: pointer;
-      font-size: 18px;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transition: background 0.2s;
+      z-index: 2;
     }
-    .carousel-btn:hover:not(:disabled) {
-      background: var(--azul);
+    .carousel-arrow.left  { left: 10px; }
+    .carousel-arrow.right { right: 10px; }
+    .carousel-arrow:hover { background: rgba(15, 23, 46, 0.85); }
+
+    .modal-thumbnails {
+      display: flex;
+      gap: 8px;
     }
-    .carousel-btn:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
+
+    .modal-thumb {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .modal-thumb.active {
+      border-color: var(--azul-900);
+    }
+    .modal-thumb:hover {
+      border-color: var(--azul-600);
     }
 
     .modal-image-counter {
@@ -1125,14 +1146,13 @@
   <div class="modal-content">
     <!-- Imagen ancho completo -->
     <div class="modal-image-section">
-      <div class="modal-image-container">
+      <div class="modal-image-main">
         <img id="modal-product-image" src="" alt="Producto" />
+        <button class="carousel-arrow left" id="prev-btn" onclick="prevImage()" style="display:none;">❮</button>
+        <button class="carousel-arrow right" id="next-btn" onclick="nextImage()" style="display:none;">❯</button>
       </div>
-      <div class="modal-image-controls">
-        <button class="carousel-btn prev" id="prev-btn" onclick="prevImage()" style="display:none;">❮</button>
-        <button class="carousel-btn next" id="next-btn" onclick="nextImage()" style="display:none;">❯</button>
-      </div>
-      <p class="modal-image-counter" id="image-counter"></p>
+      <!-- Thumbnails (solo si hay 2+ fotos) -->
+      <div class="modal-thumbnails" id="modal-thumbnails" style="display:none;"></div>
     </div>
 
     <!-- Información del producto -->
@@ -1455,8 +1475,10 @@
     currentModalProduct = product;
     currentModalImageIndex = 0;
 
-    // Por ahora asumimos una sola imagen, pero preparamos para múltiples
-    modalTalleImages = product.imagen_url ? [product.imagen_url] : [];
+    // Usar array de fotos del ERP (foto1, foto2); fallback a imagen_url
+    modalTalleImages = (product.fotos && product.fotos.length > 0)
+      ? product.fotos
+      : (product.imagen_url ? [product.imagen_url] : []);
 
     const overlay = document.getElementById("product-modal-overlay");
     const modal = document.getElementById("product-modal");
@@ -1466,10 +1488,21 @@
     document.getElementById("modal-product-name").textContent = product.nombre;
     document.getElementById("modal-product-description").textContent = product.descripcion || "Sin descripción disponible";
 
-    // Mostrar/ocultar botones de carousel
-    document.getElementById("prev-btn").style.display = modalTalleImages.length > 1 ? "block" : "none";
-    document.getElementById("next-btn").style.display = modalTalleImages.length > 1 ? "block" : "none";
-    document.getElementById("image-counter").textContent = modalTalleImages.length > 1 ? `${currentModalImageIndex + 1} de ${modalTalleImages.length}` : "";
+    // Carousel: flechas y thumbnails
+    const multiPhoto = modalTalleImages.length > 1;
+    document.getElementById("prev-btn").style.display = multiPhoto ? "flex" : "none";
+    document.getElementById("next-btn").style.display = multiPhoto ? "flex" : "none";
+
+    const thumbsEl = document.getElementById("modal-thumbnails");
+    if (multiPhoto) {
+      thumbsEl.style.display = "flex";
+      thumbsEl.innerHTML = modalTalleImages.map((url, i) =>
+        `<img class="modal-thumb${i === 0 ? " active" : ""}" src="${url}" alt="Foto ${i+1}" onclick="goToImage(${i})">`
+      ).join("");
+    } else {
+      thumbsEl.style.display = "none";
+      thumbsEl.innerHTML = "";
+    }
 
     // Generar talles con precios individuales
     const tallesGrid = document.getElementById("modal-talles-grid");
@@ -1610,19 +1643,21 @@
 
   function prevImage() {
     if (modalTalleImages.length <= 1) return;
-    currentModalImageIndex = (currentModalImageIndex - 1 + modalTalleImages.length) % modalTalleImages.length;
-    updateModalImage();
+    goToImage((currentModalImageIndex - 1 + modalTalleImages.length) % modalTalleImages.length);
   }
 
   function nextImage() {
     if (modalTalleImages.length <= 1) return;
-    currentModalImageIndex = (currentModalImageIndex + 1) % modalTalleImages.length;
-    updateModalImage();
+    goToImage((currentModalImageIndex + 1) % modalTalleImages.length);
   }
 
-  function updateModalImage() {
-    document.getElementById("modal-product-image").src = modalTalleImages[currentModalImageIndex];
-    document.getElementById("image-counter").textContent = `${currentModalImageIndex + 1} de ${modalTalleImages.length}`;
+  function goToImage(index) {
+    currentModalImageIndex = index;
+    document.getElementById("modal-product-image").src = modalTalleImages[index];
+    // Actualizar thumbnail activo
+    document.querySelectorAll(".modal-thumb").forEach((el, i) => {
+      el.classList.toggle("active", i === index);
+    });
   }
 
   updateCartCount();
