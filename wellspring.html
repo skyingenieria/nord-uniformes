@@ -103,7 +103,15 @@
 
 <div class="catalog">
   <h2 class="catalog-title" id="productos">Nuestros productos</h2>
-  <div class="grid" id="grid"></div>
+
+  <h3 style="font-size:20px;font-weight:700;margin:40px 0 24px;color:var(--azul-900)">🎒 Kinder</h3>
+  <div class="grid" id="grid-kinder"></div>
+
+  <h3 style="font-size:20px;font-weight:700;margin:40px 0 24px;color:var(--azul-900)">📚 Primaria</h3>
+  <div class="grid" id="grid-primaria"></div>
+
+  <h3 style="font-size:20px;font-weight:700;margin:40px 0 24px;color:var(--azul-900)">🎓 Secundaria</h3>
+  <div class="grid" id="grid-secundaria"></div>
 </div>
 
 <div class="modal" id="modal">
@@ -148,7 +156,7 @@ async function render() {
     const res = await fetch("/api/products");
     const products = await res.json();
 
-    const html = products.map(p => `
+    const cardHTML = (p) => `
       <div class="card" onclick="openModal('${p.id}')">
         <img src="${p.imagen}" class="card-img" onerror="this.src='https://via.placeholder.com/280x240?text=${encodeURIComponent(p.nombre)}'">
         <div class="card-body">
@@ -156,10 +164,22 @@ async function render() {
           <div class="card-price">${fmt(p.precio)}</div>
           <div class="card-desc">Haz clic para ver talles disponibles</div>
         </div>
-      </div>`).join("");
-    document.getElementById("grid").innerHTML = html;
+      </div>`;
+
+    // Distribuir productos en tres secciones
+    const third = Math.ceil(products.length / 3);
+    const kinder = products.slice(0, third);
+    const primaria = products.slice(third, third * 2);
+    const secundaria = products.slice(third * 2);
+
+    document.getElementById("grid-kinder").innerHTML = kinder.map(cardHTML).join("");
+    document.getElementById("grid-primaria").innerHTML = primaria.map(cardHTML).join("");
+    document.getElementById("grid-secundaria").innerHTML = secundaria.map(cardHTML).join("");
+
     updateCartBadge();
-  } catch (err) { document.getElementById("grid").innerHTML = "<p>Error cargando productos</p>"; }
+  } catch (err) {
+    document.getElementById("grid-kinder").innerHTML = "<p>Error cargando productos</p>";
+  }
 }
 
 async function openModal(productId) {
