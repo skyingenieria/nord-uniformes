@@ -246,6 +246,14 @@ function render() {
       <div class="datos-pago" id="datos-pago">
         <p style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--azul-400);margin-bottom:12px;">Datos para la transferencia</p>
         <div class="dato-row">
+          <span class="dato-label">Titular</span>
+          <span class="dato-val">Florencia Cordeviola</span>
+        </div>
+        <div class="dato-row">
+          <span class="dato-label">Banco</span>
+          <span class="dato-val">Galicia</span>
+        </div>
+        <div class="dato-row">
           <span class="dato-label">Alias</span>
           <div style="display:flex;align-items:center;gap:10px">
             <span class="dato-val">nord.uniformes</span>
@@ -363,7 +371,7 @@ function enviarComprobante() {
   const items = cart.map(i => `• ${i.nombre} talle ${i.talle} x${i.qty}: ${fmt(i.precio * i.qty)}`).join("\n");
   const msg = `Hola NORD Uniformes! Acá va mi comprobante de pago 🧾\n\n*Pedido #${idPedido}*\n*Familia: ${apellido} - ${nombre}*\n\n${items}\n\n*Total transferido: ${fmt(sub)}*\n\nAlias: nord.uniformes\n\n¡Gracias! 🙌`;
 
-  window.open(`https://wa.me/5491122913796?text=${encodeURIComponent(msg)}`, "_blank");
+  window.open(`https://wa.me/5491135057838?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
 render();
