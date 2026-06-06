@@ -204,6 +204,24 @@ function selectPago(tipo) {
   });
   document.getElementById("pago-transferencia")?.classList.toggle("show", tipo === "transferencia");
   document.getElementById("pago-nave")?.classList.toggle("show", tipo === "nave");
+
+  // Actualizar resumen
+  const cart = getCart();
+  const sub = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+
+  if (tipo === "transferencia") {
+    const descuento = Math.round(sub * 0.11);
+    const total = sub - descuento;
+    document.getElementById("descuento-row").innerHTML = `<div class="sum-row" style="color:#2e7d52"><span>Descuento 11% (Transferencia)</span><span>-${fmt(descuento)}</span></div>`;
+    document.getElementById("cuotas-row").innerHTML = "";
+    document.getElementById("total-amount").textContent = fmt(total);
+  } else if (tipo === "nave") {
+    const cuota = Math.round(sub / 3);
+    document.getElementById("descuento-row").innerHTML = "";
+    document.getElementById("cuotas-row").innerHTML = `<div class="sum-row" style="color:#5a2d9c"><span>3 cuotas sin interés</span><span>${fmt(cuota)} c/u</span></div>`;
+    document.getElementById("total-amount").textContent = fmt(sub);
+  }
+
   updateCta();
 }
 
@@ -230,11 +248,14 @@ async function submitOrder() {
   const email    = document.getElementById("inp-email").value.trim();
   const cart     = getCart();
   const sub      = cart.reduce((s, i) => s + i.precio * i.qty, 0);
-  const total    = sub;
 
-  const direccion = selectedEnvio === "correo" ? document.getElementById("inp-calle")?.value.trim() || "" : "";
-  const cp        = selectedEnvio === "correo" ? document.getElementById("inp-cp")?.value.trim() || "" : "";
-  const localidad = selectedEnvio === "correo" ? document.getElementById("inp-loc")?.value.trim() || "" : "";
+  // Calcular descuento y total según método de pago
+  let descuento = 0, total = sub;
+  if (selectedPago === "transferencia") {
+    descuento = Math.round(sub * 0.11); // 11% descuento
+    total = sub - descuento;
+  }
+  // Para Nave: sin descuento, total = sub
 
   try {
     // 0. Registrar/obtener cliente
@@ -271,12 +292,12 @@ async function submitOrder() {
         nombre, apellido, email, telefono: tel,
         items: cart,
         subtotal: sub,
-        descuento: 0,
+        descuento,
         codigo: "",
         total,
         pago: selectedPago,
-        envio: selectedEnvio,
-        direccion, cp, localidad,
+        envio: "retiro",
+        direccion: "", cp: "", localidad: "",
       }),
     });
 
@@ -286,8 +307,32 @@ async function submitOrder() {
       return;
     }
 
-    // 3. Si es Nave, crear intención de pago
+    // 3. Enviar notificación por email
+    await fetch("/api/mail/send-order-notification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        idPedido, codigoCliente,
+        nombre, apellido, email,
+        items: cart,
+        subtotal: sub,
+        descuento,
+        total,
+        pago: selectedPago,
+        envio: "retiro",
+      }),
+    }).catch(() => {}); // No fallar si el email falla
+
+    // 4. Guardar en sessionStorage
+    sessionStorage.setItem("nord_last_order", JSON.stringify({
+      idPedido, codigoCliente, items: cart,
+      subtotal: sub, descuento, total,
+      pago: selectedPago, envio: "retiro",
+    }));
+
+    // 5. Redirigir según método de pago
     if (selectedPago === "nave") {
+      // Crear intención de pago en Nave
       const naveRes = await fetch("/api/nave/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -305,46 +350,17 @@ async function submitOrder() {
       if (!naveData.success) {
         let errMsg = naveData.error || "desconocido";
         if (naveData.details) {
-          if (typeof naveData.details === "string") {
-            errMsg += "\n" + naveData.details;
-          } else {
-            errMsg += "\n" + JSON.stringify(naveData.details, null, 2);
-          }
+          errMsg += "\n" + (typeof naveData.details === "string" ? naveData.details : JSON.stringify(naveData.details, null, 2));
         }
-        console.error("Nave error:", naveData);
         alert("Error con Nave:\n" + errMsg);
         return;
       }
 
-      // Guardar datos para después
-      sessionStorage.setItem("nord_last_order", JSON.stringify({
-        idPedido,
-        codigoCliente,
-        items: cart,
-        subtotal: sub,
-        descuento: 0,
-        codigo: "",
-        total,
-        pago: selectedPago,
-        envio: selectedEnvio,
-      }));
-
-      // Redirigir a Nave
+      // Redirigir a checkout de Nave
       window.location.href = naveData.checkout_url;
     } else {
-      // 4. Si es transferencia, guardar y ir a confirmación
-      sessionStorage.setItem("nord_last_order", JSON.stringify({
-        idPedido,
-        codigoCliente,
-        items: cart,
-        subtotal: sub,
-        descuento: 0,
-        codigo: "",
-        total,
-        pago: selectedPago,
-        envio: selectedEnvio,
-      }));
-      window.location.href = "/confirmacion";
+      // Redirigir a página de pago por transferencia
+      window.location.href = "/pago-transferencia";
     }
   } catch (err) {
     alert("Error: " + err.message);
@@ -437,23 +453,6 @@ function render() {
               <p class="radio-desc">Pilar, Buenos Aires. Coordinamos día y horario por WhatsApp.</p>
             </div>
           </label>
-          <label class="radio-option ${selectedEnvio === 'correo' ? 'selected' : ''}" data-envio="correo" onclick="selectEnvio('correo')">
-            <input type="radio" name="envio" ${selectedEnvio === 'correo' ? 'checked' : ''}>
-            <div class="radio-label">
-              <div class="radio-title"><span>Correo Argentino — Domicilio</span><span class="badge badge-orange">A calcular</span></div>
-              <p class="radio-desc">Envío a todo el país. El costo se informa por WhatsApp según tu CP.</p>
-              <div class="addr-expand ${selectedEnvio === 'correo' ? 'show' : ''}" id="addr-expand">
-                <div class="form-row">
-                  <div class="form-group"><label>Calle y número</label><input id="inp-calle" type="text" placeholder="Av. Santa Fe 1234"></div>
-                  <div class="form-group"><label>Código postal</label><input id="inp-cp" type="text" placeholder="1425" maxlength="8"></div>
-                </div>
-                <div class="form-row full">
-                  <div class="form-group"><label>Ciudad / Localidad</label><input id="inp-loc" type="text" placeholder="Buenos Aires"></div>
-                </div>
-              </div>
-              <div class="correo-info ${selectedEnvio === 'correo' ? 'show' : ''}" id="correo-info">📦 Te informamos el costo exacto por WhatsApp antes de confirmar. El flete se abona por separado.</div>
-            </div>
-          </label>
         </div>
       </div>
 
@@ -501,9 +500,10 @@ function render() {
     <div class="summary-panel">
       <p class="summary-title">Resumen del pedido</p>
       ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(i.precio*i.qty)}</span></div>`).join("")}
-      <div class="sum-row"><span>Envío</span><span id="sum-envio">Gratis</span></div>
-      <div class="sum-row total"><span>Total</span><span>${fmt(sub)}</span></div>
-      <p class="sum-note">* El costo de Correo Argentino no está incluido.</p>
+      <div class="sum-row"><span>Envío</span><span id="sum-envio">Gratis (Retiro)</span></div>
+      <div id="descuento-row"></div>
+      <div id="cuotas-row"></div>
+      <div class="sum-row total"><span>Total</span><span id="total-amount">${fmt(sub)}</span></div>
 
       <button class="btn-wp" id="cta-btn" onclick="submitOrder()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
