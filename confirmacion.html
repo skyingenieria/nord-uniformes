@@ -75,10 +75,10 @@
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#C8A96E" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
   </div>
 
-  <h1>¡Pedido recibido!</h1>
-  <p class="subtitle">Gracias, te contactamos a la brevedad para confirmar.</p>
+  <h1>¡Muchas gracias por tu compra!</h1>
+  <p class="subtitle">Nos estaremos contactando para coordinar el retiro de tu pedido.</p>
 
-  <div class="order-id-box" id="order-id">Cargando...</div>
+  <div class="order-id-box" id="order-id">Pedido #...</div>
 
   <div class="summary-card" id="summary-card">
     <p class="summary-card-title">Resumen del pedido</p>
@@ -104,7 +104,7 @@ const data = JSON.parse(sessionStorage.getItem("nord_last_order") || "null");
 if (!data) {
   document.getElementById("order-id").textContent = "Sin datos de orden";
 } else {
-  document.getElementById("order-id").textContent = "Pedido #" + data.orderId;
+  document.getElementById("order-id").textContent = "Pedido #" + data.idPedido;
 
   // Items
   const itemsEl = document.getElementById("items-list");
@@ -119,26 +119,17 @@ if (!data) {
   const sumEl = document.getElementById("sum-rows");
   let html = `<div class="sum-row"><span>Subtotal</span><span>${fmt(data.subtotal)}</span></div>`;
   if (data.descuento > 0)
-    html += `<div class="sum-row"><span>Descuento (${data.codigo})</span><span>- ${fmt(data.descuento)}</span></div>`;
-  html += `<div class="sum-row"><span>Envío</span><span>${data.envio === "retiro" ? "Gratis" : "A calcular"}</span></div>`;
+    html += `<div class="sum-row"><span>Descuento (${data.pago === "transferencia" ? "Transferencia" : "Nave"})</span><span style="color:#2e7d52">- ${fmt(data.descuento)}</span></div>`;
+  html += `<div class="sum-row"><span>Envío</span><span>Gratis (Retiro)</span></div>`;
   html += `<div class="sum-total"><span>Total</span><span>${fmt(data.total)}</span></div>`;
   sumEl.innerHTML = html;
 
   // Info box
   const info = document.getElementById("info-box");
-  if (data.pago === "transferencia") {
-    info.innerHTML = `<strong>Pago por transferencia:</strong> transferí el monto al CBU/alias de NORD y envianos el comprobante por WhatsApp citando el número de pedido <strong>#${data.orderId}</strong>.`;
-  } else {
-    info.innerHTML = `<strong>Pago con Nave:</strong> te enviamos el link de pago por WhatsApp a la brevedad.`;
-  }
-  if (data.envio === "correo") {
-    info.innerHTML += `<br><br><strong>Envío a domicilio:</strong> te informamos el costo de Correo Argentino por WhatsApp antes de confirmar.`;
-  } else {
-    info.innerHTML += `<br><br><strong>Retiro:</strong> coordinamos día y horario por WhatsApp en Barrio Habitat, Pilar.`;
-  }
+  info.innerHTML = `<strong>✓ Pago recibido:</strong> tu pedido #<strong>${data.idPedido}</strong> ha sido confirmado. Te contactaremos en breve para coordinar el retiro en Barrio Habitat, Pilar.`;
 
   // WA link
-  const msg = encodeURIComponent(`Hola! Acabo de hacer el pedido #${data.orderId} en norduniformes.com.ar. Quedo a disposición para coordinar el pago.`);
+  const msg = encodeURIComponent(`Hola! Quiero consultar sobre mi pedido #${data.idPedido}. Gracias`);
   document.getElementById("btn-wp").href = `https://wa.me/${WHATSAPP}?text=${msg}`;
 
   // Limpiar carrito
