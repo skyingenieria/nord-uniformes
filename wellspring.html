@@ -1345,8 +1345,8 @@
     });
 
     container.innerHTML = products.map(p => {
-      const foto1 = (p.fotos && p.fotos[0]) || p.imagen_url || "";
-      const foto2 = (p.fotos && p.fotos[1]) || "";
+      const foto1 = toDirectImageUrl((p.fotos && p.fotos[0]) || p.imagen_url || "");
+      const foto2 = toDirectImageUrl((p.fotos && p.fotos[1]) || "");
       const imgHtml = foto1
         ? `<img class="foto-1" src="${foto1}" alt="${p.nombre}" loading="lazy">
            ${foto2 ? `<img class="foto-2" src="${foto2}" alt="${p.nombre} - foto 2" loading="lazy">` : ""}`
@@ -1731,14 +1731,16 @@
   // Normaliza URL de imagen (rutas /images/... pasan directo)
   function toDirectImageUrl(url) {
     if (!url) return "";
-    // Ruta local del proyecto → usar tal cual
+    // Ruta completa → usar tal cual
     if (url.startsWith("/") || url.startsWith("http")) return url;
-    // Google Drive fallback (por si alguien sigue poniendo links de Drive)
+    // Google Drive
     const match = url.match(/\/file\/d\/([^/]+)/);
     if (match) return `https://lh3.googleusercontent.com/d/${match[1]}`;
     const match2 = url.match(/[?&]id=([^&]+)/);
     if (match2) return `https://lh3.googleusercontent.com/d/${match2[1]}`;
-    return url;
+    // Nombre de archivo suelto (ej: "chomba_blanca_1") → agregar /images/ y .png
+    const nombre = url.replace(/\.(png|jpg|jpeg|webp)$/i, "");
+    return `/images/${nombre}.png`;
   }
 
   function prevImage() {
