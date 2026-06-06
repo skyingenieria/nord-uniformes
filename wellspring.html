@@ -1652,16 +1652,17 @@
     modal.classList.remove("active");
   }
 
-  // Convierte URL de Google Drive sharing → URL directa de imagen
+  // Normaliza URL de imagen (rutas /images/... pasan directo)
   function toDirectImageUrl(url) {
     if (!url) return "";
-    // https://drive.google.com/file/d/FILE_ID/view?... → directo
+    // Ruta local del proyecto → usar tal cual
+    if (url.startsWith("/") || url.startsWith("http")) return url;
+    // Google Drive fallback (por si alguien sigue poniendo links de Drive)
     const match = url.match(/\/file\/d\/([^/]+)/);
     if (match) return `https://lh3.googleusercontent.com/d/${match[1]}`;
-    // https://drive.google.com/open?id=FILE_ID
     const match2 = url.match(/[?&]id=([^&]+)/);
     if (match2) return `https://lh3.googleusercontent.com/d/${match2[1]}`;
-    return url; // devolver tal cual si no es Drive
+    return url;
   }
 
   function prevImage() {
