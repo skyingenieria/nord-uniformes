@@ -67,8 +67,15 @@ module.exports = async (req, res) => {
 
     if (!r.ok) {
       const errText = await r.text();
-      console.error("Nave error:", errText);
-      return res.status(r.status).json({ error: "Error creando intención de pago", details: errText });
+      console.error("Nave error response:", errText);
+      console.error("Nave error status:", r.status);
+      console.error("Payload sent:", JSON.stringify(payload, null, 2));
+      try {
+        const errJson = JSON.parse(errText);
+        return res.status(r.status).json({ error: "Error creando intención de pago", details: errJson });
+      } catch {
+        return res.status(r.status).json({ error: "Error creando intención de pago", details: errText });
+      }
     }
 
     const data = await r.json();
