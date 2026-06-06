@@ -20,7 +20,6 @@
     body{font-family:var(--sans);background:var(--crema);color:var(--azul-900);line-height:1.55;-webkit-font-smoothing:antialiased}
     a{text-decoration:none}
 
-    /* HEADER */
     header{background:rgba(244,241,234,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(30,45,74,.08);position:sticky;top:0;z-index:100}
     .header-container{max-width:var(--max);margin:0 auto;padding:0 var(--pad-x);height:64px;display:flex;justify-content:space-between;align-items:center}
     .brand-logo .nord{font-weight:900;font-size:22px;letter-spacing:.06em;display:block;color:var(--azul-900)}
@@ -28,20 +27,16 @@
     .back-link{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--azul-400);display:flex;align-items:center;gap:6px;transition:color .2s}
     .back-link:hover{color:var(--azul-900)}
 
-    /* PAGE */
     .page{max-width:var(--max);margin:0 auto;padding:48px var(--pad-x) 80px}
     .page-title{font-size:clamp(28px,4vw,40px);font-weight:900;letter-spacing:-.02em;margin-bottom:40px}
     .checkout-grid{display:grid;grid-template-columns:1fr 380px;gap:40px;align-items:start}
 
-    /* LEFT */
     .left{display:flex;flex-direction:column;gap:28px}
 
-    /* SECTION */
     .section-block{background:var(--blanco);border:1px solid var(--niebla-200);padding:24px 28px;border-radius:14px;box-shadow:0 2px 12px rgba(30,45,74,.06);transition:box-shadow .3s}
     .section-block:hover{box-shadow:0 4px 20px rgba(30,45,74,.1)}
     .section-block-title{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--azul-400);margin-bottom:18px}
 
-    /* ITEMS */
     .cart-item{display:flex;align-items:center;padding:14px 0;border-bottom:1px solid var(--niebla-200);gap:14px}
     .cart-item:first-child{border-top:1px solid var(--niebla-200)}
     .item-info{flex:1}
@@ -55,7 +50,6 @@
     .item-remove{background:none;border:none;cursor:pointer;color:var(--niebla);padding:4px;display:flex;transition:color .15s}
     .item-remove:hover{color:#c0392b}
 
-    /* FORM */
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
     .form-row.full{grid-template-columns:1fr}
     .form-group label{display:block;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--azul-400);margin-bottom:6px}
@@ -63,7 +57,6 @@
     .form-group input:focus{border-color:var(--azul);box-shadow:0 0 0 3px rgba(200,169,110,.1)}
     .form-group input::placeholder{color:#b0bac9}
 
-    /* RADIO OPTIONS */
     .radio-options{display:flex;flex-direction:column;gap:8px}
     .radio-option{border:1.5px solid var(--niebla-200);padding:15px 16px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;transition:border-color .15s,background .15s, box-shadow .15s;border-radius:10px;box-shadow:0 1px 4px rgba(30,45,74,.04)}
     .radio-option:hover{border-color:var(--azul-400);box-shadow:0 2px 8px rgba(30,45,74,.08)}
@@ -74,47 +67,19 @@
     .radio-desc{font-size:12px;color:var(--azul-400);margin-top:4px;line-height:1.4}
     .badge{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px}
     .badge-green{background:#e8f5e9;color:#2e7d52}
-    .badge-orange{background:#fff3e0;color:#e65100}
 
-    /* DIRECCIÓN EXPAND */
-    .addr-expand{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--niebla-200)}
-    .addr-expand.show{display:block}
-
-    /* INFO BOX correo */
-    .correo-info{margin-top:12px;padding:12px 14px;background:var(--crema-2);border-left:3px solid var(--dorado);font-size:12px;color:var(--azul-600);line-height:1.6;display:none;border-radius:8px}
-    .correo-info.show{display:block}
-
-    /* SUMMARY */
     .summary-panel{background:var(--blanco);border:1px solid var(--niebla-200);padding:28px;position:sticky;top:80px;border-radius:14px;box-shadow:0 2px 12px rgba(30,45,74,.06)}
     .summary-title{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--azul-400);margin-bottom:20px}
     .sum-row{display:flex;justify-content:space-between;font-size:14px;padding:7px 0;color:var(--azul-600)}
     .sum-row.total{border-top:1px solid var(--niebla-200);margin-top:8px;padding-top:16px;font-size:20px;font-weight:800;color:var(--azul-900)}
-    .sum-note{font-size:11px;color:var(--azul-400);margin-top:10px;line-height:1.5;font-style:italic}
 
-    /* PAGO DETAIL */
-    .pago-detail{display:none;margin-top:14px;padding:14px 16px;background:var(--crema-2);border:1px solid var(--niebla-200);border-radius:8px}
-    .pago-detail.show{display:block}
-    .cbu-block{font-size:13px;line-height:2.2}
-    .cbu-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .cbu-val{font-weight:800;font-size:14px;letter-spacing:.03em}
-    .copy-btn{background:var(--azul-900);color:var(--crema);border:none;font-family:var(--sans);font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;cursor:pointer;transition:background .15s}
-    .copy-btn:hover{background:var(--dorado);color:var(--azul-900)}
-    .nave-info{font-size:13px;color:var(--azul-600);line-height:1.6}
-    .nave-logo{font-weight:900;color:#5a2d9c;font-size:16px}
-
-    /* REQUIRED mark */
     .req{color:#c0392b;margin-left:2px}
     .field-error{border-color:#c0392b !important}
-    .form-group input:required:invalid:not(:placeholder-shown){border-color:#c0392b}
 
-    /* BUTTONS */
     .btn-wp{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;background:#25D366;color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s, box-shadow .2s;text-decoration:none;border-radius:10px;box-shadow:0 4px 12px rgba(37,211,102,.2)}
     .btn-wp:hover{background:#1ebe5d;box-shadow:0 6px 16px rgba(37,211,102,.3)}
-    .btn-nave{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;background:#5a2d9c;color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s, box-shadow .2s;border-radius:10px;box-shadow:0 4px 12px rgba(90,45,156,.2)}
-    .btn-nave:hover{background:#4a2080;box-shadow:0 6px 16px rgba(90,45,156,.3)}
     .note{margin-top:12px;font-size:11px;color:var(--azul-400);text-align:center;line-height:1.5}
 
-    /* EMPTY */
     .cart-empty{text-align:center;padding:80px 0;grid-column:1/-1}
     .cart-empty p{font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--azul-400);margin-bottom:24px}
     .btn-outline{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--azul);color:var(--azul);padding:12px 28px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;transition:all .2s;border-radius:10px}
@@ -153,15 +118,6 @@
 </div>
 
 <script>
-const WHATSAPP_NUMBER = "5491122913796";
-// ── Completar cuando tengas las credenciales bancarias ──────────────────────
-const CBU   = "TU_CBU_ACÁ";
-const ALIAS = "TU.ALIAS.ACÁ";
-const TITULAR = "Federico Alonso";
-
-let selectedEnvio = "retiro";   // "retiro" | "correo"
-let selectedPago  = "transferencia"; // "transferencia" | "nave"
-
 function getCart() {
   try { return JSON.parse(localStorage.getItem("nord_cart") || "[]"); } catch { return []; }
 }
@@ -178,53 +134,6 @@ function changeQty(key, d) {
 }
 function removeItem(key) { saveCart(getCart().filter(i => i.key !== key)); render(); }
 
-function copyText(txt) {
-  navigator.clipboard.writeText(txt).catch(() => {});
-  const btns = document.querySelectorAll(".copy-btn");
-  btns.forEach(b => { if (b.dataset.val === txt) { b.textContent = "✓ Copiado"; setTimeout(() => b.textContent = "Copiar", 1500); }});
-}
-
-function selectEnvio(tipo) {
-  selectedEnvio = tipo;
-  document.querySelectorAll(".radio-option[data-envio]").forEach(el => {
-    el.classList.toggle("selected", el.dataset.envio === tipo);
-    el.querySelector("input").checked = el.dataset.envio === tipo;
-  });
-  document.getElementById("addr-expand")?.classList.toggle("show", tipo === "correo");
-  document.getElementById("correo-info")?.classList.toggle("show", tipo === "correo");
-  document.getElementById("sum-envio").textContent = tipo === "retiro" ? "Gratis" : "A calcular";
-  updateCta();
-}
-
-function selectPago(tipo) {
-  selectedPago = tipo;
-  document.querySelectorAll(".radio-option[data-pago]").forEach(el => {
-    el.classList.toggle("selected", el.dataset.pago === tipo);
-    el.querySelector("input").checked = el.dataset.pago === tipo;
-  });
-  document.getElementById("pago-transferencia")?.classList.toggle("show", tipo === "transferencia");
-  document.getElementById("pago-nave")?.classList.toggle("show", tipo === "nave");
-
-  // Actualizar resumen
-  const cart = getCart();
-  const sub = cart.reduce((s, i) => s + i.precio * i.qty, 0);
-
-  if (tipo === "transferencia") {
-    const descuento = Math.round(sub * 0.11);
-    const total = sub - descuento;
-    document.getElementById("descuento-row").innerHTML = `<div class="sum-row" style="color:#2e7d52"><span>Descuento 11% (Transferencia)</span><span>-${fmt(descuento)}</span></div>`;
-    document.getElementById("cuotas-row").innerHTML = "";
-    document.getElementById("total-amount").textContent = fmt(total);
-  } else if (tipo === "nave") {
-    const cuota = Math.round(sub / 3);
-    document.getElementById("descuento-row").innerHTML = "";
-    document.getElementById("cuotas-row").innerHTML = `<div class="sum-row" style="color:#5a2d9c"><span>3 cuotas sin interés</span><span>${fmt(cuota)} c/u</span></div>`;
-    document.getElementById("total-amount").textContent = fmt(sub);
-  }
-
-  updateCta();
-}
-
 function validate() {
   const fields = ["inp-nombre","inp-apellido","inp-tel","inp-email"];
   let ok = true;
@@ -238,7 +147,6 @@ function validate() {
   return ok;
 }
 
-
 async function submitOrder() {
   if (!validate()) return;
 
@@ -248,14 +156,8 @@ async function submitOrder() {
   const email    = document.getElementById("inp-email").value.trim();
   const cart     = getCart();
   const sub      = cart.reduce((s, i) => s + i.precio * i.qty, 0);
-
-  // Calcular descuento y total según método de pago
-  let descuento = 0, total = sub;
-  if (selectedPago === "transferencia") {
-    descuento = Math.round(sub * 0.11); // 11% descuento
-    total = sub - descuento;
-  }
-  // Para Nave: sin descuento, total = sub
+  const descuento = Math.round(sub * 0.11);
+  const total    = sub - descuento;
 
   try {
     // 0. Registrar/obtener cliente
@@ -283,7 +185,7 @@ async function submitOrder() {
 
     const idPedido = pedidoIdData.nextId;
 
-    // 2. Guardar orden en Sheets (7 Órdenes y 3 Pedidos)
+    // 2. Guardar orden en Sheets
     const orderRes = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -295,7 +197,7 @@ async function submitOrder() {
         descuento,
         codigo: "",
         total,
-        pago: selectedPago,
+        pago: "transferencia",
         envio: "retiro",
         direccion: "", cp: "", localidad: "",
       }),
@@ -318,64 +220,22 @@ async function submitOrder() {
         subtotal: sub,
         descuento,
         total,
-        pago: selectedPago,
+        pago: "transferencia",
         envio: "retiro",
       }),
-    }).catch(() => {}); // No fallar si el email falla
+    }).catch(() => {});
 
     // 4. Guardar en sessionStorage
     sessionStorage.setItem("nord_last_order", JSON.stringify({
       idPedido, codigoCliente, items: cart,
       subtotal: sub, descuento, total,
-      pago: selectedPago, envio: "retiro",
+      pago: "transferencia", envio: "retiro",
     }));
 
-    // 5. Redirigir según método de pago
-    if (selectedPago === "nave") {
-      // Crear intención de pago en Nave
-      const naveRes = await fetch("/api/nave/create-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          orderId: idPedido,
-          total: Math.round(total),
-          nombreCliente: nombre + " " + apellido,
-          email,
-          telefono: tel,
-          items: cart,
-        }),
-      });
-
-      const naveData = await naveRes.json();
-      if (!naveData.success) {
-        let errMsg = naveData.error || "desconocido";
-        if (naveData.details) {
-          errMsg += "\n" + (typeof naveData.details === "string" ? naveData.details : JSON.stringify(naveData.details, null, 2));
-        }
-        alert("Error con Nave:\n" + errMsg);
-        return;
-      }
-
-      // Redirigir a checkout de Nave
-      window.location.href = naveData.checkout_url;
-    } else {
-      // Redirigir a página de pago por transferencia
-      window.location.href = "/pago-transferencia";
-    }
+    // 5. Redirigir a pago
+    window.location.href = "/pago-transferencia";
   } catch (err) {
     alert("Error: " + err.message);
-  }
-}
-
-function updateCta() {
-  const cta = document.getElementById("cta-btn");
-  if (!cta) return;
-  if (selectedPago === "nave") {
-    cta.textContent = "🔒 Pagar con Nave";
-    cta.className = "btn-nave";
-  } else {
-    cta.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> Confirmar pedido por WhatsApp`;
-    cta.className = "btn-wp";
   }
 }
 
@@ -389,6 +249,8 @@ function render() {
   }
 
   const sub = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+  const descuento = Math.round(sub * 0.11);
+  const total = sub - descuento;
   const totalItems = cart.reduce((s, i) => s + i.qty, 0);
 
   const itemsHtml = cart.map(i => `
@@ -410,14 +272,11 @@ function render() {
 
   grid.innerHTML = `
     <div class="left">
-
-      <!-- ITEMS -->
       <div class="section-block">
         <p class="section-block-title">Artículos (${totalItems})</p>
         ${itemsHtml}
       </div>
 
-      <!-- DATOS OBLIGATORIOS -->
       <div class="section-block">
         <p class="section-block-title">Tus datos</p>
         <div class="form-row">
@@ -426,7 +285,7 @@ function render() {
             <input id="inp-nombre" type="text" placeholder="Ej: María" required oninput="this.classList.remove('field-error')">
           </div>
           <div class="form-group">
-            <label>Apellido de familia<span class="req">*</span></label>
+            <label>Apellido<span class="req">*</span></label>
             <input id="inp-apellido" type="text" placeholder="Ej: García" required oninput="this.classList.remove('field-error')">
           </div>
         </div>
@@ -442,12 +301,11 @@ function render() {
         </div>
       </div>
 
-      <!-- ENVÍO -->
       <div class="section-block">
-        <p class="section-block-title">Método de envío</p>
+        <p class="section-block-title">Envío</p>
         <div class="radio-options">
-          <label class="radio-option ${selectedEnvio === 'retiro' ? 'selected' : ''}" data-envio="retiro" onclick="selectEnvio('retiro')">
-            <input type="radio" name="envio" ${selectedEnvio === 'retiro' ? 'checked' : ''}>
+          <label class="radio-option selected" onclick="this.classList.add('selected')">
+            <input type="radio" name="envio" checked>
             <div class="radio-label">
               <div class="radio-title"><span>Retiro en Barrio Habitat</span><span class="badge badge-green">Gratis</span></div>
               <p class="radio-desc">Pilar, Buenos Aires. Coordinamos día y horario por WhatsApp.</p>
@@ -455,59 +313,18 @@ function render() {
           </label>
         </div>
       </div>
-
-      <!-- PAGO -->
-      <div class="section-block">
-        <p class="section-block-title">Método de pago</p>
-        <div class="radio-options">
-
-          <label class="radio-option ${selectedPago === 'transferencia' ? 'selected' : ''}" data-pago="transferencia" onclick="selectPago('transferencia')">
-            <input type="radio" name="pago" ${selectedPago === 'transferencia' ? 'checked' : ''}>
-            <div class="radio-label">
-              <div class="radio-title"><span>Transferencia bancaria</span><span class="badge badge-green">Sin comisión</span></div>
-              <p class="radio-desc">Transferí al CBU de NORD y avisanos por WhatsApp con el comprobante.</p>
-              <div class="pago-detail ${selectedPago === 'transferencia' ? 'show' : ''}" id="pago-transferencia">
-                <div class="cbu-block">
-                  <div>Titular: <strong>${TITULAR}</strong></div>
-                  <div class="cbu-row">CBU: <span class="cbu-val">${CBU}</span>
-                    <button class="copy-btn" data-val="${CBU}" onclick="copyText('${CBU}')">Copiar</button>
-                  </div>
-                  <div class="cbu-row">Alias: <span class="cbu-val">${ALIAS}</span>
-                    <button class="copy-btn" data-val="${ALIAS}" onclick="copyText('${ALIAS}')">Copiar</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </label>
-
-          <label class="radio-option ${selectedPago === 'nave' ? 'selected' : ''}" data-pago="nave" onclick="selectPago('nave')">
-            <input type="radio" name="pago" ${selectedPago === 'nave' ? 'checked' : ''}>
-            <div class="radio-label">
-              <div class="radio-title"><span><span class="nave-logo">nave</span> · Tarjetas y billeteras</span><span class="badge badge-orange">+comisión</span></div>
-              <p class="radio-desc">Visa, Mastercard, débito, MODO, Naranja X y más.</p>
-              <div class="pago-detail ${selectedPago === 'nave' ? 'show' : ''}" id="pago-nave">
-                <div class="nave-info">Serás redirigido al checkout seguro de <strong>nave</strong> para completar el pago. Disponible ahora. ✓</div>
-              </div>
-            </div>
-          </label>
-
-        </div>
-      </div>
-
     </div>
 
-    <!-- RESUMEN -->
     <div class="summary-panel">
       <p class="summary-title">Resumen del pedido</p>
       ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(i.precio*i.qty)}</span></div>`).join("")}
-      <div class="sum-row"><span>Envío</span><span id="sum-envio">Gratis (Retiro)</span></div>
-      <div id="descuento-row"></div>
-      <div id="cuotas-row"></div>
-      <div class="sum-row total"><span>Total</span><span id="total-amount">${fmt(sub)}</span></div>
+      <div class="sum-row"><span>Envío</span><span>Gratis (Retiro)</span></div>
+      <div class="sum-row" style="color:#2e7d52"><span>Descuento 11%</span><span>-${fmt(descuento)}</span></div>
+      <div class="sum-row total"><span>Total</span><span>${fmt(total)}</span></div>
 
-      <button class="btn-wp" id="cta-btn" onclick="submitOrder()">
+      <button class="btn-wp" onclick="submitOrder()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        Confirmar pedido por WhatsApp
+        Confirmar pedido
       </button>
       <p class="note">Todos los campos con <span style="color:#c0392b">*</span> son obligatorios.</p>
     </div>`;

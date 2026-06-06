@@ -3,818 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wellspring Pilar — NORD Uniformes</title>
-  <meta name="description" content="Catálogo de uniformes escolares Wellspring Pilar. Consultá stock, elegí talle y pedí por WhatsApp.">
+  <title>NORD Uniformes</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" href="/api/products" as="fetch" crossorigin="anonymous">
-  <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --azul:      #1E2D4A;
-      --azul-900:  #0F172E;
-      --azul-600:  #34466A;
-      --azul-400:  #6B7B9C;
-      --dorado:    #C8A96E;
-      --dorado-700:#A6884B;
-      --dorado-300:#E0CBA0;
-      --niebla:    #8A9AB5;
-      --niebla-200:#D3DAE5;
-      --crema:     #F4F1EA;
-      --crema-2:   #ECE7DC;
-      --blanco:    #FFFFFF;
-      --negro:     #0A0E18;
-      --sans:      "Mulish", system-ui, sans-serif;
-      --serif:     "Cormorant Garamond", serif;
-      --pad-x:     clamp(20px, 5vw, 80px);
-      --max:       1280px;
+      --azul:#1E2D4A;--azul-900:#0F172E;--azul-600:#34466A;--azul-400:#6B7B9C;
+      --dorado:#C8A96E;--dorado-700:#A6884B;--dorado-300:#E0CBA0;
+      --niebla:#8A9AB5;--niebla-200:#D3DAE5;
+      --crema:#F4F1EA;--crema-2:#ECE7DC;--blanco:#FFFFFF;
+      --sans:"Mulish",system-ui,sans-serif;--serif:"Cormorant Garamond",serif;
+      --pad-x:clamp(20px,5vw,80px);--max:1280px;
     }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: var(--sans);
-      background-color: var(--crema);
-      color: var(--azul-900);
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
-    }
-    img { max-width: 100%; display: block; }
-    a { text-decoration: none; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--sans);background:var(--crema);color:var(--azul-900);line-height:1.55;-webkit-font-smoothing:antialiased}
+    img{max-width:100%;display:block}
+    a{text-decoration:none}
 
-    /* ANNOUNCEMENT */
-    .announcement-bar {
-      background-color: var(--azul-900);
-      color: var(--dorado-300);
-      text-align: center;
-      padding: 10px var(--pad-x);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-    }
+    header{background:rgba(244,241,234,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(30,45,74,.08);position:sticky;top:0;z-index:100}
+    .header-container{max-width:var(--max);margin:0 auto;padding:0 var(--pad-x);height:64px;display:flex;justify-content:space-between;align-items:center}
+    .brand-logo .nord{font-weight:900;font-size:22px;letter-spacing:.06em;display:block;color:var(--azul-900)}
+    .brand-logo .uniformes{font-weight:300;font-size:6px;letter-spacing:.55em;display:block;margin-top:2px;padding-left:.55em;color:var(--azul-900)}
+    .cart-btn{background:none;border:1px solid rgba(30,45,74,.2);padding:10px 14px;cursor:pointer;border-radius:8px;font-weight:700;font-size:11px;color:var(--azul);position:relative}
+    .cart-badge{position:absolute;top:-8px;right:-8px;background:var(--dorado);color:var(--azul-900);font-weight:800;font-size:10px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 
-    /* HEADER */
-    header {
-      background-color: rgba(244,241,234,0.92);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(30,45,74,0.08);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .header-container {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 0 var(--pad-x);
-      height: 64px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .brand-logo { color: var(--azul-900); line-height: 0.88; }
-    .brand-logo .nord { font-weight: 900; font-size: 22px; letter-spacing: 0.06em; display: block; }
-    .brand-logo .uniformes { font-weight: 300; font-size: 6px; letter-spacing: 0.55em; display: block; margin-top: 2px; padding-left: 0.55em; }
-    .header-right { display: flex; align-items: center; gap: 16px; }
-    nav { display: flex; gap: 4px; }
-    nav a {
-      color: var(--azul);
-      font-size: 11px;
-      font-weight: 600;
-      padding: 10px 16px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      opacity: 0.65;
-      transition: opacity 0.2s, color 0.2s;
-    }
-    nav a:hover, nav a.active { opacity: 1; color: var(--dorado-700); }
+    .hero{max-width:var(--max);margin:0 auto;padding:60px var(--pad-x);display:grid;grid-template-columns:2fr 1fr;gap:40px;align-items:center}
+    .hero-content h1{font-size:clamp(32px,6vw,56px);font-weight:900;letter-spacing:-.02em;margin-bottom:24px;line-height:1.1}
+    .hero-content p{font-size:18px;color:var(--azul-600);margin-bottom:32px;line-height:1.6}
+    .hero-sidebar{background:var(--azul-900);color:var(--crema);padding:40px 32px;border-radius:14px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:20px}
+    .hero-sidebar h3{font-size:24px;font-weight:900;font-family:var(--serif);font-style:italic}
+    .hero-sidebar p{font-size:14px;color:var(--crema);margin-bottom:20px}
+    .hero-sidebar a{background:var(--dorado);color:var(--azul-900);padding:14px 28px;border-radius:10px;font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase;display:inline-block;transition:background .2s}
+    .hero-sidebar a:hover{background:var(--dorado-700)}
 
-    /* CARRITO ICON */
-    .cart-btn {
-      position: relative;
-      background: none;
-      border: 1px solid rgba(30,45,74,0.2);
-      padding: 10px 14px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--sans);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--azul);
-      transition: all 0.2s;
-    }
-    .cart-btn:hover { background-color: var(--azul-900); color: var(--crema); border-color: var(--azul-900); }
-    .cart-count {
-      background-color: var(--dorado);
-      color: var(--azul-900);
-      font-size: 10px;
-      font-weight: 800;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-    }
-    .cart-count.hidden { display: none; }
+    .catalog{max-width:var(--max);margin:0 auto;padding:0 var(--pad-x) 80px}
+    .catalog-title{font-size:28px;font-weight:900;margin-bottom:40px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:28px}
 
-    /* CATALOG SECTION */
-    .catalog {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 56px var(--pad-x) 80px;
-    }
-    .catalog-header {
-      margin-bottom: 48px;
-      border-bottom: 1px solid var(--niebla-200);
-      padding-bottom: 32px;
-    }
-    .catalog-school-title {
-      font-size: clamp(48px, 10vw, 100px);
-      font-weight: 900;
-      letter-spacing: -0.03em;
-      line-height: 0.9;
-      color: var(--azul-900);
-      margin-bottom: 12px;
-    }
-    .catalog-subtitle {
-      font-family: var(--serif);
-      font-style: italic;
-      font-size: clamp(15px, 1.8vw, 19px);
-      color: var(--azul-400);
-      margin-bottom: 32px;
-    }
+    .card{background:var(--blanco);border:1px solid var(--niebla-200);border-radius:14px;overflow:hidden;transition:box-shadow .2s,transform .2s}
+    .card:hover{box-shadow:0 4px 20px rgba(30,45,74,.1);transform:translateY(-2px)}
+    .card-img{width:100%;height:200px;object-fit:cover;background:var(--crema-2)}
+    .card-body{padding:20px}
+    .card-name{font-size:14px;font-weight:700;margin-bottom:8px}
+    .card-price{font-size:16px;font-weight:800;color:var(--dorado);margin-bottom:16px}
+    .card-talle{font-size:11px;color:var(--azul-400);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;font-weight:600}
+    .talle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+    .talle-btn{background:var(--crema-2);border:1px solid var(--niebla-200);padding:8px;font-size:10px;cursor:pointer;border-radius:6px;font-weight:600;transition:all .15s}
+    .talle-btn:hover{background:var(--azul-900);color:var(--crema);border-color:var(--azul-900)}
+    .talle-btn.selected{background:var(--azul-900);color:var(--crema);border-color:var(--azul-900)}
+    .qty-wrap{display:flex;gap:6px;align-items:center;margin-bottom:12px}
+    .qty-btn{width:24px;height:24px;border:1px solid var(--niebla-200);background:none;cursor:pointer;border-radius:4px;font-weight:600;transition:all .15s}
+    .qty-btn:hover{background:var(--azul-900);color:var(--crema);border-color:var(--azul-900)}
+    .qty-num{flex:1;text-align:center;font-weight:600}
+    .btn-add{width:100%;background:var(--dorado);color:var(--azul-900);border:none;padding:11px;font-weight:800;cursor:pointer;border-radius:8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;transition:background .2s}
+    .btn-add:hover{background:var(--dorado-700)}
+    .btn-add:disabled{background:var(--niebla-200);color:var(--azul-400);cursor:not-allowed}
 
-    /* BUSCADOR */
-    .search-wrap {
-      position: relative; margin-bottom: 28px;
-    }
-    .search-input {
-      width: 100%; border: 1.5px solid var(--niebla-200);
-      background: var(--blanco); padding: 12px 16px 12px 42px;
-      font-family: var(--sans); font-size: 14px; color: var(--azul-900);
-      outline: none; transition: border-color .15s;
-    }
-    .search-input:focus { border-color: var(--azul); }
-    .search-input::placeholder { color: var(--niebla); }
-    .search-icon {
-      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-      color: var(--niebla); pointer-events: none;
-    }
-    .search-clear {
-      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; cursor: pointer; color: var(--niebla);
-      display: none; padding: 4px;
-    }
-    .search-clear.visible { display: flex; }
-
-    /* BADGE stock */
-    .badge-stock {
-      display: inline-block; font-size: 10px; font-weight: 800;
-      letter-spacing: .1em; text-transform: uppercase;
-      padding: 3px 8px; margin-bottom: 8px;
-    }
-    .badge-agotado { background: #fde8e8; color: #c0392b; }
-    .badge-ultimas { background: #fff3e0; color: #e65100; }
-
-    /* GUÍA DE TALLES MODAL */
-    .size-guide-overlay {
-      position: fixed; inset: 0; background: rgba(10,14,24,.6);
-      z-index: 400; display: flex; align-items: center; justify-content: center;
-      padding: 20px; opacity: 0; pointer-events: none; transition: opacity .2s;
-    }
-    .size-guide-overlay.open { opacity: 1; pointer-events: all; }
-    .size-guide-modal {
-      background: var(--crema); max-width: 480px; width: 100%;
-      max-height: 80vh; overflow-y: auto; padding: 32px;
-      transform: translateY(10px); transition: transform .2s;
-    }
-    .size-guide-overlay.open .size-guide-modal { transform: translateY(0); }
-    .sg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .sg-title { font-size: 16px; font-weight: 800; letter-spacing: -.01em; }
-    .sg-close { background: none; border: none; cursor: pointer; color: var(--azul-400); padding: 4px; }
-    .sg-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .sg-table th { background: var(--azul-900); color: var(--crema); padding: 8px 12px; font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; text-align: left; }
-    .sg-table td { padding: 9px 12px; border-bottom: 1px solid var(--niebla-200); }
-    .sg-table tr:last-child td { border-bottom: none; }
-    .sg-table tr:nth-child(even) td { background: var(--crema-2); }
-    .sg-note { font-size: 11px; color: var(--azul-400); margin-top: 14px; line-height: 1.5; }
-    .btn-size-guide {
-      background: none; border: 1px solid var(--niebla-200);
-      font-family: var(--sans); font-size: 11px; font-weight: 700;
-      letter-spacing: .14em; text-transform: uppercase; color: var(--azul-400);
-      padding: 6px 14px; cursor: pointer; transition: all .15s;
-      display: inline-flex; align-items: center; gap: 6px;
-    }
-    .btn-size-guide:hover { border-color: var(--azul); color: var(--azul); }
-
-    /* COMPARTIR + AVISAR STOCK */
-    .modal-actions {
-      display: flex; gap: 8px; flex-wrap: wrap;
-    }
-    .btn-share, .btn-notify {
-      flex: 1; border: 1px solid var(--niebla-200); background: none;
-      font-family: var(--sans); font-size: 11px; font-weight: 700;
-      letter-spacing: .12em; text-transform: uppercase;
-      padding: 9px 12px; cursor: pointer; display: flex;
-      align-items: center; justify-content: center; gap: 6px; transition: all .15s;
-      color: var(--azul-600);
-    }
-    .btn-share:hover { border-color: #25D366; color: #25D366; }
-    .btn-notify:hover { border-color: var(--dorado); color: var(--dorado-700); }
-
-    /* DESCRIPCIÓN */
-    .product-desc {
-      font-size: 13px; color: var(--azul-600); line-height: 1.65;
-      border-top: 1px solid var(--niebla-200); padding-top: 14px;
-    }
-
-    /* CATALOG BODY — sidebar + grid */
-    .catalog-body {
-      display: grid;
-      grid-template-columns: 220px 1fr;
-      gap: 40px;
-      align-items: start;
-    }
-
-    /* SIDEBAR */
-    .sidebar {
-      position: sticky;
-      top: 80px;
-    }
-    .sidebar-title {
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.28em;
-      text-transform: uppercase;
-      color: var(--azul-400);
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--niebla-200);
-      margin-bottom: 24px;
-    }
-    .filter-group {
-      margin-bottom: 28px;
-    }
-    .filter-group-title {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--azul-900);
-      margin-bottom: 12px;
-    }
-    .filter-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .filter-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 7px 10px;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: background 0.15s;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--azul-600);
-      user-select: none;
-    }
-    .filter-item:hover { background: var(--crema-2); }
-    .filter-item.active {
-      background: var(--azul-900);
-      color: var(--crema);
-    }
-    .filter-item.active .filter-dot { background: var(--dorado); }
-    .filter-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--niebla-200);
-      flex-shrink: 0;
-    }
-    .filter-count {
-      margin-left: auto;
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--azul-400);
-      opacity: 0.6;
-    }
-    .filter-item.active .filter-count { color: var(--dorado-300); opacity: 1; }
-
-    /* Barra sobre el grid: count + (futuro: orden) */
-    .grid-toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-    .grid-count {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      color: var(--azul-400);
-      text-transform: uppercase;
-    }
-
-    /* PRODUCT GRID */
-    .products-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 28px;
-    }
-
-    /* PRODUCT CARD */
-    .product-card {
-      background: var(--blanco);
-      border: 1px solid var(--niebla-200);
-      display: flex;
-      flex-direction: column;
-      transition: box-shadow 0.2s, transform 0.2s;
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 2px 12px rgba(30,45,74,0.06);
-    }
-    .product-card:hover {
-      box-shadow: 0 12px 36px rgba(15,23,46,0.15);
-      transform: translateY(-4px);
-      cursor: pointer;
-    }
-    .product-img {
-      aspect-ratio: 4/3;
-      overflow: hidden;
-      background-color: var(--crema-2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 14px 14px 0 0;
-    }
-    .product-img img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .product-img-placeholder {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      color: var(--niebla);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-    .product-img-placeholder svg { opacity: 0.3; }
-    .product-body { padding: 24px; flex: 1; display: flex; flex-direction: column; gap: 20px; }
-    .product-name {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--azul-900);
-      letter-spacing: -0.01em;
-      line-height: 1.2;
-    }
-    /* PRECIOS */
-    .price-lista {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--azul-900);
-      line-height: 1.2;
-    }
-    .price-transferencia {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--dorado-700);
-      margin-top: 4px;
-    }
-    .price-transferencia strong {
-      font-size: 17px;
-    }
-    .price-cuotas {
-      margin-top: 8px;
-      border: 1px solid var(--niebla-200);
-      padding: 8px 10px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--azul-600);
-      line-height: 1.4;
-      background: var(--crema-2);
-      border-radius: 6px;
-    }
-    .price-cuotas strong {
-      color: var(--azul-900);
-    }
-
-    /* ADD TO CART BUTTON en card */
-    .btn-agregar {
-      margin-top: auto;
-      background-color: var(--azul-900);
-      color: var(--crema);
-      border: none;
-      padding: 13px;
-      font-family: var(--sans);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: background-color 0.2s, box-shadow 0.2s;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      border-radius: 8px;
-      margin: 20px 24px 24px 24px;
-    }
-    .btn-agregar:hover { background-color: var(--dorado); color: var(--azul-900); box-shadow: 0 4px 12px rgba(200,169,110,0.3); }
-
-    /* ── PRODUCT MODAL ─────────────────────────────────────────────── */
-    .modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(10,14,24,0.55);
-      z-index: 300;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.25s ease;
-      display: flex; align-items: center; justify-content: center;
-      padding: 20px;
-    }
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
-
-    .modal {
-      background: var(--crema);
-      width: 100%;
-      max-width: 800px;
-      max-height: 90vh;
-      overflow-y: auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      position: relative;
-      transform: scale(0.95) translateY(12px);
-      transition: transform 0.25s ease;
-    }
-    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
-
-    /* CARRUSEL EN MODAL */
-    .modal-img {
-      aspect-ratio: 1;
-      background: var(--crema-2);
-      position: relative;
-      overflow: hidden;
-    }
-    .carousel {
-      width: 100%; height: 100%;
-      position: relative;
-    }
-    .carousel-track {
-      display: flex;
-      height: 100%;
-      transition: transform 0.35s cubic-bezier(.4,0,.2,1);
-    }
-    .carousel-slide {
-      min-width: 100%; height: 100%;
-      flex-shrink: 0;
-    }
-    .carousel-slide img {
-      width: 100%; height: 100%; object-fit: cover; display: block;
-    }
-    .carousel-slide.placeholder {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 8px;
-      color: var(--niebla); font-size: 11px; font-weight: 600;
-      letter-spacing: 0.14em; text-transform: uppercase;
-    }
-    .carousel-slide.placeholder svg { opacity: 0.25; }
-
-    .carousel-btn {
-      position: absolute; top: 50%; transform: translateY(-50%);
-      background: rgba(15,23,46,0.55); color: #fff;
-      border: none; width: 36px; height: 36px;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      z-index: 2; transition: background 0.15s;
-    }
-    .carousel-btn:hover { background: rgba(15,23,46,0.85); }
-    .carousel-btn.prev { left: 8px; }
-    .carousel-btn.next { right: 8px; }
-    .carousel-btn.hidden { display: none; }
-
-    .carousel-dots {
-      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 6px; z-index: 2;
-    }
-    .carousel-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: rgba(255,255,255,0.5); border: none; cursor: pointer;
-      padding: 0; transition: background 0.15s;
-    }
-    .carousel-dot.active { background: #fff; }
-
-    .modal-img-placeholder {
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      color: var(--niebla); font-size: 11px; font-weight: 600;
-      letter-spacing: 0.14em; text-transform: uppercase;
-      height: 100%; justify-content: center;
-    }
-    .modal-img-placeholder svg { opacity: 0.25; }
-
-    .modal-body {
-      padding: 32px 28px;
-      display: flex; flex-direction: column; gap: 20px;
-    }
-    .modal-close {
-      position: absolute; top: 14px; right: 14px;
-      background: var(--azul-900); color: var(--crema);
-      border: none; width: 32px; height: 32px;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s; z-index: 2;
-    }
-    .modal-close:hover { background: var(--dorado); color: var(--azul-900); }
-
-    .modal-name {
-      font-size: 22px; font-weight: 900; letter-spacing: -0.01em;
-      line-height: 1.15; color: var(--azul-900);
-    }
-
-    /* Talle selector en modal */
-    .modal-talle-label {
-      font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
-      text-transform: uppercase; color: var(--azul-400); margin-bottom: 10px;
-    }
-    .modal-talles { display: flex; flex-wrap: wrap; gap: 7px; }
-    .modal-talle-btn {
-      border: 1.5px solid var(--niebla-200);
-      background: none; padding: 7px 14px;
-      font-family: var(--sans); font-size: 13px; font-weight: 700;
-      color: var(--azul); cursor: pointer; transition: all 0.15s;
-      position: relative;
-    }
-    .modal-talle-btn:hover:not(.sin-stock) {
-      border-color: var(--azul); background: var(--azul); color: var(--crema);
-    }
-    .modal-talle-btn.selected {
-      border-color: var(--dorado); background: var(--dorado); color: var(--azul-900);
-    }
-    .modal-talle-btn.sin-stock {
-      opacity: 0.28; cursor: not-allowed; text-decoration: line-through;
-    }
-    .talle-stock-hint {
-      font-size: 11px; color: var(--azul-400); margin-top: 8px;
-    }
-
-    .btn-modal-agregar {
-      background: var(--azul-900); color: var(--crema);
-      border: none; padding: 15px;
-      font-family: var(--sans); font-size: 12px; font-weight: 800;
-      letter-spacing: 0.16em; text-transform: uppercase;
-      cursor: pointer; transition: background 0.2s; width: 100%;
-    }
-    .btn-modal-agregar:hover { background: var(--dorado); color: var(--azul-900); }
-    .btn-modal-agregar:disabled {
-      background: var(--niebla-200); color: var(--azul-400); cursor: not-allowed;
-    }
-    .btn-modal-agregar.added { background: #2e7d52; }
-
-    @media (max-width: 600px) {
-      .modal { grid-template-columns: 1fr; }
-      .modal-img { aspect-ratio: 4/3; }
-    }
-
-    /* ── CART DRAWER ────────────────────────────────────────────────── */
-    .drawer-overlay {
-      position: fixed; inset: 0;
-      background: rgba(10,14,24,0.45);
-      z-index: 200;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-    .drawer-overlay.open { opacity: 1; pointer-events: all; }
-
-    .cart-drawer {
-      position: fixed; top: 0; right: 0; bottom: 0;
-      width: 420px; max-width: 100vw;
-      background: var(--crema);
-      z-index: 201;
-      display: flex; flex-direction: column;
-      transform: translateX(100%);
-      transition: transform 0.35s cubic-bezier(.4,0,.2,1);
-      box-shadow: -8px 0 40px rgba(10,14,24,0.15);
-    }
-    .cart-drawer.open { transform: translateX(0); }
-
-    .drawer-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--niebla-200);
-      flex-shrink: 0;
-    }
-    .drawer-header h2 {
-      font-size: 14px; font-weight: 800;
-      letter-spacing: 0.16em; text-transform: uppercase;
-      color: var(--azul-900);
-    }
-    .drawer-close {
-      background: none; border: none; cursor: pointer;
-      color: var(--azul-400); padding: 4px;
-      display: flex; align-items: center;
-      transition: color 0.15s;
-    }
-    .drawer-close:hover { color: var(--azul-900); }
-
-    .drawer-items {
-      flex: 1; overflow-y: auto;
-      padding: 16px 24px;
-      display: flex; flex-direction: column; gap: 0;
-    }
-    .drawer-empty {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 12px; color: var(--azul-400);
-      font-size: 13px; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase;
-    }
-    .drawer-empty svg { opacity: 0.2; }
-
-    .drawer-item {
-      display: flex; align-items: center; gap: 14px;
-      padding: 14px 0;
-      border-bottom: 1px solid var(--niebla-200);
-    }
-    .drawer-item:first-child { border-top: 1px solid var(--niebla-200); }
-    .drawer-item-info { flex: 1; min-width: 0; }
-    .drawer-item-name { font-size: 14px; font-weight: 700; color: var(--azul-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .drawer-item-sub  { font-size: 11px; font-weight: 600; color: var(--azul-400); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
-    .drawer-item-price { font-size: 14px; font-weight: 700; color: var(--azul-900); white-space: nowrap; }
-    .drawer-qty {
-      display: flex; align-items: center; gap: 8px;
-    }
-    .drawer-qty-btn {
-      width: 26px; height: 26px; border: 1px solid var(--niebla-200);
-      background: none; font-size: 15px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--azul); transition: all 0.15s;
-    }
-    .drawer-qty-btn:hover { background: var(--azul-900); color: var(--crema); border-color: var(--azul-900); }
-    .drawer-qty-num { font-size: 13px; font-weight: 700; min-width: 16px; text-align: center; }
-    .drawer-remove {
-      background: none; border: none; cursor: pointer;
-      color: var(--niebla); padding: 4px; display: flex;
-      transition: color 0.15s;
-    }
-    .drawer-remove:hover { color: #c0392b; }
-
-    .drawer-footer {
-      padding: 20px 24px;
-      border-top: 1px solid var(--niebla-200);
-      flex-shrink: 0;
-      background: var(--crema);
-    }
-    .drawer-total-row {
-      display: flex; justify-content: space-between;
-      font-size: 18px; font-weight: 800;
-      color: var(--azul-900); margin-bottom: 16px;
-    }
-    .drawer-total-label { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--azul-400); display: block; margin-bottom: 2px; }
-    .btn-checkout {
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-      width: 100%; background: var(--azul-900); color: var(--crema);
-      border: none; padding: 15px; font-family: var(--sans);
-      font-size: 12px; font-weight: 800; letter-spacing: 0.16em;
-      text-transform: uppercase; cursor: pointer; transition: background 0.2s;
-    }
-    .btn-checkout:hover { background: var(--dorado); color: var(--azul-900); }
-    .btn-keep-shopping {
-      display: block; text-align: center; margin-top: 10px;
-      font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
-      text-transform: uppercase; color: var(--azul-400);
-      cursor: pointer; transition: color 0.15s;
-      background: none; border: none; width: 100%;
-    }
-    .btn-keep-shopping:hover { color: var(--azul-900); }
-
-    /* TOAST */
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background-color: var(--azul-900);
-      color: var(--crema);
-      padding: 12px 24px;
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      z-index: 999;
-      transition: transform 0.3s ease;
-      white-space: nowrap;
-    }
-    .toast.show { transform: translateX(-50%) translateY(0); }
-
-    /* LOADING / ERROR */
-    .status-msg {
-      text-align: center;
-      padding: 80px 20px;
-      color: var(--azul-400);
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    /* SKELETON */
-    .skeleton-card {
-      background: var(--blanco);
-      border: 1px solid var(--niebla-200);
-    }
-    .skeleton-img {
-      aspect-ratio: 4/3;
-      background: linear-gradient(90deg, var(--crema-2) 25%, #e8e4db 50%, var(--crema-2) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-    }
-    .skeleton-body { padding: 24px; display: flex; flex-direction: column; gap: 12px; }
-    .skeleton-line {
-      height: 14px;
-      border-radius: 2px;
-      background: linear-gradient(90deg, var(--crema-2) 25%, #e8e4db 50%, var(--crema-2) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-    }
-    .skeleton-line.title { height: 20px; width: 65%; }
-    .skeleton-line.price { height: 24px; width: 40%; }
-    .skeleton-line.short { height: 12px; width: 80%; }
-    .skeleton-talles { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-    .skeleton-talle {
-      width: 36px; height: 32px;
-      background: linear-gradient(90deg, var(--crema-2) 25%, #e8e4db 50%, var(--crema-2) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-    }
-    .skeleton-btn {
-      height: 44px; margin-top: 8px;
-      background: linear-gradient(90deg, var(--crema-2) 25%, #e8e4db 50%, var(--crema-2) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-    }
-    @keyframes shimmer {
-      0%   { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
-    /* FOOTER */
-    footer {
-      background-color: var(--azul-900);
-      color: var(--niebla);
-      padding: 48px var(--pad-x) 32px;
-      margin-top: 80px;
-    }
-    .footer-inner {
-      max-width: var(--max);
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 32px;
-      flex-wrap: wrap;
-    }
-    .footer-brand .nord { color: var(--crema); font-weight: 900; font-size: 18px; letter-spacing: 0.06em; }
-    .footer-brand .uniformes { color: var(--niebla); font-weight: 300; font-size: 6px; letter-spacing: 0.55em; margin-top: 2px; padding-left: 0.55em; }
-    .footer-text { font-size: 12px; margin-top: 12px; max-width: 28ch; line-height: 1.6; }
-    .footer-bottom {
-      max-width: var(--max);
-      margin: 32px auto 0;
-      padding-top: 24px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      font-size: 11px;
-      color: rgba(138,154,181,0.5);
-    }
-
-    @media (max-width: 900px) {
-      .catalog-body { grid-template-columns: 1fr; }
-      .sidebar { position: static; }
-      .filter-list { flex-direction: row; flex-wrap: wrap; gap: 8px; }
-      .filter-item { padding: 6px 14px; border: 1px solid var(--niebla-200); }
-      .filter-item.active { background: var(--azul-900); }
-      .filter-count { display: none; }
-      .sidebar-title { display: none; }
-      .filter-group-title { display: none; }
-      .products-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-    }
-    @media (max-width: 500px) {
-      .products-grid { grid-template-columns: 1fr; gap: 16px; }
-      nav { display: none; }
-      .catalog-school-title { font-size: clamp(40px, 14vw, 72px); }
+    @media(max-width:900px){
+      .hero{grid-template-columns:1fr}
+      .hero-sidebar{grid-row:1}
+      .grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
     }
   </style>
 </head>
 <body>
-
-<div class="announcement-bar">Talles 4 al 18 · Entrega coordinada · Pagá por transferencia sin costo extra</div>
 
 <header>
   <div class="header-container">
@@ -822,634 +75,129 @@
       <span class="nord">NORD</span>
       <span class="uniformes">UNIFORMES</span>
     </a>
-    <div class="header-right">
-      <nav>
-        <a href="/">Inicio</a>
-        <a href="/wellspring" class="active">Wellspring</a>
-      </nav>
-      <button class="cart-btn" onclick="window.location.href='/carrito'">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-        Carrito
-        <span class="cart-count hidden" id="cart-count">0</span>
-      </button>
-    </div>
+    <button class="cart-btn" onclick="window.location.href='/carrito'">
+      🛒 Carrito
+      <span class="cart-badge" id="cart-count" style="display:none">0</span>
+    </button>
   </div>
 </header>
 
-<section class="catalog">
-  <div class="catalog-header">
-    <h1 class="catalog-school-title">WELLSPRING</h1>
-    <p class="catalog-subtitle">Seleccioná tu talle y pedí por WhatsApp. Coordinamos pago y entrega.</p>
+<div class="hero">
+  <div class="hero-content">
+    <h1>Uniformes escolares de calidad</h1>
+    <p>Diseñados para comodidad y durabilidad. Elegí talle, cantidad y confirmá tu compra.</p>
   </div>
-
-  <div class="catalog-body">
-
-
-    <!-- SIDEBAR DE FILTROS -->
-    <aside class="sidebar">
-      <p class="sidebar-title">Filtrar</p>
-
-      <div class="filter-group">
-        <p class="filter-group-title">Nivel</p>
-        <ul class="filter-list" id="filter-nivel">
-          <li class="filter-item active" data-nivel="todos" onclick="filterNivel(this)">
-            <span class="filter-dot"></span>
-            Todos
-            <span class="filter-count" id="count-todos"></span>
-          </li>
-          <li class="filter-item" data-nivel="kinder" onclick="filterNivel(this)">
-            <span class="filter-dot"></span>
-            Kinder
-            <span class="filter-count" id="count-kinder"></span>
-          </li>
-          <li class="filter-item" data-nivel="primaria" onclick="filterNivel(this)">
-            <span class="filter-dot"></span>
-            Primaria
-            <span class="filter-count" id="count-primaria"></span>
-          </li>
-          <li class="filter-item" data-nivel="secundaria" onclick="filterNivel(this)">
-            <span class="filter-dot"></span>
-            Secundaria
-            <span class="filter-count" id="count-secundaria"></span>
-          </li>
-        </ul>
-      </div>
-    </aside>
-
-    <!-- GRID DE PRODUCTOS -->
-    <div>
-      <!-- BUSCADOR -->
-      <div class="search-wrap">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input class="search-input" id="search-input" type="text" placeholder="Buscar prenda..." oninput="handleSearch(this.value)">
-        <button class="search-clear" id="search-clear" onclick="clearSearch()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-
-      <div class="grid-toolbar">
-        <span class="grid-count" id="grid-count"></span>
-      </div>
-      <div id="products-container" class="products-grid">
-        <!-- Skeletons visibles mientras carga -->
-        <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line title"></div><div class="skeleton-line price"></div><div class="skeleton-line short"></div><div class="skeleton-talles"><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div></div><div class="skeleton-btn"></div></div></div>
-        <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line title"></div><div class="skeleton-line price"></div><div class="skeleton-line short"></div><div class="skeleton-talles"><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div></div><div class="skeleton-btn"></div></div></div>
-        <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line title"></div><div class="skeleton-line price"></div><div class="skeleton-line short"></div><div class="skeleton-talles"><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div><div class="skeleton-talle"></div></div><div class="skeleton-btn"></div></div></div>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- GUÍA DE TALLES -->
-<div class="size-guide-overlay" id="sg-overlay" onclick="handleSgClick(event)">
-  <div class="size-guide-modal">
-    <div class="sg-header">
-      <span class="sg-title">Guía de talles</span>
-      <button class="sg-close" onclick="closeSizeGuide()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <table class="sg-table">
-      <thead><tr><th>Talle</th><th>Altura aprox.</th><th>Edad aprox.</th></tr></thead>
-      <tbody>
-        <tr><td>1</td><td>80 – 86 cm</td><td>12 – 18 meses</td></tr>
-        <tr><td>2</td><td>86 – 92 cm</td><td>2 años</td></tr>
-        <tr><td>3</td><td>92 – 98 cm</td><td>3 años</td></tr>
-        <tr><td>4</td><td>98 – 104 cm</td><td>4 años</td></tr>
-        <tr><td>6</td><td>104 – 116 cm</td><td>5 – 6 años</td></tr>
-        <tr><td>8</td><td>116 – 128 cm</td><td>7 – 8 años</td></tr>
-        <tr><td>10</td><td>128 – 140 cm</td><td>9 – 10 años</td></tr>
-        <tr><td>12</td><td>140 – 152 cm</td><td>11 – 12 años</td></tr>
-        <tr><td>14</td><td>152 – 158 cm</td><td>13 – 14 años</td></tr>
-        <tr><td>16</td><td>158 – 164 cm</td><td>15 – 16 años</td></tr>
-        <tr><td>38</td><td>158 – 162 cm</td><td>Adulto S</td></tr>
-        <tr><td>S</td><td>155 – 160 cm</td><td>–</td></tr>
-        <tr><td>M</td><td>160 – 165 cm</td><td>–</td></tr>
-        <tr><td>L</td><td>165 – 170 cm</td><td>–</td></tr>
-        <tr><td>XL</td><td>170 – 175 cm</td><td>–</td></tr>
-        <tr><td>XXL</td><td>175+ cm</td><td>–</td></tr>
-      </tbody>
-    </table>
-    <p class="sg-note">* Las medidas son aproximadas. Si el niño/a está en el límite entre dos talles, recomendamos el talle más grande para mayor durabilidad.</p>
+  <div class="hero-sidebar">
+    <h3>Wellspring</h3>
+    <p>Tienda oficial del colegio Wellspring Pilar</p>
+    <a href="#productos">Entrar a la tienda</a>
   </div>
 </div>
 
-<!-- PRODUCT MODAL -->
-<div class="modal-overlay" id="modal-overlay" onclick="handleModalOverlayClick(event)">
-  <div class="modal" id="product-modal">
-    <button class="modal-close" onclick="closeModal()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-    <div class="modal-img" id="modal-img"></div>
-    <div class="modal-body" id="modal-body"></div>
-  </div>
+<div class="catalog">
+  <h2 class="catalog-title" id="productos">Nuestros productos</h2>
+  <div class="grid" id="grid"></div>
 </div>
-
-<!-- OVERLAY -->
-<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
-
-<!-- CART DRAWER -->
-<div class="cart-drawer" id="cart-drawer">
-  <div class="drawer-header">
-    <h2>Tu carrito</h2>
-    <button class="drawer-close" onclick="closeDrawer()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-  </div>
-  <div class="drawer-items" id="drawer-items">
-    <div class="drawer-empty">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-      Tu carrito está vacío
-    </div>
-  </div>
-  <div class="drawer-footer" id="drawer-footer" style="display:none">
-    <div class="drawer-total-row">
-      <div>
-        <span class="drawer-total-label">Total</span>
-        <span id="drawer-total">$0</span>
-      </div>
-    </div>
-    <button class="btn-checkout" onclick="window.location.href='/carrito'">
-      Ir al checkout
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-    </button>
-    <button class="btn-keep-shopping" onclick="closeDrawer()">Seguir comprando</button>
-  </div>
-</div>
-
-<footer>
-  <div class="footer-inner">
-    <div class="footer-brand">
-      <div class="nord">NORD</div>
-      <div class="uniformes">UNIFORMES</div>
-      <p class="footer-text">Uniformes escolares para Zona Norte del Gran Buenos Aires.</p>
-    </div>
-  </div>
-  <div class="footer-bottom">© 2025 NORD Uniformes · norduniformes.com.ar</div>
-</footer>
-
-<div class="toast" id="toast"></div>
 
 <script>
-  const WHATSAPP_NUMBER = "5491122913796";
-  const DESCUENTO_TRANSFERENCIA = 0.10; // 10%
-  const CUOTAS = 3;
+function getCart() { try { return JSON.parse(localStorage.getItem("nord_cart") || "[]"); } catch { return []; } }
+function saveCart(c) { localStorage.setItem("nord_cart", JSON.stringify(c)); }
+function fmt(n) { return "$" + Number(n).toLocaleString("es-AR"); }
+function updateCartBadge() {
+  const cart = getCart();
+  const count = cart.reduce((s, i) => s + i.qty, 0);
+  const badge = document.getElementById("cart-count");
+  if (count > 0) { badge.textContent = count; badge.style.display = "flex"; }
+  else badge.style.display = "none";
+}
 
-  function fmt(n) { return "$" + Math.round(Number(n)).toLocaleString("es-AR"); }
+async function render() {
+  try {
+    const res = await fetch("/api/products");
+    const products = await res.json();
 
-  function buildModalPriceHtml(precio, esDesde = false) {
-    if (!precio) return `<div class="price-lista" style="color:var(--azul-400);font-size:14px">Sin precio cargado</div>`;
-    const precioTransf = Math.round(precio * (1 - DESCUENTO_TRANSFERENCIA));
-    const precioCuota  = Math.round(precio / CUOTAS);
-    return `
-      <div class="price-lista">${esDesde ? "Desde " : ""}${fmt(precio)}</div>
-      <div class="price-transferencia"><strong>${fmt(precioTransf)}</strong> con transferencia
-        <span style="font-size:11px;background:var(--dorado);color:var(--azul-900);padding:1px 6px;font-weight:800">${Math.round(DESCUENTO_TRANSFERENCIA*100)}% OFF</span>
-      </div>
-      <div class="price-cuotas">${CUOTAS} cuotas sin interés de <strong>${fmt(precioCuota)}</strong></div>`;
-  }
-
-  function buildCardPriceHtml(p) {
-    const precios = p.talles.map(t => t.precio).filter(x => x > 0);
-    if (!precios.length) return `<div class="price-lista" style="color:var(--azul-400);font-size:14px">Sin precio cargado</div>`;
-    const min = Math.min(...precios);
-    const max = Math.max(...precios);
-    const esDesde = min !== max;
-    return buildModalPriceHtml(min, esDesde);
-  }
-
-  // ── Carrito (localStorage) ──────────────────────────────────────────
-  function getCart() {
-    try { return JSON.parse(localStorage.getItem("nord_cart") || "[]"); }
-    catch { return []; }
-  }
-  function saveCart(cart) {
-    localStorage.setItem("nord_cart", JSON.stringify(cart));
-  }
-  function updateCartCount() {
-    const cart = getCart();
-    const total = cart.reduce((s, i) => s + i.qty, 0);
-    const el = document.getElementById("cart-count");
-    if (total > 0) {
-      el.textContent = total;
-      el.classList.remove("hidden");
-    } else {
-      el.classList.add("hidden");
-    }
-  }
-
-  function addToCart(productId, nombre, talle, precio) {
-    const cart = getCart();
-    const key = `${productId}_${talle}`;
-    const existing = cart.find(i => i.key === key);
-    if (existing) {
-      existing.qty++;
-    } else {
-      cart.push({ key, productId, nombre, talle, precio, qty: 1 });
-    }
-    saveCart(cart);
-    updateCartCount();
-  }
-
-  // ── Toast ────────────────────────────────────────────────────────────
-  function showToast(msg) {
-    const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 2200);
-  }
-
-
-
-  // ── Renderizar productos ─────────────────────────────────────────────
-  function renderProducts(products) {
-    const container = document.getElementById("products-container");
-
-    if (!products.length) {
-      container.innerHTML = '<div class="status-msg">No hay productos disponibles.</div>';
-      return;
-    }
-
-    container.innerHTML = products.map(p => {
-      // Primera imagen: del Sheet si existe, sino placeholder determinista
-      const firstImg = (p.imagenes && p.imagenes[0]) || p.imagen_url
-        || getPlaceholderImages(p.id, 1)[0];
-      const imgHtml = `<img src="${firstImg}" alt="${p.nombre}" loading="lazy">`;
-
-      // Badge de stock
-      const totalStock = p.talles.reduce((s, t) => s + t.stock, 0);
-      const stockBadge = totalStock === 0
-        ? `<span class="badge-stock badge-agotado">Sin stock</span>`
-        : totalStock <= 5
-          ? `<span class="badge-stock badge-ultimas">Últimas unidades</span>`
-          : "";
-
+    const html = products.map(p => {
+      const key = `${p.id}-TALLE`;
       return `
-        <div class="product-card" data-product-id="${p.id}" onclick="openProductModal('${p.id}')">
-          <div class="product-img">${imgHtml}</div>
-          <div class="product-body">
-            <div>
-              ${stockBadge}
-              <h2 class="product-name">${p.nombre}</h2>
-              ${buildCardPriceHtml(p)}
+        <div class="card">
+          <img src="${p.imagen}" class="card-img" onerror="this.src='https://via.placeholder.com/240x200?text=${encodeURIComponent(p.nombre)}'">
+          <div class="card-body">
+            <div class="card-name">${p.nombre}</div>
+            <div class="card-price">${fmt(p.precio)}</div>
+            <div class="card-talle">Selecciona talle:</div>
+            <div class="talle-grid" id="talles-${p.id}"></div>
+            <div class="qty-wrap">
+              <button class="qty-btn" onclick="changeQty('${p.id}', -1)">−</button>
+              <span class="qty-num" id="qty-${p.id}">1</span>
+              <button class="qty-btn" onclick="changeQty('${p.id}', 1)">+</button>
             </div>
-            <button class="btn-agregar">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-              Agregar al carrito
-            </button>
+            <button class="btn-add" id="btn-${p.id}" onclick="addToCart('${p.id}')">Agregar</button>
           </div>
         </div>`;
     }).join("");
-  }
+    document.getElementById("grid").innerHTML = html;
 
-  // ── Placeholders deterministas por producto ───────────────────────────
-  // Usamos picsum.photos con seed basado en el nombre para que siempre sean las mismas fotos
-  function strToSeed(str) {
-    let h = 0;
-    for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
-    return Math.abs(h);
-  }
-  function getPlaceholderImages(productId, count = 3) {
-    const seed = strToSeed(productId);
-    return Array.from({ length: count }, (_, i) =>
-      `https://picsum.photos/seed/${seed + i * 17}/600/600`
-    );
-  }
-
-  // ── Carrusel ──────────────────────────────────────────────────────────
-  let carouselIndex = 0;
-  let carouselTotal = 0;
-
-  function buildCarousel(container, imagenes, nombre) {
-    carouselIndex = 0;
-    carouselTotal = imagenes.length;
-    const slidesHtml = imagenes.map(url =>
-      `<div class="carousel-slide"><img src="${url}" alt="${nombre}" loading="lazy"></div>`
-    ).join("");
-    const dotsHtml = imagenes.length > 1
-      ? `<div class="carousel-dots">${imagenes.map((_, i) =>
-          `<button class="carousel-dot${i === 0 ? " active" : ""}" onclick="goToSlide(${i})"></button>`
-        ).join("")}</div>`
-      : "";
-    container.innerHTML = `
-      <div class="carousel">
-        <div class="carousel-track" id="carousel-track">${slidesHtml}</div>
-        ${imagenes.length > 1 ? `
-        <button class="carousel-btn prev hidden" id="carousel-prev" onclick="carouselMove(-1)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <button class="carousel-btn next" id="carousel-next" onclick="carouselMove(1)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-        ${dotsHtml}` : ""}
-      </div>`;
-  }
-
-  function updateCarouselUI() {
-    const track = document.getElementById("carousel-track");
-    if (track) track.style.transform = `translateX(-${carouselIndex * 100}%)`;
-    document.querySelectorAll(".carousel-dot").forEach((d, i) =>
-      d.classList.toggle("active", i === carouselIndex));
-    const prev = document.getElementById("carousel-prev");
-    const next = document.getElementById("carousel-next");
-    if (prev) prev.classList.toggle("hidden", carouselIndex === 0);
-    if (next) next.classList.toggle("hidden", carouselIndex === carouselTotal - 1);
-  }
-
-  function carouselMove(dir) {
-    carouselIndex = Math.max(0, Math.min(carouselTotal - 1, carouselIndex + dir));
-    updateCarouselUI();
-  }
-
-  function goToSlide(i) {
-    carouselIndex = i;
-    updateCarouselUI();
-  }
-
-  // ── Product Modal ────────────────────────────────────────────────────
-  let modalProduct = null;
-
-  function openProductModal(productId) {
-    const p = allProducts.find(x => x.id === productId);
-    if (!p) return;
-    modalProduct = p;
-
-    // ── Carrusel ─────────────────────────────────────────────────────
-    // Imágenes del producto: p.imagenes es array, o fallback a placeholders random
-    const imagenes = (p.imagenes && p.imagenes.length)
-      ? p.imagenes
-      : getPlaceholderImages(p.id, 3);
-
-    const imgEl = document.getElementById("modal-img");
-    buildCarousel(imgEl, imagenes, p.nombre);
-
-    // Talles ordenados
-    const talleOrder = ["1","2","3","4","6","8","10","12","14","16","18","XS","S","M","L","XL","XXL","38","40","42","44","46","48","50","52","54"];
-    const sorted = [...p.talles].sort((a, b) => {
-      const ia = talleOrder.indexOf(a.talle), ib = talleOrder.indexOf(b.talle);
-      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    // Talles y eventos
+    products.forEach(p => {
+      const tallDiv = document.getElementById(`talles-${p.id}`);
+      p.talles.forEach(t => {
+        const btn = document.createElement("button");
+        btn.className = "talle-btn selected";
+        btn.textContent = t;
+        btn.type = "button";
+        btn.onclick = (e) => {
+          e.preventDefault();
+          document.querySelectorAll(`#talles-${p.id} .talle-btn`).forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          window.selectedTalles = window.selectedTalles || {};
+          window.selectedTalles[p.id] = t;
+        };
+        tallDiv.appendChild(btn);
+        if (!window.selectedTalles) window.selectedTalles = {};
+        if (!window.selectedTalles[p.id]) window.selectedTalles[p.id] = t;
+      });
     });
 
-    const tallesHtml = sorted.map(t => `
-      <button class="modal-talle-btn${t.stock === 0 ? " sin-stock" : ""}"
-        data-talle="${t.talle}" data-stock="${t.stock}" data-precio="${t.precio}"
-        ${t.stock === 0 ? "disabled" : ""}
-        onclick="selectModalTalle(this)"
-        title="${t.stock === 0 ? "Sin stock" : t.stock + " disponibles"}"
-      >${t.talle}</button>`).join("");
+    updateCartBadge();
+  } catch (err) { document.getElementById("grid").innerHTML = "<p>Error cargando productos</p>"; }
+}
 
-    // Precio inicial = mínimo disponible con stock
-    const precioInicial = sorted.find(t => t.stock > 0)?.precio || p.precio;
-    const hayVariosPrecios = sorted.filter(t=>t.precio>0).some(t=>t.precio !== sorted.find(x=>x.precio>0)?.precio);
+window.qty = {};
+function changeQty(pid, d) {
+  window.qty[pid] = (window.qty[pid] || 1) + d;
+  if (window.qty[pid] < 1) window.qty[pid] = 1;
+  document.getElementById(`qty-${pid}`).textContent = window.qty[pid];
+}
 
-    const descHtml = p.descripcion
-      ? `<div class="product-desc">${p.descripcion}</div>`
-      : "";
-
-    document.getElementById("modal-body").innerHTML = `
-      <div>
-        <h2 class="modal-name">${p.nombre}</h2>
-        <div style="margin-top:12px" id="modal-prices">
-          ${buildModalPriceHtml(precioInicial, hayVariosPrecios)}
-        </div>
-        ${descHtml}
-      </div>
-      <div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <p class="modal-talle-label" style="margin-bottom:0">Elegí tu talle</p>
-          <button class="btn-size-guide" onclick="openSizeGuide()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M2 12l4-4M2 12l4 4M22 12l-4-4M22 12l-4 4"/></svg>
-            Guía de talles
-          </button>
-        </div>
-        <div class="modal-talles">${tallesHtml}</div>
-        <p class="talle-stock-hint" id="modal-stock-hint">Seleccioná un talle para continuar</p>
-      </div>
-      <button class="btn-modal-agregar" id="btn-modal-add" disabled onclick="handleModalAdd()">
-        Seleccioná un talle
-      </button>
-      <div class="modal-actions">
-        <button class="btn-share" onclick="shareProduct('${p.id}','${p.nombre.replace(/'/g,"\\'")}')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Compartir
-        </button>
-        <button class="btn-notify" id="btn-notify" onclick="notifyStock('${p.nombre.replace(/'/g,"\\'")}')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
-          Avisar cuando haya stock
-        </button>
-      </div>`;
-
-    document.getElementById("modal-overlay").classList.add("open");
-    document.body.style.overflow = "hidden";
-  }
-
-  function handleModalOverlayClick(e) {
-    if (e.target === document.getElementById("modal-overlay")) closeModal();
-  }
-
-  function closeModal() {
-    document.getElementById("modal-overlay").classList.remove("open");
-    document.body.style.overflow = "";
-    modalProduct = null;
-  }
-
-  function selectModalTalle(btn) {
-    document.querySelectorAll(".modal-talle-btn").forEach(b => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    const stock  = parseInt(btn.dataset.stock);
-    const precio = parseInt(btn.dataset.precio) || 0;
-    const addBtn = document.getElementById("btn-modal-add");
-    addBtn.disabled = false;
-    addBtn.textContent = `Agregar talle ${btn.dataset.talle}`;
-    document.getElementById("modal-stock-hint").textContent =
-      stock <= 3 ? `⚠ Solo ${stock} disponible${stock === 1 ? "" : "s"}` : `${stock} disponibles`;
-    // Actualizar precios según el talle seleccionado
-    if (precio > 0) {
-      document.getElementById("modal-prices").innerHTML = buildModalPriceHtml(precio, false);
+function addToCart(pid) {
+  const products = document.querySelectorAll(".card");
+  let p = null;
+  products.forEach(card => {
+    if (card.querySelector(`#btn-${pid}`)) {
+      p = {
+        id: pid,
+        nombre: card.querySelector(".card-name").textContent,
+        precio: parseInt(card.querySelector(".card-price").textContent.replace(/\D/g, "")),
+        imagen: card.querySelector(".card-img").src,
+      };
     }
-  }
-
-  function handleModalAdd() {
-    const selected = document.querySelector(".modal-talle-btn.selected");
-    if (!selected || !modalProduct) return;
-    const precio = parseInt(selected.dataset.precio) || modalProduct.precio;
-    addToCart(modalProduct.id, modalProduct.nombre, selected.dataset.talle, precio);
-    const addBtn = document.getElementById("btn-modal-add");
-    addBtn.textContent = "✓ ¡Agregado!";
-    addBtn.classList.add("added");
-    setTimeout(() => {
-      closeModal();
-      openDrawer();
-    }, 700);
-  }
-
-  // ── Cart Drawer ───────────────────────────────────────────────────────
-  function openDrawer() {
-    renderDrawer();
-    document.getElementById("cart-drawer").classList.add("open");
-    document.getElementById("drawer-overlay").classList.add("open");
-    document.body.style.overflow = "hidden";
-  }
-
-  function closeDrawer() {
-    document.getElementById("cart-drawer").classList.remove("open");
-    document.getElementById("drawer-overlay").classList.remove("open");
-    document.body.style.overflow = "";
-  }
-
-  function renderDrawer() {
-    const cart = getCart();
-    const itemsEl  = document.getElementById("drawer-items");
-    const footerEl = document.getElementById("drawer-footer");
-    const totalEl  = document.getElementById("drawer-total");
-
-    if (!cart.length) {
-      itemsEl.innerHTML = `<div class="drawer-empty">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-        Tu carrito está vacío
-      </div>`;
-      footerEl.style.display = "none";
-      return;
-    }
-
-    const total = cart.reduce((s, i) => s + i.precio * i.qty, 0);
-    itemsEl.innerHTML = cart.map(item => `
-      <div class="drawer-item">
-        <div class="drawer-item-info">
-          <p class="drawer-item-name">${item.nombre}</p>
-          <p class="drawer-item-sub">Talle ${item.talle}</p>
-        </div>
-        <div class="drawer-qty">
-          <button class="drawer-qty-btn" onclick="drawerQty('${item.key}',-1)">−</button>
-          <span class="drawer-qty-num">${item.qty}</span>
-          <button class="drawer-qty-btn" onclick="drawerQty('${item.key}',1)">+</button>
-        </div>
-        <div class="drawer-item-price">${fmt(item.precio * item.qty)}</div>
-        <button class="drawer-remove" onclick="drawerRemove('${item.key}')" title="Eliminar">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>`).join("");
-
-    totalEl.textContent = fmt(total);
-    footerEl.style.display = "block";
-    updateCartCount();
-  }
-
-  function drawerQty(key, delta) {
-    const cart = getCart();
-    const item = cart.find(i => i.key === key);
-    if (!item) return;
-    item.qty += delta;
-    if (item.qty <= 0) cart.splice(cart.indexOf(item), 1);
-    saveCart(cart);
-    renderDrawer();
-    updateCartCount();
-  }
-
-  function drawerRemove(key) {
-    saveCart(getCart().filter(i => i.key !== key));
-    renderDrawer();
-    updateCartCount();
-  }
-
-  // Atajo: el botón del carrito en el header abre el drawer si hay items
-  document.querySelector(".cart-btn").addEventListener("click", (e) => {
-    e.preventDefault();
-    if (getCart().length > 0) openDrawer();
-    else window.location.href = "/carrito";
   });
 
-  // ── Fetch productos ──────────────────────────────────────────────────
-  async function loadProducts() {
-    const container = document.getElementById("products-container");
-    try {
-      const res = await fetch("/api/products");
-      if (!res.ok) throw new Error("Error HTTP " + res.status);
-      allProducts = await res.json();
-      renderProducts(allProducts);
-      updateCounts();
-      updateGridCount(allProducts.length);
-    } catch (err) {
-      console.error(err);
-      container.innerHTML = '<div class="status-msg">Error al cargar el catálogo. Intentá de nuevo.</div>';
-    }
-  }
+  if (!p) return;
+  p.talle = window.selectedTalles?.[pid] || "S";
+  p.qty = window.qty[pid] || 1;
+  p.key = `${p.id}-${p.talle}`;
 
-  // ── Filtro por nivel ─────────────────────────────────────────────────
-  let allProducts = [];
-  let activeNivel = "todos";
+  const cart = getCart();
+  const existing = cart.find(i => i.key === p.key);
+  if (existing) existing.qty += p.qty;
+  else cart.push(p);
+  saveCart(cart);
+  updateCartBadge();
+  alert(`✓ Agregado: ${p.nombre} (Talle ${p.talle}) x${p.qty}`);
+}
 
-  function updateCounts() {
-    const niveles = ["kinder", "primaria", "secundaria"];
-    document.getElementById("count-todos").textContent = allProducts.length;
-    niveles.forEach(n => {
-      const el = document.getElementById("count-" + n);
-      if (el) el.textContent = allProducts.filter(p =>
-        Array.isArray(p.categorias) && p.categorias.includes(n)
-      ).length || "";
-    });
-  }
-
-  function updateGridCount(count) {
-    const el = document.getElementById("grid-count");
-    if (el) el.textContent = count + (count === 1 ? " prenda" : " prendas");
-  }
-
-  function filterNivel(item) {
-    document.querySelectorAll(".filter-item").forEach(b => b.classList.remove("active"));
-    item.classList.add("active");
-    activeNivel = item.dataset.nivel;
-    applyFilters();
-  }
-
-  // ── Buscador ─────────────────────────────────────────────────────────
-  let searchQuery = "";
-
-  function handleSearch(val) {
-    searchQuery = val.trim().toLowerCase();
-    document.getElementById("search-clear").classList.toggle("visible", !!searchQuery);
-    applyFilters();
-  }
-
-  function clearSearch() {
-    document.getElementById("search-input").value = "";
-    handleSearch("");
-  }
-
-  function applyFilters() {
-    let filtered = activeNivel === "todos"
-      ? allProducts
-      : allProducts.filter(p => Array.isArray(p.categorias) && p.categorias.includes(activeNivel));
-    if (searchQuery) {
-      filtered = filtered.filter(p => p.nombre.toLowerCase().includes(searchQuery));
-    }
-    renderProducts(filtered);
-    updateGridCount(filtered.length);
-  }
-
-  // ── Guía de talles ────────────────────────────────────────────────────
-  function openSizeGuide()  { document.getElementById("sg-overlay").classList.add("open"); }
-  function closeSizeGuide() { document.getElementById("sg-overlay").classList.remove("open"); }
-  function handleSgClick(e) { if (e.target === document.getElementById("sg-overlay")) closeSizeGuide(); }
-
-  // ── Compartir en WhatsApp ─────────────────────────────────────────────
-  function shareProduct(productId, nombre) {
-    const url = encodeURIComponent(`https://norduniformes.com.ar/wellspring`);
-    const msg = encodeURIComponent(`Mirá este uniforme de Wellspring: ${nombre} — ${decodeURIComponent(url)}`);
-    window.open(`https://wa.me/?text=${msg}`, "_blank");
-  }
-
-  // ── Avísame cuando haya stock ─────────────────────────────────────────
-  function notifyStock(nombre) {
-    const talle = document.querySelector(".modal-talle-btn.selected")?.dataset.talle || "";
-    const talleTexto = talle ? ` talle ${talle}` : "";
-    const msg = encodeURIComponent(`Hola! Quisiera que me avisen cuando haya stock de ${nombre}${talleTexto}. Gracias!`);
-    window.open(`https://wa.me/5491122913796?text=${msg}`, "_blank");
-  }
-
-  updateCartCount();
-  loadProducts();
+render();
 </script>
 </body>
 </html>
