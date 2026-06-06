@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NORD Uniformes</title>
+    <title>NORD Uniformes — Uniformes Escolares y Ropa de Trabajo</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
@@ -11,45 +11,116 @@
         :root {
             --azul:#1E2D4A;--azul-900:#0F172E;--dorado:#C8A96E;--dorado-700:#A6884B;--dorado-300:#E0CBA0;
             --crema:#F4F1EA;--sans:"Mulish",system-ui,sans-serif;--serif:"Cormorant Garamond",serif;
-            --pad-x:clamp(20px,5vw,80px);--max:1280px;
+            --pad-x:clamp(24px,6vw,100px);
         }
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        html{scroll-behavior:smooth}
-        body{font-family:var(--sans);background:var(--azul-900);color:#fff;-webkit-font-smoothing:antialiased}
+        html,body{height:100%}
+        body{font-family:var(--sans);background:var(--azul-900);color:#fff;-webkit-font-smoothing:antialiased;overflow:hidden}
         a{text-decoration:none}
 
-        header{background:rgba(244,241,234,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(30,45,74,.08);position:sticky;top:0;z-index:100}
-        .header-container{max-width:var(--max);margin:0 auto;padding:0 var(--pad-x);height:64px;display:flex;justify-content:space-between;align-items:center}
-        .brand-logo .nord{font-weight:900;font-size:22px;letter-spacing:.06em;display:block;color:var(--azul-900)}
-        .brand-logo .uniformes{font-weight:300;font-size:6px;letter-spacing:.55em;display:block;margin-top:2px;padding-left:.55em;color:var(--azul-900)}
+        .hero {
+            height: 100dvh;
+            background: linear-gradient(135deg, var(--azul-900) 0%, #152031 60%, #0a1520 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: var(--pad-x);
+            position: relative;
+            overflow: hidden;
+        }
 
-        .hero{background:linear-gradient(135deg,var(--azul-900) 0%,#1a2a3f 100%);color:var(--crema);padding:clamp(80px,15vh,160px) var(--pad-x);min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden}
-        .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(800px 500px at 20% 35%,rgba(200,169,110,.08),transparent 55%)}
-        .hero-content{max-width:720px;position:relative;z-index:2}
-        .hero h1{font-size:clamp(48px,9vw,96px);font-weight:900;line-height:.92;letter-spacing:-.02em;margin-bottom:28px}
-        .hero .lede{font-family:var(--serif);font-style:italic;font-size:clamp(20px,2.4vw,28px);color:var(--dorado-300);margin-bottom:44px;line-height:1.35}
-        .btn-cta{display:inline-flex;align-items:center;gap:10px;background:transparent;color:var(--crema);padding:16px 36px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;border:1px solid var(--dorado);transition:all .25s;border-radius:10px}
-        .btn-cta:hover{background:var(--dorado);color:var(--azul-900)}
+        /* Glow dorado sutil */
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 900px 500px at 30% 40%, rgba(200,169,110,.06), transparent 60%),
+                radial-gradient(ellipse 600px 400px at 70% 65%, rgba(30,45,74,.4), transparent 55%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 860px;
+        }
+
+        .hero-eyebrow {
+            font-size: clamp(9px, 1.1vw, 11px);
+            font-weight: 700;
+            letter-spacing: .35em;
+            text-transform: uppercase;
+            color: var(--dorado);
+            margin-bottom: 20px;
+            opacity: .8;
+        }
+
+        .hero h1 {
+            font-size: clamp(52px, 10vw, 110px);
+            font-weight: 900;
+            line-height: .88;
+            letter-spacing: -.03em;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .hero h1 span {
+            color: var(--dorado-300);
+        }
+
+        .hero-sub {
+            font-family: var(--serif);
+            font-style: italic;
+            font-size: clamp(16px, 2vw, 22px);
+            color: rgba(255,255,255,.55);
+            margin-bottom: 48px;
+            margin-top: 18px;
+            letter-spacing: .01em;
+        }
+
+        .btn-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--dorado);
+            color: var(--azul-900);
+            padding: 18px 40px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 10px;
+            transition: all .25s;
+            box-shadow: 0 8px 32px rgba(200,169,110,.25);
+        }
+        .btn-cta:hover {
+            background: var(--dorado-300);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(200,169,110,.35);
+        }
+        .btn-cta svg { flex-shrink: 0; }
     </style>
 </head>
 <body>
 
-<header>
-    <div class="header-container">
-        <a href="/" class="brand-logo">
-            <span class="nord">NORD</span>
-            <span class="uniformes">UNIFORMES</span>
+<div class="hero">
+    <div class="hero-content">
+        <p class="hero-eyebrow">Zona Norte · Gran Buenos Aires</p>
+
+        <h1>NORD<br><span>UNIFORMES</span></h1>
+
+        <p class="hero-sub">Uniformes Escolares y Ropa de Trabajo</p>
+
+        <a class="btn-cta" href="/wellspring">
+            Ver tienda Wellspring
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
     </div>
-</header>
-
-<section class="hero">
-    <div class="hero-content">
-        <h1>Hecho para durar.</h1>
-        <p class="lede">Uniformes escolares con criterio, resistencia y diseño.</p>
-        <a class="btn-cta" href="/wellspring">Ver tienda Wellspring</a>
-    </div>
-</section>
+</div>
 
 </body>
 </html>

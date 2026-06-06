@@ -117,20 +117,17 @@
     .cart-count.hidden { display: none; }
 
     /* CATALOG SECTION */
+    /* Banner azul — ancho completo, fuera del max-width */
+    .catalog-header {
+      background: var(--azul-900);
+      padding: clamp(28px, 5vw, 48px) var(--pad-x);
+    }
+
+    /* Body del catálogo */
     .catalog {
       max-width: var(--max);
       margin: 0 auto;
-      padding: 56px var(--pad-x) 80px;
-    }
-    .catalog-header {
-      margin-bottom: 48px;
-      border-bottom: 1px solid var(--niebla-200);
-      padding-bottom: 32px;
-    }
-    .catalog-header {
-      background: var(--azul-900);
-      margin: 0;
-      padding: clamp(28px, 5vw, 48px) var(--pad-x);
+      padding: 48px var(--pad-x) 80px;
     }
     .catalog-school-title {
       font-size: clamp(48px, 10vw, 100px);
@@ -268,10 +265,11 @@
     .product-img img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       position: absolute;
       inset: 0;
       transition: opacity 0.35s ease;
+      padding: 12px;
     }
     .product-img img.foto-1 { opacity: 1; }
     .product-img img.foto-2 { opacity: 0; }
@@ -1097,7 +1095,7 @@
         <a href="/">Inicio</a>
         <a href="/wellspring" class="active">Wellspring</a>
       </nav>
-      <button class="cart-btn" onclick="window.location.href='/carrito'">
+      <button class="cart-btn" onclick="openDrawer()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         Carrito
         <span class="cart-count hidden" id="cart-count">0</span>
@@ -1106,12 +1104,12 @@
   </div>
 </header>
 
-<section class="catalog">
-  <div class="catalog-header">
-    <h1 class="catalog-school-title">WELLSPRING</h1>
-    <p class="catalog-subtitle">Seleccioná tu talle, pagá tu pedido por transferencia y coordinamos la entrega por WhatsApp.</p>
-  </div>
+<div class="catalog-header">
+  <h1 class="catalog-school-title">WELLSPRING</h1>
+  <p class="catalog-subtitle">Seleccioná tu talle, pagá tu pedido por transferencia y coordinamos la entrega por WhatsApp.</p>
+</div>
 
+<section class="catalog">
   <div class="catalog-body">
 
     <!-- SIDEBAR DE FILTROS -->
@@ -1484,11 +1482,6 @@
     updateCartCount();
   }
 
-  // El botón del carrito siempre abre el drawer (nunca redirige directo)
-  document.querySelector(".cart-btn").addEventListener("click", (e) => {
-    e.preventDefault();
-    openDrawer();
-  });
 
   // ── Fetch productos ──────────────────────────────────────────────────
   async function loadProducts() {
