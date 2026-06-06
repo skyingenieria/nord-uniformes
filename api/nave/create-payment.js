@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
           products: items.map(i => ({
             name: i.nombre,
             description: `Talle ${i.talle}`,
-            quantity: String(i.qty),
+            quantity: Number(i.qty),
             unit_price: {
               currency: "ARS",
               value: String(i.precio.toFixed(2)),
