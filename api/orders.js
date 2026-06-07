@@ -74,10 +74,10 @@ module.exports = async (req, res) => {
     const saldo = total - montoPago;
     const estadoPedido = pago === "nave" ? "Confirmado" : "Al Cobro"; // Nave confirmado, Transferencia al cobro
 
-    const clienteLabel = `${codigoCliente}-${apellido}-${nombre}`;
+    // codigoCliente ya viene en formato WS001-Apellido-Nombre
     const orden3Pedidos = [
       idPedido,           // A: ID Pedido
-      clienteLabel,       // B: Cliente (Código-Apellido-Nombre)
+      codigoCliente,      // B: Cliente (WS001-Apellido-Nombre)
       cantPrendas,        // C: Cant. Prendas
       subtotal,           // D: Monto Pedido
       pago === "nave" ? "Nave" : "Transferencia", // E: Forma de pago
