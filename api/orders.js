@@ -2,16 +2,15 @@
 //
 // "7 Ordenes" (Ventas_2) — UNA FILA POR ITEM:
 //   A: Fecha       (MM/DD/YYYY)
-//   B: Tr          (vacío — columna de uso interno)
-//   C: Pedido      (YY-XX, ej: 26-01)
-//   D: Colegio     (WS)
-//   E: Cliente     (ID del cliente, ej: WS001-Gonzalez-Maria)
-//   F: Forma pago  (Transf. Banc.)
-//   G: Prenda      (nombre de la prenda)
-//   H: Talle
-//   I: SKU         (WS-Prenda-Talle)
-//   J: Cant        (cantidad)
-//   K en adelante: fórmulas del sheet — NO TOCAR
+//   B: Pedido      (YY-XX, ej: 26-01)
+//   C: Colegio     (WS)
+//   D: Cliente     (ID del cliente, ej: WS001-Gonzalez-Maria)
+//   E: Forma pago  (Transf. Banc.)
+//   F: Prenda      (nombre de la prenda)
+//   G: Talle
+//   H: SKU         (WS-Prenda-Talle)
+//   I: Cant        (cantidad)
+//   J en adelante: fórmulas del sheet — NO TOCAR
 //
 // "3 Pedidos" — UNA FILA POR PEDIDO (resumen consolidado):
 //   A: ID Pedido  B: Cliente  C: Cant. Prendas  D: Total
@@ -78,22 +77,21 @@ module.exports = async (req, res) => {
 
     // ── 1. "7 Ordenes": una fila por item ────────────────────────────────────
     const filas7Ordenes = items.map(item => [
-      fecha,                                    // A: Fecha
-      "",                                       // B: Tr (vacío)
-      idPedido,                                 // C: Pedido
-      colegio,                                  // D: Colegio
-      codigoCliente,                            // E: Cliente (ID completo)
-      formaPago,                                // F: Forma de pago
-      item.nombre,                              // G: Prenda
-      item.talle,                               // H: Talle
-      buildSKU(colegio, item.nombre, item.talle), // I: SKU
-      item.qty || 1,                            // J: Cant
-      // K en adelante = fórmulas del sheet, NO se escriben
+      fecha,                                      // A: Fecha
+      idPedido,                                   // B: Pedido
+      colegio,                                    // C: Colegio
+      codigoCliente,                              // D: Cliente (ID completo)
+      formaPago,                                  // E: Forma de pago
+      item.nombre,                                // F: Prenda
+      item.talle,                                 // G: Talle
+      buildSKU(colegio, item.nombre, item.talle), // H: SKU
+      item.qty || 1,                              // I: Cant
+      // J en adelante = fórmulas del sheet, NO se escriben
     ]);
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'7 Ordenes'!A:J",
+      range: "'7 Ordenes'!A:I",
       valueInputOption: "USER_ENTERED",
       requestBody: { values: filas7Ordenes },
     });
