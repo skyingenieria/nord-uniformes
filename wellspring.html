@@ -1575,7 +1575,7 @@
         ? p.precio
         : (p.talles.find(t => t.precio > 0)?.precio || 0);
 
-      const generoRaw = (p.genero || "").toLowerCase();
+      const generoRaw = (p.genero || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
       const generoLabel = generoRaw === "varon" ? "Varón" : generoRaw === "mujer" ? "Mujer" : generoRaw === "unisex" ? "Unisex" : "";
       const generoClass = generoRaw === "varon" ? "genero-varon" : generoRaw === "mujer" ? "genero-mujer" : "genero-unisex";
       const generoTag = generoLabel ? `<span class="product-genero ${generoClass}">${generoLabel}</span>` : "";
@@ -1746,7 +1746,8 @@
     const q = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
     const filtered = allProducts.filter(p => {
       const matchNivel  = activeNivel  === "todos" || (Array.isArray(p.categorias) && p.categorias.includes(activeNivel));
-      const matchGenero = activeGenero === "todos" || (p.genero || "unisex").toLowerCase() === activeGenero;
+      const normGenero = (p.genero || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+      const matchGenero = activeGenero === "todos" || normGenero === activeGenero || (!normGenero && activeGenero === "unisex");
       const matchSearch = !q || p.nombre.toLowerCase().includes(q);
       return matchNivel && matchGenero && matchSearch;
     });
@@ -1798,7 +1799,7 @@
     document.getElementById("modal-product-description").textContent = product.descripcion || "";
 
     // Tag de género
-    const gRaw = (product.genero || "").toLowerCase();
+    const gRaw = (product.genero || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
     const gLabel = gRaw === "varon" ? "Varón" : gRaw === "mujer" ? "Mujer" : gRaw === "unisex" ? "Unisex" : "";
     const gClass = gRaw === "varon" ? "genero-varon" : gRaw === "mujer" ? "genero-mujer" : "genero-unisex";
     const gTag = document.getElementById("modal-genero-tag");
