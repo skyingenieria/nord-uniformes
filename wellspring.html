@@ -41,10 +41,20 @@
     img { max-width: 100%; display: block; }
     a { text-decoration: none; }
 
-    /* ANNOUNCEMENT */
-    .announcement-bar {
-      display: none;
+    /* PROMO BANNER */
+    .promo-banner {
+      background: var(--dorado);
+      color: var(--azul-900);
+      text-align: center;
+      padding: 9px var(--pad-x);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
     }
+
+    /* ANNOUNCEMENT (legacy, hidden) */
+    .announcement-bar { display: none; }
 
     /* HEADER */
     header {
@@ -134,7 +144,7 @@
       padding: 48px var(--pad-x) 80px;
     }
     .catalog-school-title {
-      font-size: clamp(48px, 10vw, 100px);
+      font-size: clamp(36px, 7vw, 72px);
       font-weight: 900;
       letter-spacing: -0.03em;
       line-height: 0.9;
@@ -149,12 +159,72 @@
       margin-bottom: 0;
     }
 
-    /* CATALOG BODY — sidebar + grid */
+    /* FILTER NAV BAR */
+    .filter-nav {
+      background: var(--azul-900);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      position: sticky;
+      top: 64px;
+      z-index: 90;
+    }
+    .filter-nav-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 var(--pad-x);
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .filter-nav-inner::-webkit-scrollbar { display: none; }
+    .filter-nav-sep {
+      width: 1px;
+      height: 20px;
+      background: rgba(255,255,255,0.12);
+      flex-shrink: 0;
+      margin: 0 4px;
+    }
+    .filter-nav-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.55);
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      padding: 14px 16px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color .15s, background .15s;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .filter-nav-btn:hover { color: white; }
+    .filter-nav-btn.active { color: var(--dorado); }
+    .filter-nav-btn.active::after {
+      content: "";
+      position: absolute;
+      bottom: 0; left: 12px; right: 12px;
+      height: 2px;
+      background: var(--dorado);
+      border-radius: 2px 2px 0 0;
+    }
+    .filter-nav-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.3);
+      padding: 14px 10px 14px 16px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* CATALOG BODY — grid sin sidebar */
     .catalog-body {
-      display: grid;
-      grid-template-columns: 220px 1fr;
-      gap: 40px;
-      align-items: start;
+      display: block;
     }
 
     /* SIDEBAR */
@@ -527,8 +597,8 @@
     /* ADD TO CART BUTTON */
     .btn-agregar {
       margin-top: auto;
-      background-color: var(--azul-900);
-      color: var(--crema);
+      background-color: var(--niebla-200);
+      color: var(--azul-600);
       border: none;
       padding: 14px;
       font-family: var(--sans);
@@ -537,7 +607,7 @@
       letter-spacing: 0.16em;
       text-transform: uppercase;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: background-color 0.2s, color 0.2s;
       width: 100%;
     }
     .btn-agregar:hover { background-color: var(--dorado); color: var(--azul-900); }
@@ -549,6 +619,44 @@
     .btn-agregar.added {
       background-color: #2e7d52;
     }
+
+    /* ── MODAL AVISAME ────────────────────────────────────────────────── */
+    .avisame-overlay {
+      position: fixed; inset: 0;
+      background: rgba(15,23,46,.5);
+      backdrop-filter: blur(4px);
+      z-index: 1100;
+      display: none;
+    }
+    .avisame-overlay.active { display: block; }
+    .avisame-modal {
+      position: fixed; inset: 0;
+      z-index: 1101;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .avisame-modal.active { display: flex; }
+    .avisame-content {
+      background: var(--crema);
+      border-radius: 14px;
+      padding: 32px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      position: relative;
+    }
+    .avisame-content h3 { font-size: 20px; font-weight: 800; color: var(--azul-900); margin-bottom: 6px; }
+    .avisame-content p { font-size: 13px; color: var(--azul-600); margin-bottom: 20px; }
+    .avisame-field { margin-bottom: 12px; }
+    .avisame-field label { display: block; font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--azul-400); margin-bottom: 5px; }
+    .avisame-field input { width: 100%; border: 1px solid var(--niebla-200); background: white; padding: 11px 13px; font-family: var(--sans); font-size: 14px; color: var(--azul-900); outline: none; border-radius: 8px; transition: border-color .15s; }
+    .avisame-field input:focus { border-color: var(--azul); }
+    .btn-avisame-submit { width: 100%; background: var(--azul-900); color: white; border: none; padding: 14px; font-family: var(--sans); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; border-radius: 8px; margin-top: 8px; transition: background .2s; }
+    .btn-avisame-submit:hover { background: var(--azul); }
+    .btn-avisame-cancel { background: none; border: none; cursor: pointer; color: var(--azul-400); font-size: 13px; width: 100%; margin-top: 10px; font-family: var(--sans); }
+    .btn-avisame-cancel:hover { color: var(--azul-900); }
 
     /* ── CART DRAWER ────────────────────────────────────────────────── */
     .drawer-overlay {
@@ -1219,7 +1327,7 @@
 </head>
 <body>
 
-<div class="announcement-bar">Entrega Coordinada - Pagos por transferencia</div>
+<div class="promo-banner">📍 Retiro en 24 hs</div>
 
 <header>
   <div class="header-container">
@@ -1249,70 +1357,34 @@
   <p class="catalog-subtitle">Seleccioná tu talle, pagá tu pedido por transferencia y coordinamos la entrega por WhatsApp.</p>
 </div>
 
+<!-- BARRA DE FILTROS HORIZONTAL -->
+<nav class="filter-nav">
+  <div class="filter-nav-inner">
+    <span class="filter-nav-label">Nivel</span>
+    <button class="filter-nav-btn active" data-nivel="todos" onclick="filterNivel(this)">Todos <span id="count-todos"></span></button>
+    <button class="filter-nav-btn" data-nivel="kinder" onclick="filterNivel(this)">Kinder <span id="count-kinder"></span></button>
+    <button class="filter-nav-btn" data-nivel="primaria" onclick="filterNivel(this)">Primaria <span id="count-primaria"></span></button>
+    <button class="filter-nav-btn" data-nivel="secundaria" onclick="filterNivel(this)">Secundaria <span id="count-secundaria"></span></button>
+    <div class="filter-nav-sep"></div>
+    <span class="filter-nav-label">Género</span>
+    <button class="filter-nav-btn active" data-genero="todos" onclick="filterGenero(this)">Todos</button>
+    <button class="filter-nav-btn" data-genero="varon" onclick="filterGenero(this)">Varón</button>
+    <button class="filter-nav-btn" data-genero="mujer" onclick="filterGenero(this)">Mujer</button>
+    <button class="filter-nav-btn" data-genero="unisex" onclick="filterGenero(this)">Unisex</button>
+    <div class="filter-nav-sep"></div>
+    <div class="search-wrap" style="margin:6px 8px;flex-shrink:0;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="search-input" type="text" placeholder="Buscar..." oninput="applyFilters()" style="background:transparent;color:white;width:120px;">
+    </div>
+  </div>
+</nav>
+
 <section class="catalog">
   <div class="catalog-body">
-
-    <!-- SIDEBAR DE FILTROS -->
-    <aside class="sidebar">
-      <p class="sidebar-title">Filtrar</p>
-
-      <div class="filter-group">
-        <p class="filter-group-title">Nivel</p>
-        <ul class="filter-list" id="filter-nivel">
-          <li class="filter-item active" data-nivel="todos" onclick="filterNivel(this)">
-            <span class="filter-dot"></span>
-            Todos
-            <span class="filter-count" id="count-todos"></span>
-          </li>
-          <li class="filter-item" data-nivel="kinder" onclick="filterNivel(this)">
-            <span class="filter-dot"></span>
-            Kinder
-            <span class="filter-count" id="count-kinder"></span>
-          </li>
-          <li class="filter-item" data-nivel="primaria" onclick="filterNivel(this)">
-            <span class="filter-dot"></span>
-            Primaria
-            <span class="filter-count" id="count-primaria"></span>
-          </li>
-          <li class="filter-item" data-nivel="secundaria" onclick="filterNivel(this)">
-            <span class="filter-dot"></span>
-            Secundaria
-            <span class="filter-count" id="count-secundaria"></span>
-          </li>
-        </ul>
-      </div>
-
-      <div class="filter-group" style="margin-top:20px;">
-        <p class="filter-group-title">Género</p>
-        <ul class="filter-list" id="filter-genero">
-          <li class="filter-item active" data-genero="todos" onclick="filterGenero(this)">
-            <span class="filter-dot"></span>
-            Todos
-          </li>
-          <li class="filter-item" data-genero="varon" onclick="filterGenero(this)">
-            <span class="filter-dot"></span>
-            Varón
-          </li>
-          <li class="filter-item" data-genero="mujer" onclick="filterGenero(this)">
-            <span class="filter-dot"></span>
-            Mujer
-          </li>
-          <li class="filter-item" data-genero="unisex" onclick="filterGenero(this)">
-            <span class="filter-dot"></span>
-            Unisex
-          </li>
-        </ul>
-      </div>
-    </aside>
-
     <!-- GRID DE PRODUCTOS -->
     <div>
       <div class="grid-toolbar">
         <span class="grid-count" id="grid-count"></span>
-        <div class="search-wrap">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input id="search-input" type="text" placeholder="Buscar prenda..." oninput="applyFilters()">
-        </div>
       </div>
       <div id="products-container" class="products-grid">
         <!-- Skeletons visibles mientras carga -->
@@ -1411,6 +1483,26 @@
   </a>
 </div>
 
+<!-- MODAL AVISAME -->
+<div class="avisame-overlay" id="avisame-overlay" onclick="closeAvisame()"></div>
+<div class="avisame-modal" id="avisame-modal" onclick="closeAvisame()">
+  <div class="avisame-content" onclick="event.stopPropagation()">
+    <h3>🔔 Avisame cuando haya stock</h3>
+    <p id="avisame-prenda-name" style="font-weight:700;color:var(--azul-900);margin-bottom:4px;"></p>
+    <p>Te avisamos cuando vuelva a estar disponible.</p>
+    <div class="avisame-field">
+      <label>Nombre</label>
+      <input id="av-nombre" type="text" placeholder="Tu nombre">
+    </div>
+    <div class="avisame-field">
+      <label>Email</label>
+      <input id="av-email" type="email" placeholder="tu@email.com">
+    </div>
+    <button class="btn-avisame-submit" onclick="submitAvisame()">AVISAME CUANDO HAYA STOCK</button>
+    <button class="btn-avisame-cancel" onclick="closeAvisame()">Cancelar</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- MODAL DE PRODUCTO -->
@@ -1444,8 +1536,8 @@
       <p id="modal-product-description" class="modal-product-description"></p>
 
       <div class="modal-price-section">
-        <div class="modal-price-label">Precio por transferencia</div>
         <div id="modal-product-price" class="modal-product-price">$0</div>
+        <div style="font-size:11px;color:var(--azul-400);margin-top:4px;">El pago se realizará únicamente por transferencia bancaria.</div>
       </div>
 
       <!-- Fila: Selecciona tu talle + Guía de talles -->
@@ -1594,11 +1686,10 @@
                 : `<div class="price-transferencia" style="color:var(--azul-400);font-size:13px">Sin precio</div>`
               }
             </div>
-            <button
-              class="btn-agregar"
-              id="btn-add-${p.id}"
-              ${hayStock ? `onclick="openProductModal('${p.id}')"` : "disabled"}
-            >${hayStock ? "Selecciona un talle" : "Sin stock"}</button>
+            ${hayStock
+              ? `<button class="btn-agregar" id="btn-add-${p.id}" onclick="openProductModal('${p.id}')">SELECCIONAR TALLE</button>`
+              : `<button class="btn-agregar" onclick="openAvisame('${p.id}', '${p.nombre.replace(/'/g,"&#39;")}')">🔔 Avisame cuando haya stock</button>`
+            }
           </div>
         </div>`;
     }).join("");
@@ -1755,14 +1846,14 @@
   }
 
   function filterNivel(item) {
-    document.querySelectorAll("#filter-nivel .filter-item").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll("[data-nivel]").forEach(b => b.classList.remove("active"));
     item.classList.add("active");
     activeNivel = item.dataset.nivel;
     applyFilters();
   }
 
   function filterGenero(item) {
-    document.querySelectorAll("#filter-genero .filter-item").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll("[data-genero]").forEach(b => b.classList.remove("active"));
     item.classList.add("active");
     activeGenero = item.dataset.genero;
     applyFilters();
@@ -1895,7 +1986,7 @@
 
     // Resetear selección de talle
     document.getElementById("btn-add-modal").disabled = true;
-    document.getElementById("btn-add-modal").textContent = "SELECCIONÁ UN TALLE";
+    document.getElementById("btn-add-modal").textContent = "SELECCIONÁ UN TALLE →";
   }
 
   function closeProductModal() {
@@ -1918,7 +2009,7 @@
     // Habilitar botón de agregar
     const addBtn = document.getElementById("btn-add-modal");
     addBtn.disabled = false;
-    addBtn.textContent = `AGREGAR TALLE ${btn.dataset.talle} AL CARRITO`;
+    addBtn.textContent = "AÑADIR AL CARRITO";
   }
 
   function handleAddFromModal() {
@@ -2015,6 +2106,53 @@
     document.querySelectorAll(".modal-thumb").forEach((el, i) => {
       el.classList.toggle("active", i === index);
     });
+  }
+
+  // ── MODAL AVISAME ───────────────────────────────────────────────────────
+  let _avisameProductId = "";
+  let _avisameProductName = "";
+
+  function openAvisame(id, nombre) {
+    _avisameProductId = id;
+    _avisameProductName = nombre;
+    document.getElementById("avisame-prenda-name").textContent = nombre;
+    document.getElementById("av-nombre").value = "";
+    document.getElementById("av-email").value = "";
+    document.getElementById("avisame-overlay").classList.add("active");
+    document.getElementById("avisame-modal").classList.add("active");
+  }
+
+  function closeAvisame() {
+    document.getElementById("avisame-overlay").classList.remove("active");
+    document.getElementById("avisame-modal").classList.remove("active");
+  }
+
+  async function submitAvisame() {
+    const nombre = document.getElementById("av-nombre").value.trim();
+    const email  = document.getElementById("av-email").value.trim();
+    if (!nombre || !email) { showToast("Completá nombre y email"); return; }
+
+    const btn = document.querySelector(".btn-avisame-submit");
+    btn.textContent = "Enviando...";
+    btn.disabled = true;
+
+    try {
+      await fetch("/api/mail/send-order-notification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idPedido: "AVISAME",
+          codigoCliente: "-",
+          nombre, apellido: "", email,
+          items: [{ nombre: _avisameProductName, talle: "-", qty: 1, precio: 0 }],
+          subtotal: 0, descuento: 0, total: 0,
+          pago: "avisame", envio: "retiro",
+        }),
+      });
+    } catch(e) { /* igual mostramos éxito */ }
+
+    closeAvisame();
+    showToast("¡Te avisamos cuando vuelva a estar disponible!");
   }
 
   updateCartCount();

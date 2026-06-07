@@ -87,10 +87,17 @@ async function fetchFromSheets(colegio = "WS") {
     if (colegioCell !== colegio || !nombre || !talle) continue;
 
     if (!productsMap[nombre]) {
-      const categorias  = catMap[nombre] ? [...catMap[nombre].cats] : [];
-      const descripcion = catMap[nombre]?.descripcion || "";
-      const fotos       = catMap[nombre]?.fotos || [];
-      const genero      = catMap[nombre]?.genero || "";
+      // Buscar en catMap: exacto primero, luego por coincidencia parcial
+      const catKey = catMap[nombre]
+        ? nombre
+        : Object.keys(catMap).find(k =>
+            k.toLowerCase().includes(nombre.toLowerCase()) ||
+            nombre.toLowerCase().includes(k.toLowerCase())
+          ) || null;
+      const categorias  = catKey ? [...catMap[catKey].cats] : [];
+      const descripcion = catKey ? catMap[catKey].descripcion : "";
+      const fotos       = catKey ? catMap[catKey].fotos : [];
+      const genero      = catKey ? catMap[catKey].genero : "";
       productsMap[nombre] = {
         id: nombre.toLowerCase().replace(/\s+/g, "-").replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u").replace(/[^a-z0-9-]/g,""),
         nombre,
