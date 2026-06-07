@@ -1450,7 +1450,6 @@
           <li class="filter-item active" data-genero="todos" onclick="filterGenero(this)"><span class="filter-dot"></span>Todos</li>
           <li class="filter-item" data-genero="varon" onclick="filterGenero(this)"><span class="filter-dot"></span>Varón</li>
           <li class="filter-item" data-genero="mujer" onclick="filterGenero(this)"><span class="filter-dot"></span>Mujer</li>
-          <li class="filter-item" data-genero="unisex" onclick="filterGenero(this)"><span class="filter-dot"></span>Unisex</li>
         </ul>
       </div>
     </aside>
@@ -1915,7 +1914,10 @@
     const filtered = allProducts.filter(p => {
       const matchNivel  = activeNivel  === "todos" || (Array.isArray(p.categorias) && p.categorias.includes(activeNivel));
       const normGenero = (p.genero || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-      const matchGenero = activeGenero === "todos" || normGenero === activeGenero || (!normGenero && activeGenero === "unisex");
+      const matchGenero = activeGenero === "todos"
+        || normGenero === activeGenero
+        || normGenero === "unisex"
+        || !normGenero;
       const matchSearch = !q || p.nombre.toLowerCase().includes(q);
       return matchNivel && matchGenero && matchSearch;
     });
