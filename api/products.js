@@ -6,7 +6,8 @@
 //   5=Compras  6=Ventas  7=Stock actual  8=Costo Unit  9=Precio Unit
 //
 // Columnas "10 Listado de Prendas":
-//   0=Colegio  1=Prenda  2=Talle  3=SKU  4=Categorias  5=Descripcion  6=Foto1  7=Foto2  8=Genero
+//   0=A Colegio  1=B Prenda  2=C Talle  3=D SKU
+//   4=E Categorias  5=F Genero  6=G Descripcion  7=H Foto1  8=I Foto2
 
 const { google } = require("googleapis");
 
@@ -40,7 +41,7 @@ async function fetchFromSheets(colegio = "WS") {
     }),
     sheets.spreadsheets.values.get({
       spreadsheetId: sid,
-      range: "'10 Listado de Prendas'!A2:I2000", // I = Genero
+      range: "'10 Listado de Prendas'!A2:I2000", // I = Foto2
       valueRenderOption: "FORMATTED_VALUE",
     }),
   ]);
@@ -50,7 +51,7 @@ async function fetchFromSheets(colegio = "WS") {
   for (const row of (catRes.data.values || [])) {
     const colColegio = String(row[0] || "").trim();
     const nombre     = String(row[1] || "").trim();
-    const catRaw     = String(row[4] || "").trim(); // "Primaria, Secundaria"
+    const catRaw = String(row[4] || "").trim(); // E = Categorias
 
     if (colColegio !== colegio || !nombre) continue;
 
@@ -58,17 +59,19 @@ async function fetchFromSheets(colegio = "WS") {
     if (!catMap[nombre]) catMap[nombre] = { cats: new Set(), descripcion: "", fotos: [], genero: "" };
     cats.forEach(c => catMap[nombre].cats.add(c));
 
-    // Descripcion: columna F (índice 5)
-    const desc = String(row[5] || "").trim();
+    // F = Genero (índice 5)
+    const genero = String(row[5] || "").trim();
+    if (genero && !catMap[nombre].genero) catMap[nombre].genero = genero;
+
+    // G = Descripcion (índice 6)
+    const desc = String(row[6] || "").trim();
     if (desc && !catMap[nombre].descripcion) catMap[nombre].descripcion = desc;
 
-    // Fotos: columnas G y H (índices 6 y 7)
-    const foto1 = String(row[6] || "").trim();
-    const foto2 = String(row[7] || "").trim();
+    // H = Foto1 (índice 7),  I = Foto2 (índice 8)
+    const foto1 = String(row[7] || "").trim();
+    const foto2 = String(row[8] || "").trim();
     if (foto1 && !catMap[nombre].fotos.includes(foto1)) catMap[nombre].fotos.push(foto1);
     if (foto2 && !catMap[nombre].fotos.includes(foto2)) catMap[nombre].fotos.push(foto2);
-    const genero = String(row[8] || "").trim();
-    if (genero && !catMap[nombre].genero) catMap[nombre].genero = genero;
   }
 
   // ── Construir productos desde stock ──────────────────────────────────────
