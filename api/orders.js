@@ -32,15 +32,6 @@ function makeAuth() {
   });
 }
 
-// Genera SKU: WS-Prenda-Talle (sin espacios, sin caracteres especiales)
-function buildSKU(colegio, prenda, talle) {
-  const prendaSlug = prenda
-    .replace(/[áàä]/gi, "a").replace(/[éèë]/gi, "e")
-    .replace(/[íìï]/gi, "i").replace(/[óòö]/gi, "o")
-    .replace(/[úùü]/gi, "u").replace(/ñ/gi, "n")
-    .replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "");
-  return `${colegio}-${prendaSlug}-${talle}`;
-}
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
