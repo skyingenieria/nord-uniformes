@@ -871,21 +871,52 @@
       color: rgba(138,154,181,0.5);
     }
 
+    /* ── RESPONSIVE ────────────────────────────────────────────────── */
     @media (max-width: 900px) {
       .catalog-body { grid-template-columns: 1fr; }
       .sidebar { position: static; }
       .filter-list { flex-direction: row; flex-wrap: wrap; gap: 8px; }
-      .filter-item { padding: 6px 14px; border: 1px solid var(--niebla-200); }
-      .filter-item.active { background: var(--azul-900); }
+      .filter-item { padding: 6px 14px; border: 1px solid var(--niebla-200); border-radius: 20px; }
+      .filter-item.active { background: var(--azul-900); color: white; }
       .filter-count { display: none; }
       .sidebar-title { display: none; }
-      .filter-group-title { display: none; }
       .products-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
     }
-    @media (max-width: 500px) {
-      .products-grid { grid-template-columns: 1fr; gap: 16px; }
+
+    @media (max-width: 600px) {
+      /* Header */
       nav { display: none; }
-      .catalog-school-title { font-size: clamp(40px, 14vw, 72px); }
+      .catalog-school-title { font-size: clamp(32px, 12vw, 56px); }
+
+      /* Sidebar: ocultar en mobile, usar solo filter-nav */
+      .sidebar { display: none; }
+      .catalog { padding: 20px 16px 60px; }
+
+      /* Grid: 2 columnas bien proporcionadas */
+      .products-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+      /* Tarjeta más compacta en mobile */
+      .product-body { padding: 12px; gap: 10px; }
+      .product-name { font-size: 13px; }
+      .price-transferencia strong { font-size: 14px; }
+      .btn-agregar { padding: 11px; font-size: 10px; letter-spacing: .1em; }
+
+      /* Imagen más alta en tarjeta */
+      .product-img { aspect-ratio: 3/4; }
+
+      /* Banner Wellspring */
+      .catalog-header { padding: 20px 16px; }
+      .catalog-header > div { gap: 10px; }
+
+      /* Filter nav más compacto */
+      .filter-nav-btn { font-size: 11px; padding: 12px 16px; }
+
+      /* Promo banner */
+      .promo-banner { font-size: 11px; padding: 7px 16px; }
+
+      /* Footer */
+      .footer-inner { flex-direction: column; gap: 24px; }
+      .politicas-grid { grid-template-columns: 1fr; }
     }
 
     /* ── MODAL DE PRODUCTO MEJORADO ── */
@@ -1312,20 +1343,46 @@
     }
 
     @media (max-width: 768px) {
+      /* Modal como bottom sheet */
+      .product-modal {
+        align-items: flex-end;
+        padding: 0;
+      }
       .modal-content {
         grid-template-columns: 1fr;
         width: 100%;
-        max-height: 100dvh;
-        border-radius: 16px 16px 0 0;
-        align-self: flex-end;
+        max-height: 95dvh;
+        border-radius: 20px 20px 0 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
       }
+
+      /* Imagen arriba: ancho completo, buena altura */
       .modal-image-section {
-        border-radius: 16px 16px 0 0;
-        max-height: 45vw;
+        border-radius: 20px 20px 0 0;
+        min-height: 56vw;
+        max-height: 70vw;
+      }
+      .modal-image-main {
+        min-height: 56vw;
+      }
+
+      /* Thumbnails más chicos */
+      .modal-thumb { width: 48px; height: 48px; }
+
+      /* Info con buen padding */
+      .modal-info-section {
+        padding: 20px 20px 32px;
+        gap: 12px;
       }
       .modal-product-name { font-size: 20px; }
-      .modal-product-price { font-size: 26px; }
-      .modal-talles-header { flex-wrap: wrap; }
+      .modal-product-price { font-size: 28px; }
+      .modal-talles-header { flex-wrap: wrap; gap: 8px; }
+      .modal-talles-grid { grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; }
+      .modal-talle-btn { padding: 10px 6px; font-size: 13px; }
+
+      /* Botón agregar grande */
+      .btn-agregar-modal { padding: 16px; font-size: 13px; }
     }
   </style>
 </head>
