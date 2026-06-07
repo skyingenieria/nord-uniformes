@@ -8,9 +8,8 @@
 //   E: Forma pago  (Transf. Banc.)
 //   F: Prenda      (nombre de la prenda)
 //   G: Talle
-//   H: SKU         (WS-Prenda-Talle)
-//   I: Cant        (cantidad)
-//   J en adelante: fórmulas del sheet — NO TOCAR
+//   H: Cant        (cantidad)
+//   I en adelante: fórmulas del sheet (SKU, Costo, Precio, etc.) — NO TOCAR
 //
 // "3 Pedidos" — UNA FILA POR PEDIDO (resumen consolidado):
 //   A: ID Pedido  B: Cliente  C: Cant. Prendas  D: Total
@@ -77,21 +76,20 @@ module.exports = async (req, res) => {
 
     // ── 1. "7 Ordenes": una fila por item ────────────────────────────────────
     const filas7Ordenes = items.map(item => [
-      fecha,                                      // A: Fecha
-      idPedido,                                   // B: Pedido
-      colegio,                                    // C: Colegio
-      codigoCliente,                              // D: Cliente (ID completo)
-      formaPago,                                  // E: Forma de pago
-      item.nombre,                                // F: Prenda
-      item.talle,                                 // G: Talle
-      buildSKU(colegio, item.nombre, item.talle), // H: SKU
-      item.qty || 1,                              // I: Cant
-      // J en adelante = fórmulas del sheet, NO se escriben
+      fecha,           // A: Fecha
+      idPedido,        // B: Pedido
+      colegio,         // C: Colegio
+      codigoCliente,   // D: Cliente (ID completo)
+      formaPago,       // E: Forma de pago
+      item.nombre,     // F: Prenda
+      item.talle,      // G: Talle
+      item.qty || 1,   // H: Cant
+      // I en adelante = fórmulas del sheet (SKU, Costo, Precio...), NO se escriben
     ]);
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'7 Ordenes'!A:I",
+      range: "'7 Ordenes'!A:H",
       valueInputOption: "USER_ENTERED",
       requestBody: { values: filas7Ordenes },
     });
