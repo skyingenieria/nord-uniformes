@@ -407,8 +407,9 @@
     }
     .product-img img.foto-1 { opacity: 1; }
     .product-img img.foto-2 { opacity: 0; }
-    .product-img:hover img.foto-1 { opacity: 0; }
-    .product-img:hover img.foto-2 { opacity: 1; }
+    /* hover solo cuando hay foto-2 */
+    .product-img.has-foto2:hover img.foto-1 { opacity: 0; }
+    .product-img.has-foto2:hover img.foto-2 { opacity: 1; }
     .product-img-placeholder {
       display: flex;
       flex-direction: column;
@@ -1241,8 +1242,10 @@
 </header>
 
 <div class="catalog-header">
-  <img src="/images/logo_wellspring_2.png" alt="Wellspring" style="height:clamp(56px,10vw,90px);margin-bottom:14px;filter:brightness(0) invert(1);opacity:.9;">
-  <h1 class="catalog-school-title">WELLSPRING</h1>
+  <div style="display:flex;align-items:center;justify-content:center;gap:clamp(14px,3vw,28px);margin-bottom:14px;">
+    <img src="/images/logo_wellspring_2.png" alt="Wellspring" style="height:clamp(48px,8vw,80px);filter:brightness(0) invert(1);opacity:.85;flex-shrink:0;">
+    <h1 class="catalog-school-title" style="margin-bottom:0;">WELLSPRING</h1>
+  </div>
   <p class="catalog-subtitle">Seleccioná tu talle, pagá tu pedido por transferencia y coordinamos la entrega por WhatsApp.</p>
 </div>
 
@@ -1356,7 +1359,7 @@
 
 <!-- Políticas de cambios -->
 <div class="politicas-section">
-  <p class="politicas-title">Políticas de cambios</p>
+  <p class="politicas-title">Políticas de Cambios & Retiros</p>
   <div class="politicas-grid">
     <div class="politica-item">
       <h4>📦 Cambios de talle</h4>
@@ -1372,7 +1375,8 @@
     </div>
     <div class="politica-item">
       <h4>📍 Punto de retiro</h4>
-      <p>Barrio Habitat Residencias, Zona Norte GBA. Horario a coordinar por WhatsApp. <a href="https://maps.app.goo.gl/x2ec2a3AeP1LGCzJ7" target="_blank" style="color:var(--azul-900);font-weight:700;">Ver en Google Maps →</a></p>
+      <p>Carlos Calvo 590, Barrio Habitat Residencias, CP 1631 La Lonja, Gran Buenos Aires. Horario a coordinar por WhatsApp.</p>
+      <a href="https://maps.app.goo.gl/x2ec2a3AeP1LGCzJ7" target="_blank" style="display:inline-block;margin-top:10px;background:var(--azul-900);color:white;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:7px 14px;border-radius:6px;text-decoration:none;">📍 Ver en Google Maps</a>
     </div>
   </div>
 </div>
@@ -1385,32 +1389,27 @@
       <p class="footer-text">Uniformes escolares para Zona Norte del Gran Buenos Aires.</p>
     </div>
     <div style="font-size:13px;line-height:1.8;color:var(--niebla);">
-      <p style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--azul-400);margin-bottom:8px;">Contacto</p>
+      <p style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:white;margin-bottom:8px;">Contacto</p>
       <p>NORD Uniformes</p>
       <p><a href="https://wa.me/5491135057838" style="color:var(--niebla);text-decoration:none;" target="_blank">+54 9 11 3505-7838</a></p>
       <p><a href="mailto:norduniformes@gmail.com" style="color:var(--niebla);text-decoration:none;">norduniformes@gmail.com</a></p>
     </div>
     <div style="font-size:13px;line-height:1.8;color:var(--niebla);">
-      <p style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--azul-400);margin-bottom:8px;">Retiro</p>
+      <p style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:white;margin-bottom:8px;">Retiro</p>
+      <p>Carlos Calvo 590</p>
       <p>Barrio Habitat Residencias</p>
-      <p>Zona Norte · Gran Buenos Aires</p>
-      <p><a href="https://maps.app.goo.gl/x2ec2a3AeP1LGCzJ7" target="_blank" style="color:var(--niebla);text-decoration:none;">Ver en Google Maps →</a></p>
+      <p>CP 1631 · La Lonja · Gran Buenos Aires</p>
+      <a href="https://maps.app.goo.gl/x2ec2a3AeP1LGCzJ7" target="_blank" style="display:inline-block;margin-top:8px;background:var(--dorado);color:var(--azul-900);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border-radius:6px;text-decoration:none;">📍 Ver en Google Maps</a>
     </div>
   </div>
   <div class="footer-bottom">© 2025 NORD Uniformes · norduniformes.com.ar</div>
 </footer>
 
-<!-- WhatsApp flotante -->
+<!-- WhatsApp flotante — link directo -->
 <div class="wa-float">
-  <div class="wa-card" id="wa-card">
-    <strong>Contacto</strong>
-    NORD Uniformes<br>
-    <a href="https://wa.me/5491135057838" target="_blank">+54 9 11 3505-7838</a><br>
-    <a href="mailto:norduniformes@gmail.com">norduniformes@gmail.com</a>
-  </div>
-  <button class="wa-btn" onclick="document.getElementById('wa-card').classList.toggle('visible')" aria-label="WhatsApp">
+  <a class="wa-btn" href="https://wa.me/5491135057838" target="_blank" aria-label="WhatsApp">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-  </button>
+  </a>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1558,7 +1557,8 @@
 
     container.innerHTML = products.map(p => {
       const foto1 = toDirectImageUrl((p.fotos && p.fotos[0]) || p.imagen_url || "");
-      const foto2 = toDirectImageUrl((p.fotos && p.fotos[1]) || "");
+      const foto2Raw = (p.fotos && p.fotos[1]) || "";
+      const foto2 = foto2Raw ? toDirectImageUrl(foto2Raw) : "";
       const imgHtml = foto1
         ? `<img class="foto-1" src="${foto1}" alt="${p.nombre}" loading="lazy">
            ${foto2 ? `<img class="foto-2" src="${foto2}" alt="${p.nombre} - foto 2" loading="lazy">` : ""}`
@@ -1582,7 +1582,7 @@
 
       return `
         <div class="product-card${hayStock ? "" : " agotado"}" data-product-id="${p.id}">
-          <div class="product-img" onclick="${hayStock ? `openProductModal('${p.id}')` : ""}" style="cursor:${hayStock ? "pointer" : "default"};">
+          <div class="product-img${foto2 ? " has-foto2" : ""}" onclick="${hayStock ? `openProductModal('${p.id}')` : ""}" style="cursor:${hayStock ? "pointer" : "default"};">
             ${imgHtml}
             ${!hayStock ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(15,23,46,0.6);color:white;font-size:11px;font-weight:700;letter-spacing:.1em;text-align:center;padding:8px;text-transform:uppercase">Sin stock</div>` : ""}
           </div>
@@ -1804,17 +1804,6 @@
     const gTag = document.getElementById("modal-genero-tag");
     if (gTag) gTag.innerHTML = gLabel ? `<span class="product-genero ${gClass}">${gLabel}</span>` : "";
 
-    // Descripción extra (debajo del precio) — misma descripcion si la hay
-    const descExtra = document.getElementById("modal-desc-extra");
-    if (descExtra) {
-      if (product.descripcion) {
-        descExtra.textContent = product.descripcion;
-        descExtra.classList.add("visible");
-      } else {
-        descExtra.textContent = "";
-        descExtra.classList.remove("visible");
-      }
-    }
 
     // Cargar imagen principal
     goToImage(0);
