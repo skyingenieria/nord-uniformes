@@ -82,10 +82,9 @@ module.exports = async (req, res) => {
       .map(id => parseInt(id.replace(/^WS(\d+).*/, "$1")) || 0);
     const maxWs = wsNums.length ? Math.max(...wsNums) : 0;
     const codeNum = Math.max(nextNro, maxWs + 1);
-    const codeStr = String(codeNum).padStart(3, "0");
 
-    // ID → WS001-Apellido-Nombre
-    const idCliente = `WS${codeStr}-${apellido}-${nombre}`;
+    // ID → WS4-Apellido-Nombre (sin zero-padding)
+    const idCliente = `WS${codeNum}-${apellido}-${nombre}`;
 
     // ── Escribir nueva fila ───────────────────────────────────────────────────
     const newRow = [
