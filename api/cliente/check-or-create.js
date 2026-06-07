@@ -8,8 +8,8 @@
 //   D (3): Colegio      (siempre "WS")
 //   E (4): ID           (WS001-Apellido-Nombre)
 //   F (5): Email
-//   G (6): (vacío — fórmula o uso futuro)
-//   H (7): WhatsApp
+//   G (6): WhatsApp
+//   H (7): Monto Comprado  → fórmula del sheet, no la escribimos
 //   I, J : Monto Comprado / Adeudado → fórmulas del sheet, no las escribimos
 //
 // Si el email ya existe → devuelve el cliente existente sin crear uno nuevo.
@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
         apellido: existingRow[2] || "",
         colegio: existingRow[3] || "WS",
         email: existingRow[5] || "",
-        telefono: existingRow[7] || "",
+        telefono: existingRow[6] || "",
         esNuevo: false,
       });
     }
@@ -95,13 +95,12 @@ module.exports = async (req, res) => {
       "WS",            // D: Colegio
       idCliente,       // E: ID
       email,           // F: Email
-      "",              // G: vacío (fórmula/uso futuro)
-      telefono || "",  // H: WhatsApp
+      telefono || "",  // G: WhatsApp
     ];
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'14 Clientes'!A:H",
+      range: "'14 Clientes'!A:G",
       valueInputOption: "USER_ENTERED",
       requestBody: { values: [newRow] },
     });
