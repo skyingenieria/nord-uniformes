@@ -94,13 +94,15 @@ async function fetchFromSheets(colegio = "WS") {
             k.toLowerCase().includes(nombre.toLowerCase()) ||
             nombre.toLowerCase().includes(k.toLowerCase())
           ) || null;
+      // Si hubo match parcial, usar el nombre del Listado (más completo/correcto)
+      const nombreFinal = catKey || nombre;
       const categorias  = catKey ? [...catMap[catKey].cats] : [];
       const descripcion = catKey ? catMap[catKey].descripcion : "";
       const fotos       = catKey ? catMap[catKey].fotos : [];
       const genero      = catKey ? catMap[catKey].genero : "";
       productsMap[nombre] = {
-        id: nombre.toLowerCase().replace(/\s+/g, "-").replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u").replace(/[^a-z0-9-]/g,""),
-        nombre,
+        id: nombreFinal.toLowerCase().replace(/\s+/g, "-").replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u").replace(/[^a-z0-9-]/g,""),
+        nombre: nombreFinal,
         precio: precioUnit,
         imagen_url: fotos[0] || "",   // primera foto para la tarjeta
         fotos,

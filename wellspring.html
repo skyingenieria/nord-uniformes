@@ -222,9 +222,12 @@
       flex-shrink: 0;
     }
 
-    /* CATALOG BODY — grid sin sidebar */
+    /* CATALOG BODY — sidebar + grid */
     .catalog-body {
-      display: block;
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 40px;
+      align-items: start;
     }
 
     /* SIDEBAR */
@@ -1357,34 +1360,52 @@
   <p class="catalog-subtitle">Seleccioná tu talle, pagá tu pedido por transferencia y coordinamos la entrega por WhatsApp.</p>
 </div>
 
-<!-- BARRA DE FILTROS HORIZONTAL -->
+<!-- BARRA DE CATEGORÍAS HORIZONTAL -->
 <nav class="filter-nav">
   <div class="filter-nav-inner">
-    <span class="filter-nav-label">Nivel</span>
     <button class="filter-nav-btn active" data-nivel="todos" onclick="filterNivel(this)">Todos <span id="count-todos"></span></button>
     <button class="filter-nav-btn" data-nivel="kinder" onclick="filterNivel(this)">Kinder <span id="count-kinder"></span></button>
     <button class="filter-nav-btn" data-nivel="primaria" onclick="filterNivel(this)">Primaria <span id="count-primaria"></span></button>
     <button class="filter-nav-btn" data-nivel="secundaria" onclick="filterNivel(this)">Secundaria <span id="count-secundaria"></span></button>
-    <div class="filter-nav-sep"></div>
-    <span class="filter-nav-label">Género</span>
-    <button class="filter-nav-btn active" data-genero="todos" onclick="filterGenero(this)">Todos</button>
-    <button class="filter-nav-btn" data-genero="varon" onclick="filterGenero(this)">Varón</button>
-    <button class="filter-nav-btn" data-genero="mujer" onclick="filterGenero(this)">Mujer</button>
-    <button class="filter-nav-btn" data-genero="unisex" onclick="filterGenero(this)">Unisex</button>
-    <div class="filter-nav-sep"></div>
-    <div class="search-wrap" style="margin:6px 8px;flex-shrink:0;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input id="search-input" type="text" placeholder="Buscar..." oninput="applyFilters()" style="background:transparent;color:white;width:120px;">
-    </div>
   </div>
 </nav>
 
 <section class="catalog">
   <div class="catalog-body">
+
+    <!-- SIDEBAR DE FILTROS -->
+    <aside class="sidebar">
+      <p class="sidebar-title">Filtrar</p>
+
+      <div class="filter-group">
+        <p class="filter-group-title">Nivel</p>
+        <ul class="filter-list" id="filter-nivel-side">
+          <li class="filter-item active" data-nivel="todos" onclick="filterNivel(this)"><span class="filter-dot"></span>Todos <span class="filter-count" id="count-todos-side"></span></li>
+          <li class="filter-item" data-nivel="kinder" onclick="filterNivel(this)"><span class="filter-dot"></span>Kinder <span class="filter-count" id="count-kinder-side"></span></li>
+          <li class="filter-item" data-nivel="primaria" onclick="filterNivel(this)"><span class="filter-dot"></span>Primaria <span class="filter-count" id="count-primaria-side"></span></li>
+          <li class="filter-item" data-nivel="secundaria" onclick="filterNivel(this)"><span class="filter-dot"></span>Secundaria <span class="filter-count" id="count-secundaria-side"></span></li>
+        </ul>
+      </div>
+
+      <div class="filter-group" style="margin-top:20px;">
+        <p class="filter-group-title">Género</p>
+        <ul class="filter-list" id="filter-genero">
+          <li class="filter-item active" data-genero="todos" onclick="filterGenero(this)"><span class="filter-dot"></span>Todos</li>
+          <li class="filter-item" data-genero="varon" onclick="filterGenero(this)"><span class="filter-dot"></span>Varón</li>
+          <li class="filter-item" data-genero="mujer" onclick="filterGenero(this)"><span class="filter-dot"></span>Mujer</li>
+          <li class="filter-item" data-genero="unisex" onclick="filterGenero(this)"><span class="filter-dot"></span>Unisex</li>
+        </ul>
+      </div>
+    </aside>
+
     <!-- GRID DE PRODUCTOS -->
     <div>
       <div class="grid-toolbar">
         <span class="grid-count" id="grid-count"></span>
+        <div class="search-wrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="search-input" type="text" placeholder="Buscar prenda..." oninput="applyFilters()">
+        </div>
       </div>
       <div id="products-container" class="products-grid">
         <!-- Skeletons visibles mientras carga -->
@@ -1818,12 +1839,12 @@
 
   function updateCounts() {
     const niveles = ["kinder", "primaria", "secundaria"];
-    document.getElementById("count-todos").textContent = allProducts.length;
+    const total = allProducts.length;
+    // Nav bar
+    ["count-todos","count-todos-side"].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = total; });
     niveles.forEach(n => {
-      const el = document.getElementById("count-" + n);
-      if (el) el.textContent = allProducts.filter(p =>
-        Array.isArray(p.categorias) && p.categorias.includes(n)
-      ).length || "";
+      const cnt = allProducts.filter(p => Array.isArray(p.categorias) && p.categorias.includes(n)).length || "";
+      ["count-"+n, "count-"+n+"-side"].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = cnt; });
     });
   }
 
@@ -1846,9 +1867,12 @@
   }
 
   function filterNivel(item) {
-    document.querySelectorAll("[data-nivel]").forEach(b => b.classList.remove("active"));
-    item.classList.add("active");
-    activeNivel = item.dataset.nivel;
+    const nivel = item.dataset.nivel;
+    // Sincronizar nav bar + sidebar
+    document.querySelectorAll("[data-nivel]").forEach(b => {
+      b.classList.toggle("active", b.dataset.nivel === nivel);
+    });
+    activeNivel = nivel;
     applyFilters();
   }
 
