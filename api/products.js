@@ -131,15 +131,30 @@ module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=3600");
 
-  // ?debug=1 → raw de primeras filas para diagnóstico
+  // ?debug=1 → buscar filas de kilt/pollera en ambas hojas
   if (req.query.debug === "1") {
     const sheets = google.sheets({ version: "v4", auth: makeAuth() });
-    const raw = await sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'6 Stock'!A1:J6",
-      valueRenderOption: "UNFORMATTED_VALUE",
-    });
-    return res.status(200).json(raw.data.values);
+    const [stockRaw, listadoRaw] = await Promise.all([
+      sheets.spreadsheets.values.get({
+        spreadsheetId: process.env.SPREADSHEET_ID,
+        range: "'6 Stock'!A2:J2000",
+        valueRenderOption: "UNFORMATTED_VALUE",
+      }),
+      sheets.spreadsheets.values.get({
+        spreadsheetId: process.env.SPREADSHEET_ID,
+        range: "'10 Listado de Prendas'!A2:I2000",
+        valueRenderOption: "FORMATTED_VALUE",
+      }),
+    ]);
+    const stockKilt = (stockRaw.data.values || []).filter(r =>
+      String(r[1]||"").toLowerCase().includes("kilt") ||
+      String(r[1]||"").toLowerCase().includes("pollera")
+    );
+    const listadoKilt = (listadoRaw.data.values || []).filter(r =>
+      String(r[1]||"").toLowerCase().includes("kilt") ||
+      String(r[1]||"").toLowerCase().includes("pollera")
+    );
+    return res.status(200).json({ stock: stockKilt, listado: listadoKilt });
   }
 
   try {
