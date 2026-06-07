@@ -8,8 +8,9 @@
 //   E: Forma pago  (Transf. Banc.)
 //   F: Prenda      (nombre de la prenda)
 //   G: Talle
-//   H: Cant        (cantidad)
-//   I en adelante: fórmulas del sheet (SKU, Costo, Precio, etc.) — NO TOCAR
+//   H: SKU         (fórmula del sheet — NO TOCAR, se deja vacío)
+//   I: Cant        (cantidad)
+//   J en adelante: fórmulas del sheet (Costo, Precio, etc.) — NO TOCAR
 //
 // "3 Pedidos" — UNA FILA POR PEDIDO (resumen consolidado):
 //   A: ID Pedido  B: Cliente  C: Cant. Prendas  D: Total
@@ -83,13 +84,14 @@ module.exports = async (req, res) => {
       formaPago,       // E: Forma de pago
       item.nombre,     // F: Prenda
       item.talle,      // G: Talle
-      item.qty || 1,   // H: Cant
-      // I en adelante = fórmulas del sheet (SKU, Costo, Precio...), NO se escriben
+      "",              // H: SKU — fórmula del sheet, se deja vacío
+      item.qty || 1,   // I: Cant
+      // J en adelante = fórmulas del sheet (Costo, Precio...), NO se escriben
     ]);
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'7 Ordenes'!A:H",
+      range: "'7 Ordenes'!A:I",
       valueInputOption: "USER_ENTERED",
       requestBody: { values: filas7Ordenes },
     });
