@@ -1364,10 +1364,9 @@
 <!-- BARRA DE CATEGORÍAS HORIZONTAL -->
 <nav class="filter-nav">
   <div class="filter-nav-inner">
-    <button class="filter-nav-btn active" data-nivel="todos" onclick="filterNivel(this)">Todos <span id="count-todos"></span></button>
-    <button class="filter-nav-btn" data-nivel="kinder" onclick="filterNivel(this)">Kinder <span id="count-kinder"></span></button>
-    <button class="filter-nav-btn" data-nivel="primaria" onclick="filterNivel(this)">Primaria <span id="count-primaria"></span></button>
-    <button class="filter-nav-btn" data-nivel="secundaria" onclick="filterNivel(this)">Secundaria <span id="count-secundaria"></span></button>
+    <button class="filter-nav-btn active" data-nivel="kinder" onclick="filterNivel(this)">Kinder</button>
+    <button class="filter-nav-btn" data-nivel="primaria" onclick="filterNivel(this)">Primaria</button>
+    <button class="filter-nav-btn" data-nivel="secundaria" onclick="filterNivel(this)">Secundaria</button>
   </div>
 </nav>
 
@@ -1381,8 +1380,8 @@
       <div class="filter-group">
         <p class="filter-group-title">Nivel</p>
         <ul class="filter-list" id="filter-nivel-side">
-          <li class="filter-item active" data-nivel="todos" onclick="filterNivel(this)"><span class="filter-dot"></span>Todos <span class="filter-count" id="count-todos-side"></span></li>
-          <li class="filter-item" data-nivel="kinder" onclick="filterNivel(this)"><span class="filter-dot"></span>Kinder <span class="filter-count" id="count-kinder-side"></span></li>
+          <li class="filter-item" data-nivel="todos" onclick="filterNivel(this)"><span class="filter-dot"></span>Todos <span class="filter-count" id="count-todos-side"></span></li>
+          <li class="filter-item active" data-nivel="kinder" onclick="filterNivel(this)"><span class="filter-dot"></span>Kinder <span class="filter-count" id="count-kinder-side"></span></li>
           <li class="filter-item" data-nivel="primaria" onclick="filterNivel(this)"><span class="filter-dot"></span>Primaria <span class="filter-count" id="count-primaria-side"></span></li>
           <li class="filter-item" data-nivel="secundaria" onclick="filterNivel(this)"><span class="filter-dot"></span>Secundaria <span class="filter-count" id="count-secundaria-side"></span></li>
         </ul>
@@ -1835,7 +1834,7 @@
 
   // ── Filtros ──────────────────────────────────────────────────────────
   let allProducts = [];
-  let activeNivel  = "todos";
+  let activeNivel  = "kinder";
   let activeGenero = "todos";
 
   function updateCounts() {
