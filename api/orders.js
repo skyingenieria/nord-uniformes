@@ -1,23 +1,33 @@
-// POST /api/orders — guarda la orden en "7 Ordenes" y "3 Pedidos"
+// POST /api/orders — guarda la orden en "Ordenes" y "Pedidos"
 //
-// "7 Ordenes" (Ventas_2) — UNA FILA POR ITEM:
-//   A: Fecha       (MM/DD/YYYY)
+// "Ordenes" — UNA FILA POR ITEM:
+//   A: Fecha       (M/D/YYYY)
 //   B: Pedido      (YY-XX, ej: 26-01)
 //   C: Colegio     (WS)
-//   D: Cliente     (ID del cliente, ej: WS001-Gonzalez-Maria)
+//   D: Cliente     (ID del cliente, ej: WS2-Luzuriaga-Maria Victoria)
 //   E: Forma pago  (Transf. Banc.)
 //   F: Prenda      (nombre de la prenda)
 //   G: Talle
-//   H: SKU         (fórmula del sheet — NO TOCAR, se deja vacío)
-//   I: Cant        (cantidad)
-//   J en adelante: fórmulas del sheet (Costo, Precio, etc.) — NO TOCAR
+//   H: Cant        (cantidad)
+//   I: SKU         (formula del sheet — no se escribe)
+//   J en adelante: formulas del sheet — no se escriben
 //
-// "3 Pedidos" — UNA FILA POR PEDIDO (resumen consolidado):
-//   A: ID Pedido  B: Cliente  C: Cant. Prendas  D: Total
-//   E: Forma pago  F: Estado
+// "Pedidos" — UNA FILA POR PEDIDO (resumen consolidado):
+//   A: ID Pedido
+//   B: Cliente
+//   C: Cant. Prendas
+//   D: Monto Pedido
+//   E: Forma de pago
+//   F: Fecha Pago   (se completa manualmente)
+//   G: Monto Pago   (se completa manualmente)
+//   H: Saldo        (formula del sheet)
+//   I: Estado Pago  (Al Cobro al crear)
+//   J: Envio        (se completa manualmente)
+//   K: Estado Envio (se completa manualmente)
 //
-// Body: { idPedido, codigoCliente, nombre, apellido, email, telefono,
-//         items:[{nombre,talle,qty,precio}], subtotal, total, pago, envio }
+// Inserta DESPUES del ultimo dato real para no pisar filas-template.
+//
+// Body: { idPedido, codigoCliente, items:[{nombre,talle,qty,precio}], total, pago }
 
 const { google } = require("googleapis");
 
@@ -32,6 +42,23 @@ function makeAuth() {
   });
 }
 
+// Devuelve el numero de fila del sheet (1-based) donde insertar el proximo dato.
+// Lee colA y busca la ultima fila donde isRealRow(valor) es true.
+async function findNextRow(sheets, sheetName, colLetter, isRealRow) {
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: process.env.SPREADSHEET_ID,
+    range: `'${sheetName}'!${colLetter}:${colLetter}`,
+  });
+  const rows = res.data.values || [];
+  let lastDataSheetRow = 1; // row 1 = header
+  for (let i = 1; i < rows.length; i++) {
+    const val = (rows[i][0] || "").toString().trim();
+    if (isRealRow(val)) {
+      lastDataSheetRow = i + 1; // 1-based
+    }
+  }
+  return lastDataSheetRow + 1;
+}
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -39,14 +66,13 @@ module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
+  if (req.method !== "POST") return res.status(405).json({ error: "Metodo no permitido" });
 
   try {
     const {
       idPedido, codigoCliente,
-      nombre, apellido,
       items = [],
-      subtotal = 0, total = 0,
+      total = 0,
       pago = "transferencia",
     } = req.body;
 
@@ -59,50 +85,56 @@ module.exports = async (req, res) => {
 
     const sheets = google.sheets({ version: "v4", auth: makeAuth() });
 
-    // Fecha en formato MM/DD/YYYY (como muestra el sheet)
     const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Argentina/Buenos_Aires" }));
     const fecha = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
-
     const formaPago = "Transf. Banc.";
-    const colegio   = "WS";
+    const colegio = "WS";
 
-    // ── 1. "7 Ordenes": una fila por item ────────────────────────────────────
-    const filas7Ordenes = items.map(item => [
+    // Encontrar primera fila disponible en cada sheet en paralelo
+    const [nextOrdenRow, nextPedidoRow] = await Promise.all([
+      // Ordenes: col A = Fecha, real si tiene contenido no vacio
+      findNextRow(sheets, "Ordenes", "A", val => val.length > 0),
+      // Pedidos: col B = Cliente, real si empieza con "WS" seguido de numero
+      findNextRow(sheets, "Pedidos", "B", val => /^WS\d/.test(val)),
+    ]);
+
+    // ── 1. "Ordenes": una fila por item ──────────────────────────────────────
+    const filasOrdenes = items.map(item => [
       fecha,           // A: Fecha
       idPedido,        // B: Pedido
       colegio,         // C: Colegio
-      codigoCliente,   // D: Cliente (ID completo)
+      codigoCliente,   // D: Cliente
       formaPago,       // E: Forma de pago
       item.nombre,     // F: Prenda
       item.talle,      // G: Talle
-      "",              // H: SKU — fórmula del sheet, se deja vacío
-      item.qty || 1,   // I: Cant
-      // J en adelante = fórmulas del sheet (Costo, Precio...), NO se escriben
+      item.qty || 1,   // H: Cant
+      // I: SKU (formula del sheet, no se escribe)
     ]);
 
-    await sheets.spreadsheets.values.append({
+    await sheets.spreadsheets.values.update({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'7 Ordenes'!A:I",
+      range: `'Ordenes'!A${nextOrdenRow}:H${nextOrdenRow + filasOrdenes.length - 1}`,
       valueInputOption: "USER_ENTERED",
-      requestBody: { values: filas7Ordenes },
+      requestBody: { values: filasOrdenes },
     });
 
-    // ── 2. "3 Pedidos": una fila resumen por pedido ───────────────────────────
+    // ── 2. "Pedidos": una fila resumen por pedido ─────────────────────────────
     const cantPrendas = items.reduce((s, i) => s + (i.qty || 1), 0);
-    const fila3Pedidos = [
-      idPedido,          // A: ID Pedido
-      codigoCliente,     // B: Cliente
-      cantPrendas,       // C: Cant. Prendas
-      total,             // D: Total
-      formaPago,         // E: Forma de pago
-      "Al Cobro",        // F: Estado (transferencia = pendiente de confirmación)
-    ];
 
-    await sheets.spreadsheets.values.append({
+    // Escribimos A:E en un update, e I (Estado Pago) en otro update separado
+    // para no tocar H (Saldo, formula del sheet) ni F/G (se completan manual)
+    await sheets.spreadsheets.values.update({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'3 Pedidos'!A:F",
+      range: `'Pedidos'!A${nextPedidoRow}:E${nextPedidoRow}`,
       valueInputOption: "USER_ENTERED",
-      requestBody: { values: [fila3Pedidos] },
+      requestBody: { values: [[idPedido, codigoCliente, cantPrendas, total, formaPago]] },
+    });
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: process.env.SPREADSHEET_ID,
+      range: `'Pedidos'!I${nextPedidoRow}`,
+      valueInputOption: "USER_ENTERED",
+      requestBody: { values: [["Al Cobro"]] },
     });
 
     res.status(200).json({ idPedido, codigoCliente, fecha, itemsGuardados: items.length, success: true });
