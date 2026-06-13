@@ -1,18 +1,19 @@
 // POST /api/cliente/check-or-create
 // Body: { nombre, apellido, email, telefono }
 //
-// Estructura "14 Clientes":
-//   A (0): Nro          (001, 002…)
-//   B (1): Nombre       (nombre de pila)
-//   C (2): Familia      (apellido de familia)
-//   D (3): Colegio      (siempre "WS")
-//   E (4): ID           (WS001-Apellido-Nombre)
+// Estructura "Clientes":
+//   A (0): Nro          (1, 2, 3...)
+//   B (1): Nombre
+//   C (2): Familia (apellido)
+//   D (3): Colegio
+//   E (4): ID  (WS1-Apellido-Nombre  o  WS1--Nombre si sin apellido)
 //   F (5): Email
 //   G (6): WhatsApp
-//   H (7): Monto Comprado  → fórmula del sheet, no la escribimos
-//   I, J : Monto Comprado / Adeudado → fórmulas del sheet, no las escribimos
+//   H, I: formulas del sheet, no se escriben
 //
-// Si el email ya existe → devuelve el cliente existente sin crear uno nuevo.
+// Inserta en la primera fila vacia despues del ultimo dato real (col A numerica),
+// usando values.update para no pisar filas-template que esten mas abajo.
+//
 // Devuelve: { codigo, nro, nombre, apellido, email, telefono, esNuevo }
 
 const { google } = require("googleapis");
@@ -34,33 +35,30 @@ module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
+  if (req.method !== "POST") return res.status(405).json({ error: "Metodo no permitido" });
 
   try {
     const { nombre, apellido, email, telefono } = req.body;
 
-    if (!nombre || !apellido || !email) {
-      return res.status(400).json({ error: "Faltan datos requeridos (nombre, apellido, email)" });
+    if (!nombre || !email) {
+      return res.status(400).json({ error: "Faltan datos requeridos (nombre, email)" });
     }
 
     const sheets = google.sheets({ version: "v4", auth: makeAuth() });
 
-    // Leer columnas A:H (I y J son fórmulas del sheet)
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'14 Clientes'!A:H",
+      range: "'Clientes'!A:G",
     });
 
     const rows = result.data.values || [];
-    const dataRows = rows.slice(1).filter(r => r && r.length > 0);
 
-    // ── Buscar cliente existente por email (columna F = índice 5) ─────────────
-    const existingRow = dataRows.find(r => (r[5] || "").trim() === email.trim());
+    // Buscar cliente existente por email (col F = indice 5)
+    const existingRow = rows.slice(1).find(r => (r[5] || "").trim() === email.trim());
 
     if (existingRow) {
-      // Cliente ya existe → usar su ID sin crear uno nuevo
       return res.json({
-        codigo: existingRow[4] || "",  // E = ID (WS001-Apellido-Nombre)
+        codigo: existingRow[4] || "",
         nro: existingRow[0] || "",
         nombre: existingRow[1] || "",
         apellido: existingRow[2] || "",
@@ -71,44 +69,52 @@ module.exports = async (req, res) => {
       });
     }
 
-    // ── Generar nuevo Nro y código ────────────────────────────────────────────
-    const nextNro = dataRows.length + 1;
-    const nroStr = String(nextNro).padStart(3, "0");
+    // Encontrar ultima fila con dato real (col A = Nro numerico)
+    let lastDataSheetRow = 1;
+    for (let i = 1; i < rows.length; i++) {
+      const nro = (rows[i][0] || "").toString().trim();
+      if (nro && !isNaN(Number(nro))) {
+        lastDataSheetRow = i + 1; // 1-based sheet row
+      }
+    }
+    const targetRow = lastDataSheetRow + 1;
 
-    // Robustez: tomar el máximo número WS ya usado en columna E
-    const wsNums = dataRows
-      .map(r => r[4] || "")
-      .filter(id => id.startsWith("WS"))
-      .map(id => parseInt(id.replace(/^WS(\d+).*/, "$1")) || 0);
-    const maxWs = wsNums.length ? Math.max(...wsNums) : 0;
-    const codeNum = Math.max(nextNro, maxWs + 1);
+    // Calcular siguiente Nro como maximo existente + 1
+    const dataRows = rows.slice(1).filter(r => {
+      const nro = (r[0] || "").toString().trim();
+      return nro && !isNaN(Number(nro));
+    });
+    const maxNro = dataRows.reduce((max, r) => Math.max(max, Number(r[0]) || 0), 0);
+    const nextNro = maxNro + 1;
 
-    // ID → WS4-Apellido-Nombre (sin zero-padding)
-    const idCliente = `WS${codeNum}-${apellido}-${nombre}`;
+    const apellidoStr = (apellido || "").trim();
+    const idCliente = apellidoStr
+      ? `WS${nextNro}-${apellidoStr}-${nombre}`
+      : `WS${nextNro}--${nombre}`;
 
-    // ── Escribir nueva fila ───────────────────────────────────────────────────
     const newRow = [
-      nroStr,          // A: Nro
-      nombre,          // B: Nombre
-      apellido,        // C: Familia
-      "WS",            // D: Colegio
-      idCliente,       // E: ID
-      email,           // F: Email
-      telefono || "",  // G: WhatsApp
+      nextNro,
+      nombre,
+      apellidoStr,
+      "WS",
+      idCliente,
+      email,
+      telefono || "",
+      // H, I: formulas del sheet, no se escriben
     ];
 
-    await sheets.spreadsheets.values.append({
+    await sheets.spreadsheets.values.update({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'14 Clientes'!A:G",
+      range: `'Clientes'!A${targetRow}:G${targetRow}`,
       valueInputOption: "USER_ENTERED",
       requestBody: { values: [newRow] },
     });
 
     res.json({
       codigo: idCliente,
-      nro: nroStr,
+      nro: nextNro,
       nombre,
-      apellido,
+      apellido: apellidoStr,
       colegio: "WS",
       email,
       telefono: telefono || "",
