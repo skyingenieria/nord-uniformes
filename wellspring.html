@@ -1759,7 +1759,7 @@
               ${generoTag}
               <h2 class="product-name" onclick="${hayStock ? `openProductModal('${p.id}')` : ""}" style="cursor:${hayStock ? "pointer" : "default"};">${p.nombre}</h2>
               ${precioMostrar > 0
-                ? `<div class="price-transferencia"><strong>${fmt(Math.round(precioMostrar * 0.9))}</strong></div>`
+                ? `<div class="price-transferencia"><strong>${fmt(Math.round(precioMostrar))}</strong></div>`
                 : `<div class="price-transferencia" style="color:var(--azul-400);font-size:13px">Sin precio</div>`
               }
             </div>
@@ -2064,7 +2064,7 @@
     });
     const primerTalle = tallesOrdenados.find(t => t.precio > 0);
     if (primerTalle) {
-      document.getElementById("modal-product-price").textContent = fmt(Math.round(primerTalle.precio * 0.9));
+      document.getElementById("modal-product-price").textContent = fmt(Math.round(primerTalle.precio));
     }
 
     // Resetear selección de talle
@@ -2086,7 +2086,7 @@
     btn.classList.add("selected");
 
     // Actualizar precio mostrado
-    const tallePrice = Math.round(precio * 0.9);
+    const tallePrice = Math.round(precio);
     document.getElementById("modal-product-price").textContent = fmt(tallePrice);
 
     // Habilitar botón de agregar
