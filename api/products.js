@@ -1,11 +1,15 @@
-// Lee "6 Stock" (stock y precios) y "10 Listado de Prendas" (categorías) del ERP Nord.
-// Filtra por colegio (por defecto "WS" = Wellspring), une ambas hojas por nombre de prenda.
+// Lee 'Stock', 'Lista de precios' y 'Listado de Prendas' del ERP Nord.
+// Filtra por colegio (por defecto "WS" = Wellspring), une las tres hojas por SKU.
 //
-// Columnas confirmadas "6 Stock" (UNFORMATTED_VALUE, 0-indexed desde A2):
-//   0=Colegio  1=Prenda  2=Talle  3=Codigo  4=Stock inicial
+// Columnas 'Stock' (UNFORMATTED_VALUE, 0-indexed desde A2):
+//   0=Colegio  1=Prenda  2=Talle  3=SKU  4=Stock inicial
 //   5=Compras  6=Ventas  7=Stock actual  8=Costo Unit  9=Precio Unit
 //
-// Columnas "10 Listado de Prendas":
+// Columnas 'Lista de precios' (UNFORMATTED_VALUE, 0-indexed desde A2):
+//   0=Colegio  1=Prenda  2=Talle  3=SKU  4=Costo
+//   5=Precio Lista  6=Dcto  7=Precio Trans(H)  8=Margen
+//
+// Columnas 'Listado de Prendas':
 //   0=A Colegio  1=B Prenda  2=C Talle  3=D SKU
 //   4=E Categorias  5=F Genero  6=G Descripcion  7=H Foto1  8=I Foto2
 
@@ -32,8 +36,8 @@ async function fetchFromSheets(colegio = "WS") {
   const sheets = google.sheets({ version: "v4", auth });
   const sid   = process.env.SPREADSHEET_ID;
 
-  // Leer ambas hojas en paralelo
-  const [stockRes, catRes] = await Promise.all([
+  // Leer las tres hojas en paralelo
+  const [stockRes, preciosRes, catRes] = await Promise.all([
     sheets.spreadsheets.values.get({
       spreadsheetId: sid,
       range: "'Stock'!A2:J2000",
@@ -41,13 +45,28 @@ async function fetchFromSheets(colegio = "WS") {
     }),
     sheets.spreadsheets.values.get({
       spreadsheetId: sid,
-      range: "'Listado de Prendas'!A2:I2000", // I = Foto2
+      range: "'Lista de precios'!A2:I2000",
+      valueRenderOption: "UNFORMATTED_VALUE",
+    }),
+    sheets.spreadsheets.values.get({
+      spreadsheetId: sid,
+      range: "'Listado de Prendas'!A2:I2000",
       valueRenderOption: "FORMATTED_VALUE",
     }),
   ]);
 
-  // ── Construir mapa de categorías: nombre → Set de categorias ──────────────
-  const catMap = {}; // { "Blusa": { cats, descripcion, fotos }, ... }
+  // -- Construir mapa de precios: SKU -> Precio Trans (col H, indice 7) ------
+  const precioMap = {};
+  for (const row of (preciosRes.data.values || [])) {
+    const colColegio = String(row[0] || "").trim();
+    const sku        = String(row[3] || "").trim();
+    const precio     = Math.round(Number(row[7]) || 0); // H = Precio Trans
+    if (colColegio !== colegio || !sku || !precio) continue;
+    precioMap[sku] = precio;
+  }
+
+  // -- Construir mapa de categorias: nombre -> Set de categorias --------------
+  const catMap = {};
   for (const row of (catRes.data.values || [])) {
     const colColegio = String(row[0] || "").trim();
     const nombre     = String(row[1] || "").trim();
@@ -59,42 +78,39 @@ async function fetchFromSheets(colegio = "WS") {
     if (!catMap[nombre]) catMap[nombre] = { cats: new Set(), descripcion: "", fotos: [], genero: "" };
     cats.forEach(c => catMap[nombre].cats.add(c));
 
-    // F = Genero (índice 5)
     const genero = String(row[5] || "").trim();
     if (genero && !catMap[nombre].genero) catMap[nombre].genero = genero;
 
-    // G = Descripcion (índice 6)
     const desc = String(row[6] || "").trim();
     if (desc && !catMap[nombre].descripcion) catMap[nombre].descripcion = desc;
 
-    // H = Foto1 (índice 7),  I = Foto2 (índice 8)
     const foto1 = String(row[7] || "").trim();
     const foto2 = String(row[8] || "").trim();
     if (foto1 && !catMap[nombre].fotos.includes(foto1)) catMap[nombre].fotos.push(foto1);
     if (foto2 && !catMap[nombre].fotos.includes(foto2)) catMap[nombre].fotos.push(foto2);
   }
 
-  // ── Construir productos desde stock ──────────────────────────────────────
+  // -- Construir productos desde stock ----------------------------------------
   const productsMap = {};
 
   for (const row of (stockRes.data.values || [])) {
     const colegioCell = String(row[0] || "").trim();
     const nombre      = String(row[1] || "").trim();
     const talle       = String(row[2] ?? "").trim();
-    const stockActual = Math.round(Number(row[7]) || 0); // columna H = Stock actual
-    const precioUnit  = Math.round(Number(row[9]) || 0); // columna J = Precio Unit
+    const sku         = String(row[3] || "").trim();
+    const stockActual = Math.round(Number(row[7]) || 0); // H = Stock actual
+    // Precio desde Lista de precios col H (Precio Trans); fallback a Stock col J
+    const precioUnit  = precioMap[sku] || Math.round(Number(row[9]) || 0);
 
     if (colegioCell !== colegio || !nombre || !talle) continue;
 
     if (!productsMap[nombre]) {
-      // Buscar en catMap: exacto primero, luego por coincidencia parcial
       const catKey = catMap[nombre]
         ? nombre
         : Object.keys(catMap).find(k =>
             k.toLowerCase().includes(nombre.toLowerCase()) ||
             nombre.toLowerCase().includes(k.toLowerCase())
           ) || null;
-      // Si hubo match parcial, usar el nombre del Listado (más completo/correcto)
       const nombreFinal = catKey || nombre;
       const categorias  = catKey ? [...catMap[catKey].cats] : [];
       const descripcion = catKey ? catMap[catKey].descripcion : "";
@@ -104,7 +120,7 @@ async function fetchFromSheets(colegio = "WS") {
         id: nombreFinal.toLowerCase().replace(/\s+/g, "-").replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u").replace(/[^a-z0-9-]/g,""),
         nombre: nombreFinal,
         precio: precioUnit,
-        imagen_url: fotos[0] || "",   // primera foto para la tarjeta
+        imagen_url: fotos[0] || "",
         fotos,
         genero,
         categorias,
@@ -113,14 +129,12 @@ async function fetchFromSheets(colegio = "WS") {
       };
     }
 
-    // El precio del producto = mínimo precio no-cero entre todos los talles
     if (precioUnit > 0) {
       if (productsMap[nombre].precio === 0 || precioUnit < productsMap[nombre].precio) {
         productsMap[nombre].precio = precioUnit;
       }
     }
 
-    // Cada talle lleva su propio precio
     productsMap[nombre].talles.push({ talle, stock: stockActual, precio: precioUnit });
   }
 
@@ -131,7 +145,6 @@ module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=3600");
 
-  // ?debug=1 → buscar filas de kilt/pollera en ambas hojas
   if (req.query.debug === "1") {
     const sheets = google.sheets({ version: "v4", auth: makeAuth() });
     const [stockRaw, listadoRaw] = await Promise.all([
