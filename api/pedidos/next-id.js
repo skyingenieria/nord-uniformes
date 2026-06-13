@@ -1,6 +1,6 @@
 // GET /api/pedidos/next-id
-// Devuelve el siguiente ID Pedido en formato YY-NN
-// Ej: 26-01, 26-02, etc.
+// Devuelve el siguiente ID Pedido en formato YY-NN (ej: 26-05)
+// Solo cuenta pedidos reales: col B (Cliente) debe empezar con "WS" + digito.
 
 const { google } = require("googleapis");
 
@@ -20,32 +20,33 @@ module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "GET") return res.status(405).json({ error: "Método no permitido" });
+  if (req.method !== "GET") return res.status(405).json({ error: "Metodo no permitido" });
 
   try {
     const sheets = google.sheets({ version: "v4", auth: makeAuth() });
 
-    // Leer la sheet "3 Pedidos" para encontrar el máximo ID
-    const pedidosResult = await sheets.spreadsheets.values.get({
+    // Leer A:B para poder filtrar por cliente real (col B)
+    const result = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'3 Pedidos'!A:A",
+      range: "'Pedidos'!A:B",
     });
 
-    const rows = pedidosResult.data.values || [];
+    const rows = result.data.values || [];
     const today = new Date();
-    const currentYear = String(today.getFullYear()).slice(-2); // "26" para 2026
+    const currentYear = String(today.getFullYear()).slice(-2);
 
-    // Buscar IDs del año actual (ej: 26-01, 26-02, etc.)
-    const currentYearIds = rows
-      .slice(1) // saltar header
-      .map(r => r[0])
-      .filter(id => id && id.startsWith(currentYear + "-"))
-      .map(id => {
-        const num = parseInt(id.split("-")[1]) || 0;
-        return num;
-      });
+    // Solo contar IDs de pedidos reales del año actual
+    // (cliente en col B debe empezar con "WS" + digito, excluye "Pedido Inexistente" etc)
+    const currentYearNums = rows
+      .slice(1)
+      .filter(r => {
+        const idPedido = (r[0] || "").trim();
+        const cliente = (r[1] || "").trim();
+        return idPedido.startsWith(currentYear + "-") && /^WS\d/.test(cliente);
+      })
+      .map(r => parseInt(r[0].split("-")[1]) || 0);
 
-    const maxNum = currentYearIds.length > 0 ? Math.max(...currentYearIds) : 0;
+    const maxNum = currentYearNums.length > 0 ? Math.max(...currentYearNums) : 0;
     const nextNum = maxNum + 1;
     const nextId = `${currentYear}-${String(nextNum).padStart(2, "0")}`;
 
