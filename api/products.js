@@ -36,12 +36,12 @@ async function fetchFromSheets(colegio = "WS") {
   const [stockRes, catRes] = await Promise.all([
     sheets.spreadsheets.values.get({
       spreadsheetId: sid,
-      range: "'6 Stock'!A2:J2000",
+      range: "'Stock'!A2:J2000",
       valueRenderOption: "UNFORMATTED_VALUE",
     }),
     sheets.spreadsheets.values.get({
       spreadsheetId: sid,
-      range: "'10 Listado de Prendas'!A2:I2000", // I = Foto2
+      range: "'Listado de Prendas'!A2:I2000", // I = Foto2
       valueRenderOption: "FORMATTED_VALUE",
     }),
   ]);
@@ -137,12 +137,12 @@ module.exports = async (req, res) => {
     const [stockRaw, listadoRaw] = await Promise.all([
       sheets.spreadsheets.values.get({
         spreadsheetId: process.env.SPREADSHEET_ID,
-        range: "'6 Stock'!A2:J2000",
+        range: "'Stock'!A2:J2000",
         valueRenderOption: "UNFORMATTED_VALUE",
       }),
       sheets.spreadsheets.values.get({
         spreadsheetId: process.env.SPREADSHEET_ID,
-        range: "'10 Listado de Prendas'!A2:I2000",
+        range: "'Listado de Prendas'!A2:I2000",
         valueRenderOption: "FORMATTED_VALUE",
       }),
     ]);
