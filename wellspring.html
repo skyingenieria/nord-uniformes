@@ -850,6 +850,21 @@
     }
     .btn-keep-shopping:hover { color: var(--azul-900); }
 
+    /* ACORDEÓN DRAWER */
+    .drawer-accordion{border:1px solid var(--niebla-200);border-radius:10px;overflow:hidden;margin-bottom:14px}
+    .drawer-acc-item{border-bottom:1px solid var(--niebla-200)}
+    .drawer-acc-item:last-child{border-bottom:none}
+    .drawer-acc-btn{width:100%;background:none;border:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:11px 14px;font-family:var(--sans);font-size:12px;font-weight:700;color:var(--azul-900);text-align:left;transition:background .15s}
+    .drawer-acc-btn:hover{background:var(--crema-2)}
+    .drawer-acc-btn svg{flex-shrink:0;transition:transform .2s;color:var(--azul-400)}
+    .drawer-acc-item.open .drawer-acc-btn svg{transform:rotate(180deg)}
+    .drawer-acc-body{display:none;padding:0 14px 12px;font-size:12px;color:var(--azul-600);line-height:1.6}
+    .drawer-acc-item.open .drawer-acc-body{display:block}
+    .drawer-acc-body p{margin-bottom:6px}
+    .drawer-acc-body p:last-child{margin-bottom:0}
+    .drawer-acc-body strong{color:var(--azul-900);font-weight:700}
+    .drawer-acc-link{color:var(--azul-900);font-weight:700;text-decoration:underline}
+
     /* TOAST */
     .toast {
       position: fixed;
@@ -1635,23 +1650,47 @@
       </div>
     </div>
 
-    <!-- Info retiro + envío -->
-    <div style="border:1px solid var(--niebla-200);border-radius:10px;overflow:hidden;margin-bottom:14px;">
-      <div style="padding:12px 14px;border-bottom:1px solid var(--niebla-200);">
-        <p style="font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--azul-400);margin-bottom:4px;">📍 Punto de retiro</p>
-        <p style="font-size:12px;color:var(--azul-900);line-height:1.5;">Carlos Calvo 590, Barrio Habitat Residencias, La Lonja. Horario a coordinar por WhatsApp.</p>
-      </div>
-      <div style="padding:12px 14px;background:rgba(31,45,74,.03);">
-        <p style="font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--azul-400);margin-bottom:4px;">🛵 Envío a domicilio</p>
-        <p style="font-size:12px;color:var(--azul-900);line-height:1.5;">Podemos coordinar envío por motomensajería con costo adicional. Consultanos por WhatsApp.</p>
-      </div>
-    </div>
-
     <button class="btn-checkout" onclick="window.location.href='/carrito'">
-      Ir al checkout
+      IR A PAGAR
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
     <button class="btn-keep-shopping" onclick="closeDrawer()">Seguir comprando</button>
+
+    <!-- Acordeón info -->
+    <div class="drawer-accordion">
+      <div class="drawer-acc-item">
+        <button class="drawer-acc-btn" onclick="toggleDrawerAcc(this)">
+          📍 Punto de retiro
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="drawer-acc-body">
+          <p>Carlos Calvo 590, Barrio Habitat Residencias, La Lonja, Gran Buenos Aires.</p>
+          <p>Horario a coordinar por WhatsApp.</p>
+          <p><a href="https://maps.app.goo.gl/x2ec2a3AeP1LGCzJ7" target="_blank" class="drawer-acc-link">Ver en Google Maps →</a></p>
+        </div>
+      </div>
+      <div class="drawer-acc-item">
+        <button class="drawer-acc-btn" onclick="toggleDrawerAcc(this)">
+          🛵 Envío a domicilio
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="drawer-acc-body">
+          <p>Podemos coordinar envío por motomensajería con costo adicional.</p>
+          <p>Consultanos por WhatsApp antes de confirmar el pedido.</p>
+        </div>
+      </div>
+      <div class="drawer-acc-item">
+        <button class="drawer-acc-btn" onclick="toggleDrawerAcc(this)">
+          🔄 Políticas de cambio
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="drawer-acc-body">
+          <p><strong>Cambios de talle:</strong> Aceptamos cambios dentro de los 30 días con la prenda sin uso y en su estado original.</p>
+          <p><strong>Proceso:</strong> Contactanos por WhatsApp con el número de pedido y el talle que necesitás.</p>
+          <p><strong>Condiciones:</strong> Sin uso, sin lavado y con todas las etiquetas.</p>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2114,6 +2153,13 @@
     if (!btn) return;
     const active = activeNivel !== "todos" || activeGenero !== "todos";
     btn.classList.toggle("has-active", active);
+  }
+
+  function toggleDrawerAcc(btn) {
+    const item = btn.closest(".drawer-acc-item");
+    const isOpen = item.classList.contains("open");
+    item.closest(".drawer-accordion").querySelectorAll(".drawer-acc-item").forEach(i => i.classList.remove("open"));
+    if (!isOpen) item.classList.add("open");
   }
 
   function toggleMobileFilterPanel() {
