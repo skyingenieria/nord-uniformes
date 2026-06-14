@@ -231,7 +231,12 @@ function render() {
       ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(i.precio*i.qty)}</span></div>`).join("")}
       <div class="sum-row total"><span>Total</span><span>${fmt(sub)}</span></div>
 
-      <!-- Info retiro -->
+      <!-- Botón IR A PAGAR -->
+      <button class="btn-pagar" onclick="irAPagar()">
+        IR A PAGAR
+      </button>
+
+      <!-- Info retiro, envío y cambios -->
       <div class="retiro-info">
         <strong>📍 Punto de retiro</strong>
         Carlos Calvo 590, Barrio Habitat Residencias, La Lonja. Horario a coordinar por WhatsApp.<br>
@@ -239,13 +244,12 @@ function render() {
       </div>
       <div class="retiro-info" style="margin-top:8px;">
         <strong>🛵 Envío a domicilio</strong>
-        Podemos coordinar envío por motomensajería con costo adicional. Consultanos por WhatsApp antes de confirmar el pedido.
+        Podemos coordinar envío por motomensajería con costo adicional. Consultanos por WhatsApp antes de confirmar.
       </div>
-
-      <!-- Botón IR A PAGAR -->
-      <button class="btn-pagar" onclick="irAPagar()">
-        IR A PAGAR
-      </button>
+      <div class="retiro-info" style="margin-top:8px;">
+        <strong>🔄 Cambios de talle</strong>
+        Aceptamos cambios dentro de los 30 días con la prenda sin uso y en su estado original. Coordiná por WhatsApp con el número de pedido.
+      </div>
 
       <!-- Datos de transferencia (se muestran al hacer click en IR A PAGAR) -->
       <div class="datos-pago" id="datos-pago">
