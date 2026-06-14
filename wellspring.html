@@ -2318,6 +2318,10 @@
     _actuallyCloseModal();
   });
 
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeProductModal();
+  });
+
   function selectTalleModal(btn, productId, precio) {
     document.querySelectorAll(".modal-talle-btn").forEach(b => b.classList.remove("selected"));
     btn.classList.add("selected");
