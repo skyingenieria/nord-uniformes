@@ -2039,14 +2039,6 @@
     if (guiaImg) {
       guideTable.innerHTML = `<tr><td style="padding:0"><img src="${guiaImg}" alt="Guía de talles ${product.nombre}" style="width:100%;border-radius:8px;display:block;"></td></tr>`;
       guideBtn.style.display = "block";
-    } else if (product.talles && product.talles.length > 0) {
-      // Fallback: tabla de texto si no hay imagen
-      const guideMap = { "4":"Talle 4","6":"Talle 6","8":"Talle 8","10":"Talle 10","12":"Talle 12","14":"Talle 14","16":"Talle 16","18":"Talle 18","XS":"XS","S":"S","M":"M","L":"L","XL":"XL","XXL":"XXL" };
-      let tableHTML = "<thead><tr><th>Talle</th><th>Descripción</th></tr></thead><tbody>";
-      product.talles.sort((a,b)=>{ const o=["4","6","8","10","12","14","16","18","XS","S","M","L","XL","XXL"]; return o.indexOf(a.talle)-o.indexOf(b.talle); })
-        .forEach(t => { tableHTML += `<tr><td><strong>${t.talle}</strong></td><td>${guideMap[t.talle]||""}</td></tr>`; });
-      guideTable.innerHTML = tableHTML + "</tbody>";
-      guideBtn.style.display = "block";
     } else {
       guideBtn.style.display = "none";
     }
