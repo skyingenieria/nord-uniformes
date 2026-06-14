@@ -588,10 +588,6 @@
     }
 
     /* Tarjeta completamente sin stock */
-    .product-card.agotado {
-      opacity: 0.5;
-      filter: grayscale(40%);
-    }
     .product-card.agotado .btn-agregar {
       background: var(--niebla);
       cursor: default;
@@ -1140,7 +1136,7 @@
     }
     .modal-talle-btn.sin-stock {
       opacity: 0.45;
-      cursor: not-allowed;
+      cursor: pointer;
       color: var(--niebla);
       border-color: var(--niebla-200);
       position: relative;
@@ -1665,6 +1661,16 @@
       <!-- Descripción extra debajo del precio -->
       <div class="modal-desc-extra" id="modal-desc-extra"></div>
 
+      <!-- Banner sin stock (oculto por defecto) -->
+      <div id="aviso-sin-stock" style="display:none;margin-top:12px;padding:12px 14px;background:#fff8ee;border:1px solid #f0d090;border-radius:10px;">
+        <p id="aviso-sin-stock-texto" style="font-size:13px;color:#7a5800;line-height:1.5;margin:0 0 10px;"></p>
+        <a id="aviso-sin-stock-btn" href="#" target="_blank"
+          style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#25d366;border-radius:8px;color:white;font-size:13px;font-weight:700;letter-spacing:.06em;text-decoration:none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2 22l5.112-1.318A9.956 9.956 0 0011.999 22C17.522 22 22 17.523 22 12S17.522 2 11.999 2zm0 18c-1.658 0-3.208-.453-4.535-1.24l-.324-.194-3.035.782.806-2.952-.212-.34A7.955 7.955 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.588 8-7.999 8z"/></svg>
+          Avisame cuando haya stock
+        </a>
+      </div>
+
       <!-- Botón agregar -->
       <button
         class="btn-agregar-modal"
@@ -1785,23 +1791,20 @@
 
       return `
         <div class="product-card${hayStock ? "" : " agotado"}" data-product-id="${p.id}">
-          <div class="product-img${foto2 ? " has-foto2" : ""}" onclick="${hayStock ? `openProductModal('${p.id}')` : ""}" style="cursor:${hayStock ? "pointer" : "default"};">
+          <div class="product-img${foto2 ? " has-foto2" : ""}" onclick="openProductModal('${p.id}')" style="cursor:pointer;">
             ${imgHtml}
-            ${!hayStock ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(15,23,46,0.6);color:white;font-size:11px;font-weight:700;letter-spacing:.1em;text-align:center;padding:8px;text-transform:uppercase">Sin stock</div>` : ""}
+            ${!hayStock ? `<div style="position:absolute;top:8px;right:8px;background:var(--azul-900);color:var(--crema);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-radius:5px;">Sin stock</div>` : ""}
           </div>
           <div class="product-body">
             <div>
               ${generoTag}
-              <h2 class="product-name" onclick="${hayStock ? `openProductModal('${p.id}')` : ""}" style="cursor:${hayStock ? "pointer" : "default"};">${p.nombre}</h2>
+              <h2 class="product-name" onclick="openProductModal('${p.id}')" style="cursor:pointer;">${p.nombre}</h2>
               ${precioMostrar > 0
                 ? `<div class="price-transferencia"><strong>${fmt(Math.round(precioMostrar))}</strong></div>`
                 : `<div class="price-transferencia" style="color:var(--azul-400);font-size:13px">Sin precio</div>`
               }
             </div>
-            ${hayStock
-              ? `<button class="btn-agregar" id="btn-add-${p.id}" onclick="openProductModal('${p.id}')">SELECCIONAR TALLE</button>`
-              : `<button class="btn-agregar" onclick="openAvisame('${p.id}', '${p.nombre.replace(/'/g,"&#39;")}')">🔔 Avisame cuando haya stock</button>`
-            }
+            <button class="btn-agregar" id="btn-add-${p.id}" onclick="openProductModal('${p.id}')">SELECCIONAR TALLE</button>
           </div>
         </div>`;
     }).join("");
@@ -2057,8 +2060,8 @@
           class="modal-talle-btn${t.stock === 0 ? " sin-stock" : ""}"
           data-talle="${t.talle}"
           data-precio="${t.precio}"
+          data-sin-stock="${t.stock === 0 ? "1" : "0"}"
           onclick="selectTalleModal(this, '${product.id}', ${t.precio})"
-          ${t.stock === 0 ? "disabled" : ""}
           title="${t.stock === 0 ? "Sin stock" : `${t.stock} disponibles`}"
         >
           ${t.talle}
@@ -2106,9 +2109,12 @@
       document.getElementById("modal-product-price").textContent = fmt(Math.round(primerTalle.precio));
     }
 
-    // Resetear selección de talle
-    document.getElementById("btn-add-modal").disabled = true;
-    document.getElementById("btn-add-modal").textContent = "SELECCIONÁ UN TALLE →";
+    // Resetear selección de talle y banner sin stock
+    const addBtn = document.getElementById("btn-add-modal");
+    addBtn.disabled = true;
+    addBtn.style.display = "";
+    addBtn.textContent = "SELECCIONÁ UN TALLE →";
+    document.getElementById("aviso-sin-stock").style.display = "none";
   }
 
   function _actuallyCloseModal() {
@@ -2133,18 +2139,29 @@
   });
 
   function selectTalleModal(btn, productId, precio) {
-    // Deselect previous
     document.querySelectorAll(".modal-talle-btn").forEach(b => b.classList.remove("selected"));
     btn.classList.add("selected");
 
-    // Actualizar precio mostrado
-    const tallePrice = Math.round(precio);
-    document.getElementById("modal-product-price").textContent = fmt(tallePrice);
-
-    // Habilitar botón de agregar
+    const talle = btn.dataset.talle;
+    const sinStock = btn.dataset.sinStock === "1";
     const addBtn = document.getElementById("btn-add-modal");
-    addBtn.disabled = false;
-    addBtn.textContent = "AÑADIR AL CARRITO";
+    const avisoBanner = document.getElementById("aviso-sin-stock");
+
+    if (sinStock) {
+      addBtn.style.display = "none";
+      avisoBanner.style.display = "block";
+      document.getElementById("aviso-sin-stock-texto").textContent =
+        `No hay stock de Talle ${talle}. ¿Querés que te avisemos cuando entre?`;
+      const nombrePrenda = currentModalProduct ? currentModalProduct.nombre : "";
+      const waMsg = encodeURIComponent(`Hola! Me gustaría que me avisen cuando tengan stock de ${nombrePrenda} talle ${talle}.`);
+      document.getElementById("aviso-sin-stock-btn").href = `https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}`;
+    } else {
+      avisoBanner.style.display = "none";
+      addBtn.style.display = "";
+      addBtn.disabled = false;
+      addBtn.textContent = "AÑADIR AL CARRITO";
+      document.getElementById("modal-product-price").textContent = fmt(Math.round(precio));
+    }
   }
 
   function handleAddFromModal() {
