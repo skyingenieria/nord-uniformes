@@ -1733,8 +1733,8 @@
 
 <!-- MODAL DE PRODUCTO -->
 <div class="product-modal-overlay" id="product-modal-overlay" onclick="closeProductModal()"></div>
-<div class="product-modal" id="product-modal">
-  <div class="modal-content">
+<div class="product-modal" id="product-modal" onclick="closeProductModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
     <!-- Barra "← Catálogo" -->
     <div class="modal-back-bar" id="modal-back-bar">
       <button onclick="closeProductModal()">
