@@ -95,34 +95,71 @@
     }
     .header-search input::placeholder { color: var(--niebla); }
 
-    /* BOTÓN FILTRO MOBILE */
-    .mobile-filter-btn {
-      display: none;
-      align-items: center; gap: 6px;
-      background: none; border: none; cursor: pointer;
-      font-family: var(--sans); font-size: 11px; font-weight: 700;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--azul-900); padding: 4px;
+    /* ÍCONOS MOBILE (filtro + búsqueda) — solo mobile */
+    .mobile-icons {
+      display: none; align-items: center; gap: 4px;
     }
-    .mobile-filter-dropdown {
+    .mobile-icon-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--azul-900); padding: 8px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; transition: background 0.15s;
+      position: relative;
+    }
+    .mobile-icon-btn:hover { background: var(--crema-2); }
+    .mobile-icon-btn.has-active::after {
+      content: ""; position: absolute; top: 6px; right: 6px;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--dorado);
+    }
+
+    /* Panel de filtros mobile */
+    #mobile-filter-panel {
       display: none;
       position: absolute; top: 64px; left: 0; right: 0;
-      background: var(--azul-900);
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      z-index: 99; padding: 8px 0;
+      background: var(--crema); border-bottom: 1px solid var(--niebla-200);
+      z-index: 99; padding: 20px var(--pad-x) 24px;
+      box-shadow: 0 8px 24px rgba(10,14,24,0.1);
     }
-    .mobile-filter-dropdown.open { display: block; }
-    .mobile-filter-option {
-      display: block; width: 100%;
-      background: none; border: none; cursor: pointer;
+    #mobile-filter-panel.open { display: block; }
+    .mobile-panel-group { margin-bottom: 18px; }
+    .mobile-panel-group:last-child { margin-bottom: 0; }
+    .mobile-panel-title {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--azul-400); margin-bottom: 10px;
+    }
+    .mobile-panel-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .mobile-pill {
+      background: none; border: 1px solid var(--niebla-200);
+      border-radius: 20px; padding: 6px 14px; cursor: pointer;
       font-family: var(--sans); font-size: 13px; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: rgba(255,255,255,0.7); text-align: left;
-      padding: 12px var(--pad-x);
-      transition: color 0.15s, background 0.15s;
+      color: var(--azul-600); transition: all 0.15s;
     }
-    .mobile-filter-option:hover { color: white; background: rgba(255,255,255,0.05); }
-    .mobile-filter-option.active { color: var(--dorado); }
+    .mobile-pill.active {
+      background: var(--azul-900); color: var(--crema);
+      border-color: var(--azul-900);
+    }
+
+    /* Barra de búsqueda mobile (debajo del header) */
+    #mobile-search-bar {
+      display: none;
+      position: absolute; top: 64px; left: 0; right: 0;
+      background: var(--crema); border-bottom: 1px solid var(--niebla-200);
+      padding: 12px var(--pad-x);
+      z-index: 99; box-shadow: 0 4px 12px rgba(10,14,24,0.08);
+    }
+    #mobile-search-bar.open { display: flex; align-items: center; gap: 10px; }
+    #mobile-search-bar input {
+      flex: 1; border: 1px solid var(--niebla-200); border-radius: 8px;
+      padding: 9px 13px; font-family: var(--sans); font-size: 14px;
+      color: var(--azul-900); background: white; outline: none;
+    }
+    #mobile-search-bar input:focus { border-color: var(--azul); }
+    #mobile-search-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--azul-400); font-size: 13px; font-weight: 600;
+      font-family: var(--sans); letter-spacing: 0.06em; padding: 4px;
+    }
     nav { display: flex; gap: 4px; }
     nav a {
       color: var(--azul);
@@ -1381,7 +1418,8 @@
 
     @media (max-width: 768px) {
       .header-search { display: none; }
-      .mobile-filter-btn { display: none; }
+      .mobile-icons { display: flex; }
+      .sidebar { display: none; }
       .cart-btn-text { display: none; }
 
       /* Modal como página completa en mobile */
@@ -1461,6 +1499,16 @@
 
 <header style="position:relative;">
   <div class="header-container">
+    <!-- Íconos mobile: búsqueda + filtro -->
+    <div class="mobile-icons">
+      <button class="mobile-icon-btn" id="mobile-search-btn" onclick="toggleMobileSearch()" aria-label="Buscar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <button class="mobile-icon-btn" id="mobile-filter-btn" onclick="toggleMobileFilterPanel()" aria-label="Filtros">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      </button>
+    </div>
+
     <a href="/" class="brand-logo">
       <span class="nord">NORD</span>
       <span class="uniformes">UNIFORMES</span>
@@ -1480,6 +1528,32 @@
         <span class="cart-count hidden" id="cart-count">0</span>
       </button>
     </div>
+  </div>
+  <!-- Panel filtros mobile -->
+  <div id="mobile-filter-panel">
+    <div class="mobile-panel-group">
+      <p class="mobile-panel-title">Nivel</p>
+      <div class="mobile-panel-pills">
+        <button class="mobile-pill" data-nivel="todos" onclick="filterNivel(this)">Todos</button>
+        <button class="mobile-pill active" data-nivel="kinder" onclick="filterNivel(this)">Kinder</button>
+        <button class="mobile-pill" data-nivel="primaria" onclick="filterNivel(this)">Primaria</button>
+        <button class="mobile-pill" data-nivel="secundaria" onclick="filterNivel(this)">Secundaria</button>
+      </div>
+    </div>
+    <div class="mobile-panel-group">
+      <p class="mobile-panel-title">Género</p>
+      <div class="mobile-panel-pills">
+        <button class="mobile-pill active" data-genero="todos" onclick="filterGenero(this)">Todos</button>
+        <button class="mobile-pill" data-genero="varon" onclick="filterGenero(this)">Varón</button>
+        <button class="mobile-pill" data-genero="mujer" onclick="filterGenero(this)">Mujer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra búsqueda mobile -->
+  <div id="mobile-search-bar">
+    <input id="search-input-mobile" type="text" placeholder="Buscar..." oninput="applyFilters()">
+    <button class="mobile-search-close" onclick="toggleMobileSearch()">Cerrar</button>
   </div>
 </header>
 
@@ -1998,7 +2072,7 @@
   }
 
   function applyFilters() {
-    const q = (document.getElementById("search-input")?.value || "").toLowerCase().trim();
+    const q = ((document.getElementById("search-input")?.value || "") + (document.getElementById("search-input-mobile")?.value || "")).toLowerCase().trim();
     const filtered = allProducts.filter(p => {
       const matchNivel  = activeNivel  === "todos" || (Array.isArray(p.categorias) && p.categorias.includes(activeNivel));
       const normGenero = (p.genero || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -2019,8 +2093,50 @@
       b.classList.toggle("active", b.dataset.nivel === nivel);
     });
     activeNivel = nivel;
+    // Punto indicador en botón filtro mobile
+    const hasActiveNivel = nivel !== "todos";
+    _updateFilterBadge();
     applyFilters();
   }
+
+  function filterGenero(item) {
+    const genero = item.dataset.genero;
+    document.querySelectorAll("[data-genero]").forEach(b => b.classList.remove("active"));
+    item.classList.add("active");
+    activeGenero = genero;
+    _updateFilterBadge();
+    applyFilters();
+  }
+
+  function _updateFilterBadge() {
+    const btn = document.getElementById("mobile-filter-btn");
+    if (!btn) return;
+    const active = activeNivel !== "todos" || activeGenero !== "todos";
+    btn.classList.toggle("has-active", active);
+  }
+
+  function toggleMobileFilterPanel() {
+    document.getElementById("mobile-search-bar").classList.remove("open");
+    document.getElementById("mobile-filter-panel").classList.toggle("open");
+  }
+
+  function toggleMobileSearch() {
+    document.getElementById("mobile-filter-panel").classList.remove("open");
+    const bar = document.getElementById("mobile-search-bar");
+    bar.classList.toggle("open");
+    if (bar.classList.contains("open")) {
+      setTimeout(() => document.getElementById("search-input-mobile")?.focus(), 50);
+    }
+  }
+
+  document.addEventListener("click", function(e) {
+    if (!e.target.closest("#mobile-filter-btn") && !e.target.closest("#mobile-filter-panel")) {
+      document.getElementById("mobile-filter-panel")?.classList.remove("open");
+    }
+    if (!e.target.closest("#mobile-search-btn") && !e.target.closest("#mobile-search-bar")) {
+      document.getElementById("mobile-search-bar")?.classList.remove("open");
+    }
+  });
 
   function toggleMobileFilter() {
     const dd = document.getElementById("mobile-filter-dropdown");
@@ -2041,19 +2157,7 @@
     applyFilters();
   }
 
-  // Cerrar dropdown mobile al tocar fuera
-  document.addEventListener("click", function(e) {
-    if (!e.target.closest("#mobile-filter-btn") && !e.target.closest("#mobile-filter-dropdown")) {
-      document.getElementById("mobile-filter-dropdown")?.classList.remove("open");
-    }
-  });
 
-  function filterGenero(item) {
-    document.querySelectorAll("[data-genero]").forEach(b => b.classList.remove("active"));
-    item.classList.add("active");
-    activeGenero = item.dataset.genero;
-    applyFilters();
-  }
 
   // ── MODAL DE PRODUCTO ──────────────────────────────────────────────────
   let currentModalProduct = null;
