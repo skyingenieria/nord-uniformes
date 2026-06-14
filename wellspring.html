@@ -80,6 +80,49 @@
     .brand-logo .nord { font-weight: 900; font-size: 22px; letter-spacing: 0.06em; display: block; }
     .brand-logo .uniformes { font-weight: 300; font-size: 6px; letter-spacing: 0.55em; display: block; margin-top: 2px; padding-left: 0.55em; }
     .header-right { display: flex; align-items: center; gap: 16px; }
+
+    /* BUSCADOR EN HEADER (solo desktop) */
+    .header-search {
+      display: flex; align-items: center; gap: 8px;
+      background: white; border: 1px solid var(--niebla-200);
+      border-radius: 8px; padding: 6px 12px;
+      width: 180px;
+    }
+    .header-search svg { color: var(--azul-400); flex-shrink: 0; }
+    .header-search input {
+      border: none; background: transparent; outline: none;
+      font-family: var(--sans); font-size: 13px; color: var(--azul-900); width: 100%;
+    }
+    .header-search input::placeholder { color: var(--niebla); }
+
+    /* BOTÓN FILTRO MOBILE */
+    .mobile-filter-btn {
+      display: none;
+      align-items: center; gap: 6px;
+      background: none; border: none; cursor: pointer;
+      font-family: var(--sans); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--azul-900); padding: 4px;
+    }
+    .mobile-filter-dropdown {
+      display: none;
+      position: absolute; top: 64px; left: 0; right: 0;
+      background: var(--azul-900);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      z-index: 99; padding: 8px 0;
+    }
+    .mobile-filter-dropdown.open { display: block; }
+    .mobile-filter-option {
+      display: block; width: 100%;
+      background: none; border: none; cursor: pointer;
+      font-family: var(--sans); font-size: 13px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(255,255,255,0.7); text-align: left;
+      padding: 12px var(--pad-x);
+      transition: color 0.15s, background 0.15s;
+    }
+    .mobile-filter-option:hover { color: white; background: rgba(255,255,255,0.05); }
+    .mobile-filter-option.active { color: var(--dorado); }
     nav { display: flex; gap: 4px; }
     nav a {
       color: var(--azul);
@@ -1339,6 +1382,11 @@
     .modal-back-bar { display: none; }
 
     @media (max-width: 768px) {
+      .header-search { display: none; }
+      .mobile-filter-btn { display: flex; }
+      .filter-nav { display: none; }
+      .search-wrap { display: none; }
+
       /* Modal como página completa en mobile */
       .product-modal {
         align-items: flex-start;
@@ -1414,8 +1462,12 @@
 
 <div class="promo-banner">📍 Retiro en 24 hs</div>
 
-<header>
+<header style="position:relative;">
   <div class="header-container">
+    <button class="mobile-filter-btn" id="mobile-filter-btn" onclick="toggleMobileFilter()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <span id="mobile-filter-label">Kinder</span>
+    </button>
     <a href="/" class="brand-logo">
       <span class="nord">NORD</span>
       <span class="uniformes">UNIFORMES</span>
@@ -1425,12 +1477,22 @@
         <a href="/">Inicio</a>
         <a href="/wellspring" class="active">Wellspring</a>
       </nav>
+      <div class="header-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="search-input" type="text" placeholder="Buscar" oninput="applyFilters()">
+      </div>
       <button class="cart-btn" onclick="openDrawer()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         Carrito
         <span class="cart-count hidden" id="cart-count">0</span>
       </button>
     </div>
+  </div>
+  <!-- Dropdown filtro mobile -->
+  <div class="mobile-filter-dropdown" id="mobile-filter-dropdown">
+    <button class="mobile-filter-option active" data-nivel="kinder" onclick="selectMobileNivel(this)">Kinder</button>
+    <button class="mobile-filter-option" data-nivel="primaria" onclick="selectMobileNivel(this)">Primaria</button>
+    <button class="mobile-filter-option" data-nivel="secundaria" onclick="selectMobileNivel(this)">Secundaria</button>
   </div>
 </header>
 
@@ -1482,10 +1544,6 @@
     <div>
       <div class="grid-toolbar">
         <span class="grid-count" id="grid-count"></span>
-        <div class="search-wrap">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input id="search-input" type="text" placeholder="Buscar prenda..." oninput="applyFilters()">
-        </div>
       </div>
       <div id="products-container" class="products-grid">
         <!-- Skeletons visibles mientras carga -->
@@ -1965,13 +2023,38 @@
 
   function filterNivel(item) {
     const nivel = item.dataset.nivel;
-    // Sincronizar nav bar + sidebar
     document.querySelectorAll("[data-nivel]").forEach(b => {
       b.classList.toggle("active", b.dataset.nivel === nivel);
     });
     activeNivel = nivel;
     applyFilters();
   }
+
+  function toggleMobileFilter() {
+    const dd = document.getElementById("mobile-filter-dropdown");
+    dd.classList.toggle("open");
+  }
+
+  function selectMobileNivel(btn) {
+    const nivel = btn.dataset.nivel;
+    document.querySelectorAll(".mobile-filter-option").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("mobile-filter-label").textContent = btn.textContent.trim();
+    document.getElementById("mobile-filter-dropdown").classList.remove("open");
+    // Sincronizar con filtros del sidebar
+    document.querySelectorAll("[data-nivel]").forEach(b => {
+      b.classList.toggle("active", b.dataset.nivel === nivel);
+    });
+    activeNivel = nivel;
+    applyFilters();
+  }
+
+  // Cerrar dropdown mobile al tocar fuera
+  document.addEventListener("click", function(e) {
+    if (!e.target.closest("#mobile-filter-btn") && !e.target.closest("#mobile-filter-dropdown")) {
+      document.getElementById("mobile-filter-dropdown")?.classList.remove("open");
+    }
+  });
 
   function filterGenero(item) {
     document.querySelectorAll("[data-genero]").forEach(b => b.classList.remove("active"));
