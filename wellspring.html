@@ -654,10 +654,16 @@
       position: relative;
       overflow: hidden;
     }
+    .talle-btn-wrap {
+      position: relative;
+      display: block;
+    }
+    .talle-btn-wrap .modal-talle-btn { width: 100%; }
+    .modal-talles-grid { overflow: visible; }
     .talle-bell {
       position: absolute;
-      top: -7px;
-      right: -7px;
+      top: -6px;
+      right: -6px;
       font-size: 11px;
       line-height: 1;
       pointer-events: none;
@@ -2304,16 +2310,17 @@
         return (order.indexOf(a.talle) - order.indexOf(b.talle)) || a.talle.localeCompare(b.talle);
       })
       .map(t => {
-        return `<button
+        const btn = `<button
           class="modal-talle-btn${t.stock === 0 ? " sin-stock" : ""}"
           data-talle="${t.talle}"
           data-precio="${t.precio}"
           data-sin-stock="${t.stock === 0 ? "1" : "0"}"
           onclick="selectTalleModal(this, '${product.id}', ${t.precio})"
           title="${t.stock === 0 ? "Sin stock" : `${t.stock} disponibles`}"
-        >
-          ${t.talle}${t.stock === 0 ? `<span class="talle-bell">🔔</span>` : ""}
-        </button>`;
+        >${t.talle}</button>`;
+        return t.stock === 0
+          ? `<div class="talle-btn-wrap">${btn}<span class="talle-bell">🔔</span></div>`
+          : btn;
       }).join("");
 
     // Mapa de palabras clave → imagen de guía (en orden de especificidad)
