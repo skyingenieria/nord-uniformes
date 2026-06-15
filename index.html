@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-5M0T17EKC7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-5M0T17EKC7');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x7jkrq09ps");
+  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NORD Uniformes</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%230F172E'/><text x='16' y='14' dominant-baseline='central' text-anchor='middle' font-family='system-ui,sans-serif' font-weight='900' font-size='20' fill='white'>N</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azul:#1E2D4A;--azul-900:#0F172E;--dorado:#C8A96E;--dorado-700:#A6884B;--dorado-300:#E0CBA0;
+            --crema:#F4F1EA;--sans:"Mulish",system-ui,sans-serif;--serif:"Cormorant Garamond",serif;
+            --pad-x:clamp(24px,6vw,100px);
+        }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html,body{height:100%;margin:0}
+        body{font-family:var(--sans);background:var(--azul-900);color:#fff;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+        footer{background:rgba(0,0,0,.3);padding:24px var(--pad-x);font-size:12px;color:rgba(255,255,255,.45);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+        footer a{color:rgba(255,255,255,.6);text-decoration:none;}
+        footer a:hover{color:white}
+        footer strong{color:rgba(255,255,255,.8);font-size:10px;letter-spacing:.16em;text-transform:uppercase}
+        a{text-decoration:none}
+
+        .hero {
+            flex: 1;
+            background: linear-gradient(135deg, var(--azul-900) 0%, #152031 60%, #0a1520 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: var(--pad-x);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Glow dorado sutil */
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 900px 500px at 30% 40%, rgba(200,169,110,.06), transparent 60%),
+                radial-gradient(ellipse 600px 400px at 70% 65%, rgba(30,45,74,.4), transparent 55%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 860px;
+        }
+
+        /* WhatsApp flotante */
+        .wa-float {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        .wa-card {
+            background: white;
+            border-radius: 12px;
+            padding: 14px 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            font-family: var(--sans);
+            font-size: 13px;
+            color: var(--azul-900);
+            line-height: 1.6;
+            display: none;
+            max-width: 240px;
+        }
+        .wa-card.visible { display: block; }
+        .wa-card strong { display: block; font-size: 12px; font-weight: 800; letter-spacing: .06em; margin-bottom: 6px; text-transform: uppercase; }
+        .wa-card a { color: var(--azul); text-decoration: none; font-weight: 600; }
+        .wa-btn {
+            width: 56px;
+            height: 56px;
+            background: #25D366;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(37,211,102,.4);
+            cursor: pointer;
+            border: none;
+            transition: transform .2s, box-shadow .2s;
+        }
+        .wa-btn:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(37,211,102,.5); }
+
+        .hero h1 {
+            font-size: clamp(52px, 10vw, 110px);
+            font-weight: 900;
+            line-height: .88;
+            letter-spacing: -.03em;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .hero h1 span {
+            color: var(--dorado-300);
+        }
+
+        .hero-sub {
+            font-family: var(--serif);
+            font-style: italic;
+            font-size: clamp(16px, 2vw, 22px);
+            color: rgba(255,255,255,.55);
+            margin-bottom: 48px;
+            margin-top: 18px;
+            letter-spacing: .01em;
+        }
+
+        .btn-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--dorado);
+            color: var(--azul-900);
+            padding: 18px 40px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 10px;
+            transition: all .25s;
+            box-shadow: 0 8px 32px rgba(200,169,110,.25);
+        }
+        .btn-cta:hover {
+            background: var(--dorado-300);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(200,169,110,.35);
+        }
+        .btn-cta svg { flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <div class="hero-content">
+        <h1>NORD<br><span>UNIFORMES</span></h1>
+
+        <p class="hero-sub">Uniformes Escolares y Ropa de Trabajo</p>
+
+        <a class="btn-cta" href="/wellspring">
+            Ver tienda Wellspring
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+    </div>
+</div>
+
+<footer>
+  <div><strong>NORD Uniformes</strong></div>
+  <div>
+    <a href="https://wa.me/5491135057838" target="_blank">+54 9 11 3505-7838</a>
+    &nbsp;·&nbsp;
+    <a href="mailto:norduniformes@gmail.com">norduniformes@gmail.com</a>
+  </div>
+  <div>© 2025 NORD Uniformes</div>
+</footer>
+
+<!-- WhatsApp flotante — link directo -->
+<div class="wa-float">
+  <a class="wa-btn" href="https://wa.me/5491135057838" target="_blank" aria-label="WhatsApp">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </a>
+</div>
+
+</body>
+</html>
