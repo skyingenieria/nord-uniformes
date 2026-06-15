@@ -906,7 +906,7 @@ function updateTalles() {
   sel.innerHTML = talles.length
     ? talles.map(t => {
         const sinStock = t.stock <= 0;
-        const label = sinStock ? `${t.talle} — SIN STOCK` : `${t.talle} — ${fmt(t.precio)}`;
+        const label = sinStock ? `${t.talle} — ${fmt(t.precio)} · SIN STOCK` : `${t.talle} — ${fmt(t.precio)}`;
         return `<option value="${t.talle}" data-precio="${t.precio}" data-stock="${t.stock}">${label}</option>`;
       }).join("")
     : `<option value="">Sin talles</option>`;
