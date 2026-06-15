@@ -654,7 +654,7 @@ function renderCharts() {
 
 // ── CLIENTES ──────────────────────────────────────────────────────────────
 async function loadClientes() {
-  const r = await fetch("/api/admin/clientes", { headers: { Authorization: "Bearer " + TOKEN } });
+  const r = await fetch("/api/admin/orders?type=clientes", { headers: { Authorization: "Bearer " + TOKEN } });
   if (!r.ok) return;
   allClientes = await r.json();
   renderClientes(allClientes);
@@ -911,7 +911,7 @@ async function renderMetricas() {
 
   // Datos de cobros desde API
   try {
-    const r=await fetch("/api/admin/metrics",{headers:{Authorization:"Bearer "+TOKEN}});
+    const r=await fetch("/api/admin/orders?type=metrics",{headers:{Authorization:"Bearer "+TOKEN}});
     const data=await r.json();
     document.getElementById("m-saldo").textContent=fmt(data.totalSaldo||0);
     document.getElementById("m-cobrado").textContent=fmt(data.totalCobrado||0);
