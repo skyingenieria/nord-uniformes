@@ -510,7 +510,6 @@
       line-height: 1.55;
     }
 
-    /* Descripción extra en modal */
     .modal-desc-extra {
       font-size: 13px;
       color: var(--azul-600);
@@ -1166,12 +1165,6 @@
       margin: 0;
     }
 
-    .modal-product-description {
-      font-size: 14px;
-      color: var(--azul-600);
-      line-height: 1.5;
-      margin: 0;
-    }
 
     .modal-price-section {
       background: rgba(31, 45, 74, 0.05);
@@ -1817,7 +1810,6 @@
         <h2 id="modal-product-name" class="modal-product-name"></h2>
         <span id="modal-genero-tag"></span>
       </div>
-      <p id="modal-product-description" class="modal-product-description"></p>
 
       <div class="modal-price-section">
         <div id="modal-product-price" class="modal-product-price">$0</div>
@@ -2260,7 +2252,6 @@
 
     // Llenar datos
     document.getElementById("modal-product-name").textContent = product.nombre;
-    document.getElementById("modal-product-description").textContent = product.descripcion || "";
 
     // Tag de género
     const gRaw = (product.genero || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
