@@ -11,7 +11,7 @@
       --dorado:#C8A96E;--niebla-200:#D3DAE5;
       --crema:#F4F1EA;--crema-2:#ECE7DC;--blanco:#fff;
       --sans:"Mulish",system-ui,sans-serif;
-      --max:1400px;--pad:clamp(16px,3vw,40px);
+      --sidebar:220px;--pad:clamp(16px,3vw,36px);
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:var(--sans);background:#0d1117;color:#e6edf3;min-height:100vh;-webkit-font-smoothing:antialiased}
@@ -24,65 +24,78 @@
     .login-box p{font-size:13px;color:#8b949e;margin-bottom:28px}
     .login-box input{width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:11px 14px;font-family:var(--sans);font-size:14px;outline:none;margin-bottom:12px;border-radius:6px;transition:border-color .2s,box-shadow .2s}
     .login-box input:focus{border-color:var(--dorado);box-shadow:0 0 0 3px rgba(200,169,110,.15)}
-    .btn-login{width:100%;background:var(--azul-900);color:var(--crema);border:none;padding:13px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:background .2s,box-shadow .2s;border-radius:8px;box-shadow:0 2px 8px rgba(15,23,46,.3)}
-    .btn-login:hover{background:var(--dorado);color:var(--azul-900);box-shadow:0 4px 12px rgba(200,169,110,.3)}
+    .btn-login{width:100%;background:var(--azul-900);color:var(--crema);border:none;padding:13px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:background .2s,box-shadow .2s;border-radius:8px}
+    .btn-login:hover{background:var(--dorado);color:var(--azul-900)}
     .login-error{font-size:12px;color:#f85149;margin-top:10px;display:none}
 
-    /* APP */
-    #app-screen{display:none}
-    .topbar{background:#161b22;border-bottom:1px solid #30363d;padding:0 var(--pad);height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-    .topbar-brand{font-size:16px;font-weight:900;letter-spacing:.04em;color:#e6edf3}
-    .topbar-brand span{font-weight:300;font-size:9px;letter-spacing:.4em;display:block;margin-top:1px;color:#8b949e;padding-left:.4em}
-    .topbar-right{display:flex;align-items:center;gap:16px}
-    .btn-logout{background:none;border:1px solid #30363d;color:#8b949e;padding:6px 14px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+    /* APP LAYOUT */
+    #app-screen{display:none;height:100vh;overflow:hidden}
+    .app-body{display:flex;height:100vh}
+
+    /* SIDEBAR */
+    .sidebar{width:var(--sidebar);background:#161b22;border-right:1px solid #30363d;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+    .sidebar-brand{padding:20px 18px 16px;border-bottom:1px solid #30363d}
+    .sidebar-brand-name{font-size:15px;font-weight:900;letter-spacing:.04em;color:#e6edf3}
+    .sidebar-brand-sub{font-size:9px;font-weight:300;letter-spacing:.4em;color:#8b949e;margin-top:2px}
+    .sidebar-nav{display:flex;flex-direction:column;padding:12px 10px;gap:2px;flex:1}
+    .tab-btn{background:none;border:none;color:#8b949e;padding:10px 12px;font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;border-radius:8px;text-align:left;display:flex;align-items:center;gap:9px;white-space:nowrap}
+    .tab-btn:hover{color:#e6edf3;background:#1c2128}
+    .tab-btn.active{color:var(--dorado);background:#1c2128}
+    .tab-btn .tab-icon{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+    .sidebar-footer{padding:16px 18px;border-top:1px solid #30363d}
+    .btn-logout{width:100%;background:none;border:1px solid #30363d;color:#8b949e;padding:8px;font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s;border-radius:6px}
     .btn-logout:hover{border-color:#f85149;color:#f85149}
 
-    /* TABS */
-    .tab-nav{background:#161b22;border-bottom:1px solid #30363d;padding:0 var(--pad);display:flex;gap:0;position:sticky;top:56px;z-index:99}
-    .tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:#8b949e;padding:14px 20px;font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap}
-    .tab-btn:hover{color:#e6edf3}
-    .tab-btn.active{color:var(--dorado);border-bottom-color:var(--dorado)}
+    /* MAIN CONTENT */
+    .main-content{flex:1;overflow-y:auto;height:100vh}
     .tab-panel{display:none}
     .tab-panel.active{display:block}
+    .container{max-width:1300px;margin:0 auto;padding:28px var(--pad)}
 
-    .container{max-width:var(--max);margin:0 auto;padding:32px var(--pad)}
+    /* PAGE HEADER */
+    .page-header{margin-bottom:24px}
+    .page-title{font-size:18px;font-weight:900;letter-spacing:-.01em;color:#e6edf3}
+    .page-sub{font-size:12px;color:#8b949e;margin-top:4px}
 
     /* STAT CARDS */
-    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px}
-    .stat{background:#161b22;border:1px solid #30363d;padding:20px 24px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:28px}
+    .stat{background:#161b22;border:1px solid #30363d;padding:18px 20px;border-radius:12px}
     .stat-label{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8b949e;margin-bottom:8px}
-    .stat-value{font-size:28px;font-weight:900;color:#e6edf3;letter-spacing:-.02em}
+    .stat-value{font-size:26px;font-weight:900;color:#e6edf3;letter-spacing:-.02em}
     .stat-sub{font-size:11px;color:#8b949e;margin-top:4px}
     .stat.highlight .stat-value{color:var(--dorado)}
 
     /* FILTERS */
-    .filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
-    .filter-btn{background:none;border:1px solid #30363d;color:#8b949e;padding:7px 16px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .15s;border-radius:6px}
+    .filters{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+    .filter-btn{background:none;border:1px solid #30363d;color:#8b949e;padding:7px 14px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s;border-radius:6px}
     .filter-btn:hover,.filter-btn.active{background:var(--azul-900);border-color:var(--azul-900);color:#e6edf3}
-    .search-admin{flex:1;min-width:200px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:8px 14px;font-family:var(--sans);font-size:13px;outline:none;border-radius:6px;transition:border-color .2s,box-shadow .2s}
-    .search-admin:focus{border-color:var(--dorado);box-shadow:0 0 0 3px rgba(200,169,110,.15)}
+    .search-admin{flex:1;min-width:200px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:8px 14px;font-family:var(--sans);font-size:13px;outline:none;border-radius:6px;transition:border-color .2s}
+    .search-admin:focus{border-color:var(--dorado);box-shadow:0 0 0 3px rgba(200,169,110,.12)}
     .search-admin::placeholder{color:#8b949e}
 
     /* TABLE */
-    .table-wrap{background:#161b22;border:1px solid #30363d;overflow:auto;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    .table-wrap{background:#161b22;border:1px solid #30363d;overflow:auto;border-radius:12px}
     table{width:100%;border-collapse:collapse;font-size:13px}
     th{background:#0d1117;color:#8b949e;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:10px 16px;text-align:left;white-space:nowrap}
-    td{padding:12px 16px;border-top:1px solid #21262d;vertical-align:top;color:#e6edf3}
+    td{padding:11px 16px;border-top:1px solid #21262d;vertical-align:top;color:#e6edf3}
     tr:hover td{background:#1c2128;cursor:pointer}
-    .badge{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:2px}
+    .badge{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:2px}
     .badge-pendiente{background:#fff3cd;color:#856404}
     .badge-confirmada{background:#d1ecf1;color:#0c5460}
     .badge-enviada{background:#d4edda;color:#155724}
     .badge-cancelada{background:#f8d7da;color:#721c24}
     .badge-pago-transferencia{background:#e8f4f8;color:var(--azul)}
     .badge-pago-nave{background:#ede7f6;color:#5a2d9c}
+    .badge-sin-stock{background:#f8d7da;color:#721c24}
+    .badge-stock-ok{background:#d4edda;color:#155724}
+    .badge-stock-bajo{background:#fff3cd;color:#856404}
 
     /* ORDER DETAIL PANEL */
     .detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity .25s}
     .detail-overlay.open{opacity:1;pointer-events:all}
     .detail-panel{width:480px;max-width:100vw;background:#161b22;border-left:1px solid #30363d;overflow-y:auto;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
     .detail-overlay.open .detail-panel{transform:translateX(0)}
-    .detail-header{padding:20px 24px;border-bottom:1px solid #30363d;display:flex;justify-content:space-between;align-items:center}
+    .detail-header{padding:20px 24px;border-bottom:1px solid #30363d;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#161b22;z-index:1}
     .detail-title{font-size:15px;font-weight:800}
     .detail-close{background:none;border:none;color:#8b949e;cursor:pointer;padding:4px;display:flex}
     .detail-body{padding:24px}
@@ -97,17 +110,15 @@
     .detail-item-sub{color:#8b949e;font-size:11px;margin-top:2px}
     .detail-total{display:flex;justify-content:space-between;font-size:18px;font-weight:800;padding-top:12px;margin-top:8px;border-top:1px solid #30363d}
     .detail-total span:last-child{color:var(--dorado)}
-    .status-select{width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 14px;font-family:var(--sans);font-size:13px;font-weight:700;outline:none;margin-top:12px;cursor:pointer;border-radius:6px;transition:border-color .2s}
+    .status-select{width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 14px;font-family:var(--sans);font-size:13px;font-weight:700;outline:none;margin-top:12px;cursor:pointer;border-radius:6px}
     .status-select:focus{border-color:var(--dorado)}
-    .btn-update{width:100%;background:var(--dorado);color:var(--azul-900);border:none;padding:12px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;margin-top:8px;transition:background .2s,box-shadow .2s;border-radius:6px;box-shadow:0 2px 8px rgba(200,169,110,.2)}
+    .btn-update{width:100%;background:var(--dorado);color:var(--azul-900);border:none;padding:12px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;margin-top:8px;border-radius:6px}
     .btn-update:hover{background:#b8944e}
     .update-msg{font-size:12px;color:#3fb950;margin-top:8px;text-align:center;display:none}
 
-    /* ANALYTICS */
-    .analytics-section{margin-top:40px}
-    .analytics-title{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#8b949e;margin-bottom:20px}
-    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-    .chart-card{background:#161b22;border:1px solid #30363d;padding:20px 24px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    /* CHARTS */
+    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+    .chart-card{background:#161b22;border:1px solid #30363d;padding:20px 24px;border-radius:12px}
     .chart-card-title{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#8b949e;margin-bottom:16px}
     .bar-list{display:flex;flex-direction:column;gap:10px}
     .bar-item{display:flex;align-items:center;gap:10px;font-size:12px}
@@ -116,15 +127,10 @@
     .bar-fill{height:100%;background:var(--dorado);border-radius:2px;transition:width .4s ease}
     .bar-val{min-width:80px;text-align:right;color:#8b949e;font-weight:700}
 
-    /* SECTION TITLE */
-    .section-title{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#8b949e;margin-bottom:20px}
-
     /* CLIENTES */
-    .clientes-toolbar{display:flex;gap:10px;margin-bottom:20px;align-items:center}
-    .btn-primary{background:var(--dorado);color:var(--azul-900);border:none;padding:9px 20px;font-family:var(--sans);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:6px;transition:background .2s;white-space:nowrap}
+    .toolbar{display:flex;gap:10px;margin-bottom:18px;align-items:center;flex-wrap:wrap}
+    .btn-primary{background:var(--dorado);color:var(--azul-900);border:none;padding:9px 20px;font-family:var(--sans);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:6px;white-space:nowrap}
     .btn-primary:hover{background:#b8944e}
-    .btn-secondary{background:#161b22;color:#e6edf3;border:1px solid #30363d;padding:9px 20px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:6px;transition:all .15s}
-    .btn-secondary:hover{border-color:#8b949e;color:#e6edf3}
 
     /* FORM MODAL */
     .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
@@ -143,9 +149,9 @@
     .form-msg.err{color:#f85149}
 
     /* NUEVA VENTA */
-    .venta-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
-    .venta-panel{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px}
-    .venta-panel-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8b949e;margin-bottom:16px}
+    .venta-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+    .venta-panel{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px}
+    .venta-panel-title{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8b949e;margin-bottom:14px}
     .autocomplete-wrap{position:relative}
     .autocomplete-list{position:absolute;top:100%;left:0;right:0;background:#161b22;border:1px solid #30363d;border-top:none;border-radius:0 0 6px 6px;max-height:200px;overflow-y:auto;z-index:50;display:none}
     .autocomplete-item{padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid #21262d}
@@ -156,7 +162,7 @@
     .selected-client{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:12px 14px;margin-top:8px;display:none}
     .selected-client .sc-name{font-weight:700;color:#e6edf3;font-size:13px}
     .selected-client .sc-sub{font-size:11px;color:#8b949e;margin-top:2px}
-    .item-list{min-height:80px;margin-bottom:16px}
+    .item-list{min-height:80px;margin-bottom:14px}
     .item-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #21262d;font-size:13px}
     .item-row:last-child{border-bottom:none}
     .item-name{flex:1;color:#e6edf3;font-weight:600}
@@ -166,17 +172,33 @@
     .item-del{background:none;border:none;color:#f85149;cursor:pointer;font-size:16px;padding:0 4px;line-height:1}
     .venta-total{display:flex;justify-content:space-between;font-size:18px;font-weight:800;padding-top:12px;margin-top:4px;border-top:1px solid #30363d}
     .venta-total span:last-child{color:var(--dorado)}
-    .btn-confirmar{width:100%;background:var(--dorado);color:var(--azul-900);border:none;padding:14px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-top:16px;transition:background .2s}
+    .btn-confirmar{width:100%;background:var(--dorado);color:var(--azul-900);border:none;padding:14px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-top:14px}
     .btn-confirmar:hover{background:#b8944e}
     .btn-confirmar:disabled{opacity:.5;cursor:not-allowed}
+    .sin-stock-warning{color:#f85149;font-size:11px;margin-top:6px;display:none}
 
-    /* METRICAS */
-    .metrics-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:32px}
-    .pending-list{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto}
+    /* MÉTRICAS */
+    .metrics-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px}
+    .pending-list{display:flex;flex-direction:column;gap:6px;max-height:350px;overflow-y:auto}
     .pending-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#0d1117;border-radius:6px;font-size:13px}
     .pending-row .p-id{font-family:monospace;font-size:11px;color:#8b949e}
     .pending-row .p-cliente{color:#e6edf3;font-weight:600}
-    .pending-row .p-saldo{color:#f85149;font-weight:800}
+    .pending-row .p-saldo{color:#f85149;font-weight:800;white-space:nowrap}
+
+    /* PEDIDOS */
+    .pedido-row-pagado td{color:#8b949e}
+
+    /* STOCK */
+    .stock-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px}
+    .stock-prenda-group{background:#161b22;border:1px solid #30363d;border-radius:10px;overflow:hidden;margin-bottom:12px}
+    .stock-prenda-header{padding:12px 16px;background:#0d1117;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+    .stock-prenda-name{font-weight:700;font-size:13px;color:#e6edf3}
+    .stock-prenda-total{font-size:11px;color:#8b949e}
+    .stock-talles{display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px}
+    .stock-talle-chip{padding:5px 10px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.06em}
+    .stock-chip-ok{background:#0d3321;border:1px solid #1a6840;color:#3fb950}
+    .stock-chip-bajo{background:#2d2008;border:1px solid #6b4c0a;color:#ffc107}
+    .stock-chip-vacio{background:#2d0f0f;border:1px solid #6b1c1c;color:#f85149}
 
     /* WEB */
     .web-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
@@ -184,13 +206,15 @@
     .web-card-icon{font-size:36px;margin-bottom:12px}
     .web-card-title{font-size:14px;font-weight:800;color:#e6edf3;margin-bottom:6px}
     .web-card-sub{font-size:12px;color:#8b949e;margin-bottom:20px;line-height:1.6}
-    .web-card a{display:inline-block;background:var(--dorado);color:var(--azul-900);padding:10px 24px;font-family:var(--sans);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-radius:6px;transition:background .2s}
+    .web-card a{display:inline-block;background:var(--dorado);color:var(--azul-900);padding:10px 24px;font-family:var(--sans);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-radius:6px}
     .web-card a:hover{background:#b8944e}
 
-    @media(max-width:700px){
+    @media(max-width:800px){
+      .sidebar{width:56px}
+      .tab-btn span:not(.tab-icon){display:none}
+      .sidebar-brand-sub,.sidebar-brand-name{display:none}
       .charts-grid,.venta-grid,.web-grid{grid-template-columns:1fr}
       .detail-panel{width:100vw}
-      .tab-btn{padding:12px 12px;font-size:10px}
     }
   </style>
 </head>
@@ -209,196 +233,271 @@
 
 <!-- APP -->
 <div id="app-screen">
-  <div class="topbar">
-    <div class="topbar-brand">NORD <span>ADMIN</span></div>
-    <div class="topbar-right">
-      <button class="btn-logout" onclick="logout()">Salir</button>
-    </div>
-  </div>
+  <div class="app-body">
 
-  <!-- TAB NAV -->
-  <div class="tab-nav">
-    <button class="tab-btn active" data-tab="ordenes" onclick="switchTab('ordenes')">📋 Órdenes</button>
-    <button class="tab-btn" data-tab="clientes" onclick="switchTab('clientes')">👥 Clientes</button>
-    <button class="tab-btn" data-tab="nueva-venta" onclick="switchTab('nueva-venta')">📦 Nueva Venta</button>
-    <button class="tab-btn" data-tab="metricas" onclick="switchTab('metricas')">📊 Métricas</button>
-    <button class="tab-btn" data-tab="web" onclick="switchTab('web')">🌐 Web</button>
-  </div>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-name">NORD</div>
+        <div class="sidebar-brand-sub">ADMIN</div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="tab-btn active" data-tab="ordenes" onclick="switchTab('ordenes')">
+          <span class="tab-icon">📋</span><span>Órdenes</span>
+        </button>
+        <button class="tab-btn" data-tab="pedidos" onclick="switchTab('pedidos')">
+          <span class="tab-icon">📦</span><span>Pedidos</span>
+        </button>
+        <button class="tab-btn" data-tab="clientes" onclick="switchTab('clientes')">
+          <span class="tab-icon">👥</span><span>Clientes</span>
+        </button>
+        <button class="tab-btn" data-tab="nueva-venta" onclick="switchTab('nueva-venta')">
+          <span class="tab-icon">🛒</span><span>Nueva Venta</span>
+        </button>
+        <button class="tab-btn" data-tab="stock" onclick="switchTab('stock')">
+          <span class="tab-icon">🏷️</span><span>Stock</span>
+        </button>
+        <button class="tab-btn" data-tab="metricas" onclick="switchTab('metricas')">
+          <span class="tab-icon">📊</span><span>Métricas</span>
+        </button>
+        <button class="tab-btn" data-tab="web" onclick="switchTab('web')">
+          <span class="tab-icon">🌐</span><span>Web</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </aside>
 
-  <!-- ══════════ TAB: ÓRDENES ══════════ -->
-  <div id="tab-ordenes" class="tab-panel active">
-    <div class="container">
-      <div class="stats" id="stats-container">
-        <div class="stat"><div class="stat-label">Órdenes totales</div><div class="stat-value" id="s-total">—</div></div>
-        <div class="stat"><div class="stat-label">Pendientes</div><div class="stat-value" id="s-pendiente" style="color:#ffc107">—</div></div>
-        <div class="stat"><div class="stat-label">Confirmadas</div><div class="stat-value" id="s-confirmada" style="color:#17a2b8">—</div></div>
-        <div class="stat highlight"><div class="stat-label">Facturación total</div><div class="stat-value" id="s-revenue">—</div></div>
-        <div class="stat"><div class="stat-label">Ticket promedio</div><div class="stat-value" id="s-ticket">—</div></div>
+    <!-- MAIN -->
+    <div class="main-content">
+
+      <!-- ══════════ TAB: ÓRDENES ══════════ -->
+      <div id="tab-ordenes" class="tab-panel active">
+        <div class="container">
+          <div class="page-header">
+            <div class="page-title">Órdenes web</div>
+            <div class="page-sub">Pedidos ingresados desde el sitio norduniformes.com.ar</div>
+          </div>
+          <div class="stats" id="stats-container">
+            <div class="stat"><div class="stat-label">Total</div><div class="stat-value" id="s-total">—</div></div>
+            <div class="stat"><div class="stat-label">Pendientes</div><div class="stat-value" id="s-pendiente" style="color:#ffc107">—</div></div>
+            <div class="stat"><div class="stat-label">Confirmadas</div><div class="stat-value" id="s-confirmada" style="color:#17a2b8">—</div></div>
+            <div class="stat highlight"><div class="stat-label">Facturación</div><div class="stat-value" id="s-revenue">—</div></div>
+            <div class="stat"><div class="stat-label">Ticket prom.</div><div class="stat-value" id="s-ticket">—</div></div>
+          </div>
+          <div class="filters">
+            <button class="filter-btn active" data-status="todas" onclick="setFilter(this)">Todas</button>
+            <button class="filter-btn" data-status="pendiente" onclick="setFilter(this)">Pendientes</button>
+            <button class="filter-btn" data-status="confirmada" onclick="setFilter(this)">Confirmadas</button>
+            <button class="filter-btn" data-status="enviada" onclick="setFilter(this)">Enviadas</button>
+            <button class="filter-btn" data-status="cancelada" onclick="setFilter(this)">Canceladas</button>
+            <input class="search-admin" placeholder="Buscar por nombre, email, ID..." oninput="handleSearch(this.value)">
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Prendas</th><th>Total</th><th>Pago</th><th>Envío</th><th>Estado</th></tr></thead>
+              <tbody id="orders-tbody"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
-      <div class="filters">
-        <button class="filter-btn active" data-status="todas" onclick="setFilter(this)">Todas</button>
-        <button class="filter-btn" data-status="pendiente" onclick="setFilter(this)">Pendientes</button>
-        <button class="filter-btn" data-status="confirmada" onclick="setFilter(this)">Confirmadas</button>
-        <button class="filter-btn" data-status="enviada" onclick="setFilter(this)">Enviadas</button>
-        <button class="filter-btn" data-status="cancelada" onclick="setFilter(this)">Canceladas</button>
-        <input class="search-admin" placeholder="Buscar por nombre, email, ID..." oninput="handleSearch(this.value)">
+      <!-- ══════════ TAB: PEDIDOS ══════════ -->
+      <div id="tab-pedidos" class="tab-panel">
+        <div class="container">
+          <div class="page-header">
+            <div class="page-title">Pedidos ERP</div>
+            <div class="page-sub">Registro de pedidos y estado de cobros del sistema interno</div>
+          </div>
+          <div class="stats">
+            <div class="stat"><div class="stat-label">Total pedidos</div><div class="stat-value" id="p-total">—</div></div>
+            <div class="stat"><div class="stat-label">Cobrado</div><div class="stat-value" id="p-cobrado" style="color:#3fb950">—</div></div>
+            <div class="stat"><div class="stat-label">Saldo pendiente</div><div class="stat-value" id="p-saldo" style="color:#f85149">—</div></div>
+          </div>
+          <div class="filters">
+            <button class="filter-btn active" data-pfilter="todos" onclick="setPedidoFilter(this)">Todos</button>
+            <button class="filter-btn" data-pfilter="pendiente" onclick="setPedidoFilter(this)">Con saldo</button>
+            <button class="filter-btn" data-pfilter="pagado" onclick="setPedidoFilter(this)">Pagados</button>
+            <input class="search-admin" placeholder="Buscar por ID o cliente..." oninput="filterPedidos(this.value)" id="pedidos-search">
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Cliente</th><th>Prendas</th><th>Monto</th><th>Forma Pago</th><th>Cobrado</th><th>Saldo</th><th>Estado</th></tr></thead>
+              <tbody id="pedidos-tbody"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Prendas</th><th>Total</th><th>Pago</th><th>Envío</th><th>Estado</th></tr>
-          </thead>
-          <tbody id="orders-tbody"></tbody>
-        </table>
+      <!-- ══════════ TAB: CLIENTES ══════════ -->
+      <div id="tab-clientes" class="tab-panel">
+        <div class="container">
+          <div class="page-header">
+            <div class="page-title">Clientes</div>
+            <div class="page-sub">Base de datos del sheet Clientes</div>
+          </div>
+          <div class="toolbar">
+            <input class="search-admin" style="max-width:340px" placeholder="Buscar por nombre, email..." oninput="filterClientes(this.value)">
+            <button class="btn-primary" onclick="openClienteModal()">+ Nuevo cliente</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Nro</th><th>Nombre</th><th>Apellido</th><th>Email</th><th>Teléfono</th><th>Código</th></tr></thead>
+              <tbody id="clientes-tbody"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
-      <div class="analytics-section">
-        <p class="analytics-title">Analytics</p>
-        <div class="charts-grid">
-          <div class="chart-card">
-            <p class="chart-card-title">Prendas más vendidas</p>
-            <div class="bar-list" id="chart-prendas"></div>
+      <!-- ══════════ TAB: NUEVA VENTA ══════════ -->
+      <div id="tab-nueva-venta" class="tab-panel">
+        <div class="container">
+          <div class="page-header">
+            <div class="page-title">Nueva venta</div>
+            <div class="page-sub">Registrar venta manual que no pasó por el carrito web</div>
+          </div>
+          <div class="venta-grid">
+            <div>
+              <div class="venta-panel" style="margin-bottom:16px">
+                <p class="venta-panel-title">1. Cliente</p>
+                <div class="autocomplete-wrap">
+                  <input class="form-input" id="venta-cliente-search" placeholder="Buscar cliente por nombre o email..." oninput="searchCliente(this.value)" autocomplete="off">
+                  <div class="autocomplete-list" id="venta-autocomplete"></div>
+                </div>
+                <div class="selected-client" id="venta-selected-client">
+                  <div class="sc-name" id="vsc-name"></div>
+                  <div class="sc-sub" id="vsc-sub"></div>
+                </div>
+              </div>
+              <div class="venta-panel">
+                <p class="venta-panel-title">2. Agregar prenda</p>
+                <div class="form-group">
+                  <label class="form-label">Prenda</label>
+                  <select class="form-input" id="venta-prenda" onchange="updateTalles()">
+                    <option value="">Seleccionar prenda...</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Talle</label>
+                  <select class="form-input" id="venta-talle">
+                    <option value="">—</option>
+                  </select>
+                  <p class="sin-stock-warning" id="sin-stock-warning">⚠ Este talle no tiene stock disponible</p>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Cantidad</label>
+                  <input class="form-input" type="number" id="venta-qty" value="1" min="1" max="99">
+                </div>
+                <button class="btn-primary" style="width:100%" onclick="addItem()">+ Agregar al pedido</button>
+              </div>
+            </div>
+            <div class="venta-panel">
+              <p class="venta-panel-title">3. Resumen del pedido</p>
+              <div class="item-list" id="venta-items">
+                <p style="color:#8b949e;font-size:13px;text-align:center;padding:24px 0">Sin prendas agregadas</p>
+              </div>
+              <div class="venta-total"><span>Total</span><span id="venta-total-val">$0</span></div>
+              <button class="btn-confirmar" id="btn-confirmar-venta" onclick="confirmarVenta()" disabled>Confirmar venta</button>
+              <p class="form-msg ok" id="venta-ok-msg"></p>
+              <p class="form-msg err" id="venta-err-msg"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ TAB: STOCK ══════════ -->
+      <div id="tab-stock" class="tab-panel">
+        <div class="container">
+          <div class="page-header">
+            <div class="page-title">Stock</div>
+            <div class="page-sub">Estado actual de inventario por prenda y talle</div>
+          </div>
+          <div class="stock-summary">
+            <div class="stat"><div class="stat-label">Prendas distintas</div><div class="stat-value" id="st-prendas">—</div></div>
+            <div class="stat highlight"><div class="stat-label">Talles con stock</div><div class="stat-value" id="st-ok">—</div></div>
+            <div class="stat"><div class="stat-label">Sin stock</div><div class="stat-value" id="st-vacio" style="color:#f85149">—</div></div>
+          </div>
+          <div class="filters">
+            <button class="filter-btn active" data-sfilter="todos" onclick="setStockFilter(this)">Todos</button>
+            <button class="filter-btn" data-sfilter="sin-stock" onclick="setStockFilter(this)">Sin stock</button>
+            <button class="filter-btn" data-sfilter="bajo" onclick="setStockFilter(this)">Stock bajo (≤3)</button>
+            <input class="search-admin" placeholder="Buscar prenda..." oninput="filterStock(this.value)" id="stock-search">
+          </div>
+          <div id="stock-list"></div>
+        </div>
+      </div>
+
+      <!-- ══════════ TAB: MÉTRICAS ══════════ -->
+      <div id="tab-metricas" class="tab-panel">
+        <div class="container">
+          <div class="page-header">
+            <div class="page-title">Métricas</div>
+            <div class="page-sub">Resumen de ventas, facturación y cobros</div>
+          </div>
+          <div class="metrics-stats">
+            <div class="stat highlight"><div class="stat-label">Facturación total</div><div class="stat-value" id="m-total">—</div></div>
+            <div class="stat"><div class="stat-label">Este mes</div><div class="stat-value" id="m-mes">—</div></div>
+            <div class="stat"><div class="stat-label">Mes anterior</div><div class="stat-value" id="m-mes-ant">—</div></div>
+            <div class="stat"><div class="stat-label">Saldo pendiente</div><div class="stat-value" id="m-saldo" style="color:#f85149">—</div></div>
+            <div class="stat"><div class="stat-label">Cobrado</div><div class="stat-value" id="m-cobrado" style="color:#3fb950">—</div></div>
+          </div>
+          <div class="charts-grid">
+            <div class="chart-card">
+              <p class="chart-card-title">Facturación por mes (últimos 6)</p>
+              <div class="bar-list" id="chart-mensual"></div>
+            </div>
+            <div class="chart-card">
+              <p class="chart-card-title">Top prendas vendidas</p>
+              <div class="bar-list" id="chart-prendas-metrics"></div>
+            </div>
+          </div>
+          <div class="charts-grid">
+            <div class="chart-card">
+              <p class="chart-card-title">Prendas más vendidas (órdenes web)</p>
+              <div class="bar-list" id="chart-prendas"></div>
+            </div>
+            <div class="chart-card">
+              <p class="chart-card-title">Métodos de pago</p>
+              <div class="bar-list" id="chart-pagos"></div>
+            </div>
           </div>
           <div class="chart-card">
-            <p class="chart-card-title">Métodos de pago</p>
-            <div class="bar-list" id="chart-pagos"></div>
+            <p class="chart-card-title" style="margin-bottom:16px">Cobros pendientes</p>
+            <div class="pending-list" id="pending-list">
+              <p style="color:#8b949e;font-size:13px">Cargando...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ TAB: WEB ══════════ -->
+      <div id="tab-web" class="tab-panel">
+        <div class="container">
+          <div class="page-header">
+            <div class="page-title">Métricas web</div>
+            <div class="page-sub">Acceso directo a herramientas de análisis de tráfico</div>
+          </div>
+          <div class="web-grid">
+            <div class="web-card">
+              <div class="web-card-icon">📈</div>
+              <div class="web-card-title">Google Analytics 4</div>
+              <div class="web-card-sub">Sesiones, usuarios, páginas vistas, fuentes de tráfico, dispositivos y ubicación geográfica.</div>
+              <a href="https://analytics.google.com" target="_blank">Abrir GA4 →</a>
+            </div>
+            <div class="web-card">
+              <div class="web-card-icon">🎥</div>
+              <div class="web-card-title">Microsoft Clarity</div>
+              <div class="web-card-sub">Grabaciones de sesiones, heatmaps de clicks y scroll, análisis de comportamiento de usuarios.</div>
+              <a href="https://clarity.microsoft.com" target="_blank">Abrir Clarity →</a>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- ══════════ TAB: CLIENTES ══════════ -->
-  <div id="tab-clientes" class="tab-panel">
-    <div class="container">
-      <div class="clientes-toolbar">
-        <input class="search-admin" style="max-width:340px" placeholder="Buscar por nombre, email..." oninput="filterClientes(this.value)" id="clientes-search">
-        <button class="btn-primary" onclick="openClienteModal()">+ Nuevo cliente</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Nro</th><th>Nombre</th><th>Apellido</th><th>Email</th><th>Teléfono</th><th>Código</th></tr>
-          </thead>
-          <tbody id="clientes-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════ TAB: NUEVA VENTA ══════════ -->
-  <div id="tab-nueva-venta" class="tab-panel">
-    <div class="container">
-      <p class="section-title">Registrar venta manual</p>
-      <div class="venta-grid">
-
-        <!-- Panel izquierdo: cliente + agregar prenda -->
-        <div>
-          <div class="venta-panel" style="margin-bottom:16px">
-            <p class="venta-panel-title">1. Cliente</p>
-            <div class="autocomplete-wrap">
-              <input class="form-input" id="venta-cliente-search" placeholder="Buscar cliente por nombre o email..." oninput="searchCliente(this.value)" autocomplete="off">
-              <div class="autocomplete-list" id="venta-autocomplete"></div>
-            </div>
-            <div class="selected-client" id="venta-selected-client">
-              <div class="sc-name" id="vsc-name"></div>
-              <div class="sc-sub" id="vsc-sub"></div>
-            </div>
-          </div>
-
-          <div class="venta-panel">
-            <p class="venta-panel-title">2. Agregar prenda</p>
-            <div class="form-group">
-              <label class="form-label">Prenda</label>
-              <select class="form-input" id="venta-prenda" onchange="updateTalles()">
-                <option value="">Seleccionar prenda...</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Talle</label>
-              <select class="form-input" id="venta-talle">
-                <option value="">—</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Cantidad</label>
-              <input class="form-input" type="number" id="venta-qty" value="1" min="1" max="99">
-            </div>
-            <button class="btn-primary" style="width:100%" onclick="addItem()">+ Agregar al pedido</button>
-          </div>
-        </div>
-
-        <!-- Panel derecho: resumen pedido -->
-        <div class="venta-panel">
-          <p class="venta-panel-title">3. Resumen del pedido</p>
-          <div class="item-list" id="venta-items">
-            <p style="color:#8b949e;font-size:13px;text-align:center;padding:24px 0">Sin prendas agregadas</p>
-          </div>
-          <div class="venta-total"><span>Total</span><span id="venta-total-val">$0</span></div>
-          <button class="btn-confirmar" id="btn-confirmar-venta" onclick="confirmarVenta()" disabled>Confirmar venta</button>
-          <p class="form-msg ok" id="venta-ok-msg"></p>
-          <p class="form-msg err" id="venta-err-msg"></p>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════ TAB: MÉTRICAS ══════════ -->
-  <div id="tab-metricas" class="tab-panel">
-    <div class="container">
-      <div class="metrics-stats">
-        <div class="stat highlight"><div class="stat-label">Facturación total</div><div class="stat-value" id="m-total">—</div></div>
-        <div class="stat"><div class="stat-label">Este mes</div><div class="stat-value" id="m-mes">—</div></div>
-        <div class="stat"><div class="stat-label">Mes anterior</div><div class="stat-value" id="m-mes-ant">—</div></div>
-        <div class="stat"><div class="stat-label">Saldo pendiente</div><div class="stat-value" id="m-saldo" style="color:#f85149">—</div></div>
-        <div class="stat"><div class="stat-label">Cobrado</div><div class="stat-value" id="m-cobrado" style="color:#3fb950">—</div></div>
-      </div>
-
-      <div class="charts-grid" style="margin-bottom:32px">
-        <div class="chart-card">
-          <p class="chart-card-title">Facturación por mes (últimos 6)</p>
-          <div class="bar-list" id="chart-mensual"></div>
-        </div>
-        <div class="chart-card">
-          <p class="chart-card-title">Top prendas vendidas</p>
-          <div class="bar-list" id="chart-prendas-metrics"></div>
-        </div>
-      </div>
-
-      <div class="chart-card">
-        <p class="chart-card-title" style="margin-bottom:16px">Cobros pendientes</p>
-        <div class="pending-list" id="pending-list">
-          <p style="color:#8b949e;font-size:13px">Cargando...</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════ TAB: WEB ══════════ -->
-  <div id="tab-web" class="tab-panel">
-    <div class="container">
-      <p class="section-title" style="margin-bottom:24px">Métricas de la web</p>
-      <div class="web-grid">
-        <div class="web-card">
-          <div class="web-card-icon">📈</div>
-          <div class="web-card-title">Google Analytics 4</div>
-          <div class="web-card-sub">Sesiones, usuarios, páginas vistas, fuentes de tráfico, dispositivos y ubicación geográfica.</div>
-          <a href="https://analytics.google.com" target="_blank">Abrir GA4 →</a>
-        </div>
-        <div class="web-card">
-          <div class="web-card-icon">🎥</div>
-          <div class="web-card-title">Microsoft Clarity</div>
-          <div class="web-card-sub">Grabaciones de sesiones, heatmaps de clicks y scroll, y análisis de comportamiento de usuarios.</div>
-          <a href="https://clarity.microsoft.com" target="_blank">Abrir Clarity →</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div>
+    </div><!-- /main-content -->
+  </div><!-- /app-body -->
+</div><!-- /app-screen -->
 
 <!-- DETAIL PANEL (órdenes) -->
 <div class="detail-overlay" id="detail-overlay" onclick="handleOverlayClick(event)">
@@ -446,11 +545,16 @@
 
 <script>
 let TOKEN = sessionStorage.getItem("nord_admin_token") || "";
-let allOrders = [];
+let allOrders   = [];
 let allClientes = [];
 let allProducts = [];
+let allPedidos  = [];
 let currentFilter = "todas";
+let currentPedidoFilter = "todos";
+let currentStockFilter = "todos";
 let searchQuery = "";
+let pedidoSearch = "";
+let stockSearch  = "";
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
 function fmt(n) { return "$" + Math.round(Number(n)||0).toLocaleString("es-AR"); }
@@ -469,6 +573,8 @@ function switchTab(tab) {
   if (tab === "clientes" && !allClientes.length) loadClientes();
   if (tab === "nueva-venta") { if (!allClientes.length) loadClientes(); if (!allProducts.length) loadProducts(); }
   if (tab === "metricas") renderMetricas();
+  if (tab === "pedidos") loadPedidos();
+  if (tab === "stock") loadStock();
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
@@ -509,7 +615,6 @@ async function loadOrders() {
   allOrders = await r.json();
   renderStats();
   renderTable();
-  renderCharts();
 }
 
 function renderStats() {
@@ -532,7 +637,7 @@ function getFiltered() {
 }
 
 function setFilter(btn) {
-  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".filter-btn[data-status]").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   currentFilter = btn.dataset.status;
   renderTable();
@@ -554,7 +659,7 @@ function renderTable() {
       <td style="font-family:monospace;font-size:11px;color:#8b949e">${o.id}</td>
       <td style="color:#8b949e;white-space:nowrap">${o.fecha?.split(",")[0]||"—"}</td>
       <td><div style="font-weight:700">${o.nombre} ${o.apellido}</div><div style="font-size:11px;color:#8b949e">${o.email}</div></td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8b949e;font-size:12px">${prendas}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8b949e;font-size:12px">${prendas}</td>
       <td style="font-weight:800;white-space:nowrap">${fmt(o.total)}</td>
       <td><span class="badge badge-pago-${o.pago}">${o.pago==="transferencia"?"Transf.":"Nave"}</span></td>
       <td style="font-size:12px;color:#8b949e">${o.envio==="retiro"?"Retiro":"Correo"}</td>
@@ -623,33 +728,50 @@ async function updateStatus(orderId) {
 function closeDetail() { document.getElementById("detail-overlay").classList.remove("open"); }
 function handleOverlayClick(e) { if (e.target===document.getElementById("detail-overlay")) closeDetail(); }
 
-// ── CHARTS ────────────────────────────────────────────────────────────────
-function renderCharts() {
-  const prendaCounts = {};
-  allOrders.filter(o => o.estado!=="cancelada").forEach(o => {
-    (o.items||[]).forEach(i => { prendaCounts[i.nombre]=(prendaCounts[i.nombre]||0)+(i.qty||1); });
-  });
-  const topPrendas = Object.entries(prendaCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const maxP = topPrendas[0]?.[1]||1;
-  document.getElementById("chart-prendas").innerHTML = topPrendas.map(([n,v])=>`
-    <div class="bar-item">
-      <div class="bar-label" title="${n}">${n}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${(v/maxP*100).toFixed(1)}%"></div></div>
-      <div class="bar-val">${v} und.</div>
-    </div>`).join("")||"<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
+// ── PEDIDOS ───────────────────────────────────────────────────────────────
+async function loadPedidos() {
+  if (allPedidos.length) { renderPedidos(); return; }
+  const r = await fetch("/api/admin/orders?type=metrics", { headers: { Authorization: "Bearer " + TOKEN } });
+  if (!r.ok) return;
+  const data = await r.json();
+  allPedidos = data.pedidos || [];
+  document.getElementById("p-total").textContent = allPedidos.length;
+  document.getElementById("p-cobrado").textContent = fmt(data.totalCobrado||0);
+  document.getElementById("p-saldo").textContent   = fmt(data.totalSaldo||0);
+  renderPedidos();
+}
 
-  const pagoCounts = {};
-  allOrders.filter(o => o.estado!=="cancelada").forEach(o => {
-    pagoCounts[o.pago]=(pagoCounts[o.pago]||0)+1;
-  });
-  const pagos = Object.entries(pagoCounts).sort((a,b)=>b[1]-a[1]);
-  const maxPago = pagos[0]?.[1]||1;
-  document.getElementById("chart-pagos").innerHTML = pagos.map(([n,v])=>`
-    <div class="bar-item">
-      <div class="bar-label">${n==="transferencia"?"Transferencia":"Nave"}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${(v/maxPago*100).toFixed(1)}%"></div></div>
-      <div class="bar-val">${v} órd.</div>
-    </div>`).join("")||"<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
+function setPedidoFilter(btn) {
+  document.querySelectorAll(".filter-btn[data-pfilter]").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentPedidoFilter = btn.dataset.pfilter;
+  renderPedidos();
+}
+
+function filterPedidos(q) { pedidoSearch = q.toLowerCase().trim(); renderPedidos(); }
+
+function renderPedidos() {
+  let list = allPedidos;
+  if (currentPedidoFilter === "pendiente") list = list.filter(p => p.saldo > 0);
+  if (currentPedidoFilter === "pagado")    list = list.filter(p => p.saldo <= 0);
+  if (pedidoSearch) list = list.filter(p =>
+    p.id.toLowerCase().includes(pedidoSearch) || p.cliente.toLowerCase().includes(pedidoSearch)
+  );
+  const tbody = document.getElementById("pedidos-tbody");
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#8b949e;padding:32px">Sin pedidos</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(p => `<tr class="${p.saldo<=0?'pedido-row-pagado':''}">
+    <td style="font-family:monospace;font-size:11px;color:#8b949e">${p.id}</td>
+    <td style="font-weight:700">${p.cliente}</td>
+    <td style="color:#8b949e">${p.cant} prenda${p.cant!==1?'s':''}</td>
+    <td style="font-weight:700">${fmt(p.monto)}</td>
+    <td style="color:#8b949e;font-size:12px">${p.formaPago||"—"}</td>
+    <td style="color:#3fb950;font-weight:700">${fmt(p.montoPago)}</td>
+    <td style="${p.saldo>0?'color:#f85149':'color:#3fb950'};font-weight:800">${fmt(p.saldo)}</td>
+    <td><span class="badge ${p.saldo>0?'badge-pendiente':'badge-enviada'}">${p.saldo>0?'Pendiente':'Pagado'}</span></td>
+  </tr>`).join("");
 }
 
 // ── CLIENTES ──────────────────────────────────────────────────────────────
@@ -678,10 +800,9 @@ function renderClientes(list) {
 
 function filterClientes(q) {
   const ql = q.toLowerCase().trim();
-  const filtered = ql ? allClientes.filter(c =>
+  renderClientes(ql ? allClientes.filter(c =>
     [c.nombre,c.apellido,c.email,c.codigo].some(v => v?.toLowerCase().includes(ql))
-  ) : allClientes;
-  renderClientes(filtered);
+  ) : allClientes);
 }
 
 function openClienteModal() { document.getElementById("cliente-modal").classList.add("open"); }
@@ -700,9 +821,7 @@ async function guardarCliente() {
   const okEl  = document.getElementById("nc-ok");
   const errEl = document.getElementById("nc-err");
   okEl.style.display="none"; errEl.style.display="none";
-
   if (!nombre||!email) { errEl.textContent="Nombre y email son obligatorios"; errEl.style.display="block"; return; }
-
   const r = await fetch("/api/cliente/check-or-create", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -736,12 +855,27 @@ async function loadProducts() {
 function updateTalles() {
   const idx = document.getElementById("venta-prenda").value;
   const sel = document.getElementById("venta-talle");
+  const warning = document.getElementById("sin-stock-warning");
+  warning.style.display = "none";
   if (idx==="") { sel.innerHTML="<option value=''>—</option>"; return; }
   const prod = allProducts[idx];
-  const disponibles = (prod.talles||[]).filter(t => t.stock > 0);
-  sel.innerHTML = disponibles.length
-    ? disponibles.map(t => `<option value="${t.talle}" data-precio="${t.precio}">${t.talle} — ${fmt(t.precio)}</option>`).join("")
-    : `<option value="">Sin stock</option>`;
+  const talles = prod.talles || [];
+  sel.innerHTML = talles.length
+    ? talles.map(t => {
+        const sinStock = t.stock <= 0;
+        const label = sinStock ? `${t.talle} — SIN STOCK` : `${t.talle} — ${fmt(t.precio)}`;
+        return `<option value="${t.talle}" data-precio="${t.precio}" data-stock="${t.stock}">${label}</option>`;
+      }).join("")
+    : `<option value="">Sin talles</option>`;
+  checkTalleStock();
+}
+
+function checkTalleStock() {
+  const sel = document.getElementById("venta-talle");
+  const warning = document.getElementById("sin-stock-warning");
+  const opt = sel.selectedOptions[0];
+  const stock = parseInt(opt?.dataset.stock ?? "1");
+  warning.style.display = stock <= 0 ? "block" : "none";
 }
 
 function searchCliente(q) {
@@ -765,10 +899,9 @@ function selectCliente(codigo) {
   if (!selectedCliente) return;
   document.getElementById("venta-autocomplete").style.display="none";
   document.getElementById("venta-cliente-search").value=`${selectedCliente.nombre} ${selectedCliente.apellido}`;
-  const sc = document.getElementById("venta-selected-client");
   document.getElementById("vsc-name").textContent=`${selectedCliente.nombre} ${selectedCliente.apellido}`;
   document.getElementById("vsc-sub").textContent=`${selectedCliente.email} · ${selectedCliente.codigo}`;
-  sc.style.display="block";
+  document.getElementById("venta-selected-client").style.display="block";
   updateConfirmarBtn();
 }
 
@@ -780,16 +913,13 @@ function addItem() {
   const prod   = allProducts[prendaIdx];
   const talle  = talleOpt.value;
   const precio = parseFloat(talleOpt.selectedOptions[0]?.dataset.precio)||0;
-  ventaItems.push({ nombre: prod.nombre, talle, qty, precio });
+  const stock  = parseInt(talleOpt.selectedOptions[0]?.dataset.stock ?? "1");
+  ventaItems.push({ nombre: prod.nombre, talle, qty, precio, sinStock: stock <= 0 });
   renderVentaItems();
   updateConfirmarBtn();
 }
 
-function removeItem(idx) {
-  ventaItems.splice(idx,1);
-  renderVentaItems();
-  updateConfirmarBtn();
-}
+function removeItem(idx) { ventaItems.splice(idx,1); renderVentaItems(); updateConfirmarBtn(); }
 
 function renderVentaItems() {
   const el = document.getElementById("venta-items");
@@ -800,14 +930,13 @@ function renderVentaItems() {
   }
   el.innerHTML=ventaItems.map((i,idx)=>`
     <div class="item-row">
-      <span class="item-name">${i.nombre}</span>
+      <span class="item-name">${i.nombre}${i.sinStock?' <span style="color:#f85149;font-size:10px">SIN STOCK</span>':''}</span>
       <span class="item-talle">T. ${i.talle}</span>
       <span class="item-qty">×${i.qty}</span>
       <span class="item-precio">${fmt(i.precio*i.qty)}</span>
       <button class="item-del" onclick="removeItem(${idx})">×</button>
     </div>`).join("");
-  const total=ventaItems.reduce((s,i)=>s+i.precio*i.qty,0);
-  document.getElementById("venta-total-val").textContent=fmt(total);
+  document.getElementById("venta-total-val").textContent=fmt(ventaItems.reduce((s,i)=>s+i.precio*i.qty,0));
 }
 
 function updateConfirmarBtn() {
@@ -820,22 +949,14 @@ async function confirmarVenta() {
   okEl.style.display="none"; errEl.style.display="none";
   const btn = document.getElementById("btn-confirmar-venta");
   btn.disabled=true; btn.textContent="Guardando...";
-
   try {
     const idResp = await fetch("/api/pedidos/next-id");
     const { nextId } = await idResp.json();
     const total = ventaItems.reduce((s,i)=>s+i.precio*i.qty,0);
-
     const r = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        idPedido: nextId,
-        codigoCliente: selectedCliente.codigo,
-        items: ventaItems,
-        total,
-        pago: "transferencia",
-      }),
+      body: JSON.stringify({ idPedido: nextId, codigoCliente: selectedCliente.codigo, items: ventaItems, total, pago: "transferencia" }),
     });
     const data = await r.json();
     if (r.ok) {
@@ -845,6 +966,7 @@ async function confirmarVenta() {
       document.getElementById("venta-cliente-search").value="";
       document.getElementById("venta-selected-client").style.display="none";
       renderVentaItems();
+      allPedidos=[];
       loadOrders();
     } else {
       errEl.textContent=data.error||"Error al guardar";
@@ -858,9 +980,70 @@ async function confirmarVenta() {
   updateConfirmarBtn();
 }
 
+// ── STOCK ─────────────────────────────────────────────────────────────────
+async function loadStock() {
+  if (allProducts.length) { renderStock(); return; }
+  const r = await fetch("/api/products");
+  if (!r.ok) return;
+  allProducts = await r.json();
+  renderStock();
+}
+
+function setStockFilter(btn) {
+  document.querySelectorAll(".filter-btn[data-sfilter]").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentStockFilter = btn.dataset.sfilter;
+  renderStock();
+}
+
+function filterStock(q) { stockSearch = q.toLowerCase().trim(); renderStock(); }
+
+function renderStock() {
+  let products = allProducts;
+  if (stockSearch) products = products.filter(p => p.nombre.toLowerCase().includes(stockSearch));
+
+  let totalOk = 0, totalVacio = 0;
+  allProducts.forEach(p => (p.talles||[]).forEach(t => {
+    if (t.stock > 0) totalOk++; else totalVacio++;
+  }));
+  document.getElementById("st-prendas").textContent = allProducts.length;
+  document.getElementById("st-ok").textContent      = totalOk;
+  document.getElementById("st-vacio").textContent   = totalVacio;
+
+  if (currentStockFilter === "sin-stock") {
+    products = products.filter(p => (p.talles||[]).some(t => t.stock <= 0));
+  } else if (currentStockFilter === "bajo") {
+    products = products.filter(p => (p.talles||[]).some(t => t.stock > 0 && t.stock <= 3));
+  }
+
+  const el = document.getElementById("stock-list");
+  if (!products.length) {
+    el.innerHTML = `<div style="text-align:center;color:#8b949e;padding:40px">Sin resultados</div>`;
+    return;
+  }
+
+  el.innerHTML = products.map(p => {
+    const talles = (p.talles||[]);
+    const chips = talles.map(t => {
+      let cls = "stock-chip-ok";
+      if (t.stock <= 0) cls = "stock-chip-vacio";
+      else if (t.stock <= 3) cls = "stock-chip-bajo";
+      return `<span class="stock-talle-chip ${cls}">T.${t.talle}: ${t.stock}</span>`;
+    }).join("");
+    const total = talles.reduce((s,t)=>s+t.stock,0);
+    const hasSinStock = talles.some(t=>t.stock<=0);
+    return `<div class="stock-prenda-group">
+      <div class="stock-prenda-header">
+        <span class="stock-prenda-name">${p.nombre}</span>
+        <span class="stock-prenda-total">${total} uds total${hasSinStock?' · <span style="color:#f85149">Talles sin stock</span>':''}</span>
+      </div>
+      <div class="stock-talles">${chips}</div>
+    </div>`;
+  }).join("");
+}
+
 // ── MÉTRICAS ──────────────────────────────────────────────────────────────
 async function renderMetricas() {
-  // Datos locales desde allOrders
   const active = allOrders.filter(o => o.estado!=="cancelada");
   const total  = active.reduce((s,o)=>s+(Number(o.total)||0),0);
   document.getElementById("m-total").textContent=fmt(total);
@@ -868,7 +1051,6 @@ async function renderMetricas() {
   const now=new Date();
   const thisMonth=now.getMonth(); const thisYear=now.getFullYear();
   const prevMonth=(thisMonth+11)%12; const prevYear=thisMonth===0?thisYear-1:thisYear;
-
   let mesAct=0,mesAnt=0;
   active.forEach(o=>{
     const d=parseDate(o.fecha); if(!d) return;
@@ -878,7 +1060,7 @@ async function renderMetricas() {
   document.getElementById("m-mes").textContent=fmt(mesAct);
   document.getElementById("m-mes-ant").textContent=fmt(mesAnt);
 
-  // Gráfico mensual (últimos 6 meses)
+  // Gráfico mensual
   const monthly={};
   active.forEach(o=>{
     const d=parseDate(o.fecha); if(!d) return;
@@ -890,32 +1072,44 @@ async function renderMetricas() {
   const MNAMES=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   document.getElementById("chart-mensual").innerHTML=meses.map(([k,v])=>{
     const [y,m]=k.split("-");
-    return `<div class="bar-item">
-      <div class="bar-label">${MNAMES[parseInt(m)-1]} ${y}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${(v/maxM*100).toFixed(1)}%"></div></div>
-      <div class="bar-val">${fmt(v)}</div>
-    </div>`;
+    return `<div class="bar-item"><div class="bar-label">${MNAMES[parseInt(m)-1]} ${y}</div><div class="bar-track"><div class="bar-fill" style="width:${(v/maxM*100).toFixed(1)}%"></div></div><div class="bar-val">${fmt(v)}</div></div>`;
   }).join("")||"<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
 
-  // Top prendas
+  // Top prendas (ERP)
   const pc={};
   active.forEach(o=>(o.items||[]).forEach(i=>{pc[i.nombre]=(pc[i.nombre]||0)+(i.qty||1);}));
   const topP=Object.entries(pc).sort((a,b)=>b[1]-a[1]).slice(0,6);
   const maxPP=topP[0]?.[1]||1;
   document.getElementById("chart-prendas-metrics").innerHTML=topP.map(([n,v])=>`
-    <div class="bar-item">
-      <div class="bar-label" title="${n}">${n}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${(v/maxPP*100).toFixed(1)}%"></div></div>
-      <div class="bar-val">${v} und.</div>
-    </div>`).join("")||"<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
+    <div class="bar-item"><div class="bar-label" title="${n}">${n}</div><div class="bar-track"><div class="bar-fill" style="width:${(v/maxPP*100).toFixed(1)}%"></div></div><div class="bar-val">${v} und.</div></div>`
+  ).join("")||"<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
 
-  // Datos de cobros desde API
+  // Prendas más vendidas (órdenes web)
+  const prendaCounts={};
+  allOrders.filter(o=>o.estado!=="cancelada").forEach(o=>{
+    (o.items||[]).forEach(i=>{prendaCounts[i.nombre]=(prendaCounts[i.nombre]||0)+(i.qty||1);});
+  });
+  const topPrendas=Object.entries(prendaCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxP=topPrendas[0]?.[1]||1;
+  document.getElementById("chart-prendas").innerHTML=topPrendas.map(([n,v])=>`
+    <div class="bar-item"><div class="bar-label" title="${n}">${n}</div><div class="bar-track"><div class="bar-fill" style="width:${(v/maxP*100).toFixed(1)}%"></div></div><div class="bar-val">${v} und.</div></div>`
+  ).join("")||"<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
+
+  // Métodos de pago
+  const pagoCounts={};
+  allOrders.filter(o=>o.estado!=="cancelada").forEach(o=>{pagoCounts[o.pago]=(pagoCounts[o.pago]||0)+1;});
+  const pagos=Object.entries(pagoCounts).sort((a,b)=>b[1]-a[1]);
+  const maxPago=pagos[0]?.[1]||1;
+  document.getElementById("chart-pagos").innerHTML=pagos.map(([n,v])=>`
+    <div class="bar-item"><div class="bar-label">${n==="transferencia"?"Transferencia":"Nave"}</div><div class="bar-track"><div class="bar-fill" style="width:${(v/maxPago*100).toFixed(1)}%"></div></div><div class="bar-val">${v} órd.</div></div>`
+  ).join("")||"<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
+
+  // Cobros pendientes desde API
   try {
     const r=await fetch("/api/admin/orders?type=metrics",{headers:{Authorization:"Bearer "+TOKEN}});
     const data=await r.json();
     document.getElementById("m-saldo").textContent=fmt(data.totalSaldo||0);
     document.getElementById("m-cobrado").textContent=fmt(data.totalCobrado||0);
-
     const pendEl=document.getElementById("pending-list");
     if(!data.pendientes?.length){
       pendEl.innerHTML=`<p style="color:#3fb950;font-size:13px;text-align:center;padding:16px">✓ Sin cobros pendientes</p>`;
@@ -940,6 +1134,7 @@ document.addEventListener("click", e => {
     document.querySelectorAll(".autocomplete-list").forEach(el => el.style.display="none");
   }
 });
+document.getElementById("venta-talle")?.addEventListener("change", checkTalleStock);
 </script>
 </body>
 </html>
