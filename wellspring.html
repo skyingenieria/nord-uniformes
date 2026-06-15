@@ -428,9 +428,9 @@
       display: inline-block;
       margin-bottom: 4px;
     }
-    .genero-unisex  { background: rgba(31,45,74,.08); color: var(--azul-600); }
-    .genero-varon   { background: rgba(30,100,200,.08); color: #1a5cc8; }
-    .genero-mujer   { background: rgba(180,50,120,.08); color: #b43278; }
+    .genero-unisex,
+    .genero-varon,
+    .genero-mujer   { background: rgba(31,45,74,.08); color: var(--azul-600); }
 
     /* WhatsApp flotante */
     .wa-float {
@@ -2080,7 +2080,8 @@
     try {
       const res = await fetch("/api/products");
       if (!res.ok) throw new Error("Error HTTP " + res.status);
-      allProducts = await res.json();
+      const OCULTOS = ["campera azul"];
+      allProducts = (await res.json()).filter(p => !OCULTOS.includes(p.nombre.toLowerCase().trim()));
       renderProducts(allProducts);
       updateCounts();
       updateGridCount(allProducts.length);
