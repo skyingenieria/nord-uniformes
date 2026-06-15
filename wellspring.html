@@ -438,6 +438,7 @@
       bottom: 28px;
       right: 28px;
       z-index: 9999;
+      transition: right 0.3s ease;
       display: flex;
       flex-direction: column;
       align-items: flex-end;
@@ -471,6 +472,7 @@
       transition: transform .2s;
     }
     .wa-btn:hover { transform: scale(1.08); }
+    .wa-float.drawer-open { right: calc(380px + 28px); }
 
     /* Políticas */
     .politicas-section {
@@ -652,6 +654,15 @@
       position: relative;
       overflow: hidden;
     }
+    .talle-bell {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      font-size: 9px;
+      line-height: 1;
+      pointer-events: none;
+    }
+
     /* Línea diagonal sobre talle sin stock */
     .talle-btn.sin-stock::after {
       content: "";
@@ -1209,6 +1220,8 @@
       font-weight: 600;
       color: var(--azul-900);
       transition: all 0.2s;
+      position: relative;
+      overflow: visible;
     }
     .modal-talle-btn:hover {
       border-color: var(--azul-600);
@@ -2014,12 +2027,14 @@
     document.getElementById("cart-drawer").classList.add("open");
     document.getElementById("drawer-overlay").classList.add("open");
     document.body.style.overflow = "hidden";
+    document.querySelector(".wa-float").classList.add("drawer-open");
   }
 
   function closeDrawer() {
     document.getElementById("cart-drawer").classList.remove("open");
     document.getElementById("drawer-overlay").classList.remove("open");
     document.body.style.overflow = "";
+    document.querySelector(".wa-float").classList.remove("drawer-open");
   }
 
   function renderDrawer() {
@@ -2296,7 +2311,7 @@
           onclick="selectTalleModal(this, '${product.id}', ${t.precio})"
           title="${t.stock === 0 ? "Sin stock" : `${t.stock} disponibles`}"
         >
-          ${t.talle}
+          ${t.talle}${t.stock === 0 ? `<span class="talle-bell">🔔</span>` : ""}
         </button>`;
       }).join("");
 
