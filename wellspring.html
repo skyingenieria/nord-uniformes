@@ -472,7 +472,7 @@
       transition: transform .2s;
     }
     .wa-btn:hover { transform: scale(1.08); }
-    .wa-float.drawer-open { right: calc(380px + 28px); }
+    .wa-float.drawer-open { right: calc(420px + 20px); }
 
     /* Políticas */
     .politicas-section {
@@ -656,11 +656,12 @@
     }
     .talle-bell {
       position: absolute;
-      top: -6px;
-      right: -6px;
-      font-size: 9px;
+      top: -7px;
+      right: -7px;
+      font-size: 11px;
       line-height: 1;
       pointer-events: none;
+      z-index: 2;
     }
 
     /* Línea diagonal sobre talle sin stock */
@@ -1239,7 +1240,7 @@
       color: var(--niebla);
       border-color: var(--niebla-200);
       position: relative;
-      overflow: hidden;
+      overflow: visible;
     }
     .modal-talle-btn.sin-stock::after {
       content: "";
