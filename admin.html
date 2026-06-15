@@ -200,14 +200,24 @@
     .stock-chip-bajo{background:#2d2008;border:1px solid #6b4c0a;color:#ffc107}
     .stock-chip-vacio{background:#2d0f0f;border:1px solid #6b1c1c;color:#f85149}
 
-    /* WEB */
-    .web-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-    .web-card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;text-align:center}
-    .web-card-icon{font-size:36px;margin-bottom:12px}
-    .web-card-title{font-size:14px;font-weight:800;color:#e6edf3;margin-bottom:6px}
-    .web-card-sub{font-size:12px;color:#8b949e;margin-bottom:20px;line-height:1.6}
-    .web-card a{display:inline-block;background:var(--dorado);color:var(--azul-900);padding:10px 24px;font-family:var(--sans);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-radius:6px}
-    .web-card a:hover{background:#b8944e}
+    /* WEB / GA4 */
+    .ga4-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px}
+    .ga4-section{margin-bottom:24px}
+    .ga4-section-title{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8b949e;margin-bottom:14px}
+    .daily-chart{display:flex;align-items:flex-end;gap:3px;height:80px;padding:0 4px}
+    .daily-bar{flex:1;background:var(--dorado);border-radius:2px 2px 0 0;min-width:2px;transition:opacity .15s;position:relative;cursor:default}
+    .daily-bar:hover{opacity:.75}
+    .daily-bar-tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#0d1117;border:1px solid #30363d;border-radius:4px;padding:4px 8px;font-size:10px;white-space:nowrap;color:#e6edf3;pointer-events:none;display:none;z-index:10}
+    .daily-bar:hover .daily-bar-tooltip{display:block}
+    .clarity-card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px;display:flex;align-items:center;gap:20px}
+    .clarity-icon{font-size:32px;flex-shrink:0}
+    .clarity-info{flex:1}
+    .clarity-title{font-size:14px;font-weight:800;color:#e6edf3;margin-bottom:4px}
+    .clarity-sub{font-size:12px;color:#8b949e;line-height:1.6;margin-bottom:14px}
+    .clarity-info a{display:inline-block;background:var(--dorado);color:var(--azul-900);padding:8px 20px;font-family:var(--sans);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-radius:6px}
+    .clarity-info a:hover{background:#b8944e}
+    .ga4-reload{background:none;border:1px solid #30363d;color:#8b949e;padding:6px 14px;font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:6px;transition:all .15s;margin-left:12px}
+    .ga4-reload:hover{border-color:#8b949e;color:#e6edf3}
 
     @media(max-width:800px){
       .sidebar{width:56px}
@@ -474,21 +484,53 @@
       <!-- ══════════ TAB: WEB ══════════ -->
       <div id="tab-web" class="tab-panel">
         <div class="container">
-          <div class="page-header">
-            <div class="page-title">Métricas web</div>
-            <div class="page-sub">Acceso directo a herramientas de análisis de tráfico</div>
-          </div>
-          <div class="web-grid">
-            <div class="web-card">
-              <div class="web-card-icon">📈</div>
-              <div class="web-card-title">Google Analytics 4</div>
-              <div class="web-card-sub">Sesiones, usuarios, páginas vistas, fuentes de tráfico, dispositivos y ubicación geográfica.</div>
-              <a href="https://analytics.google.com" target="_blank">Abrir GA4 →</a>
+          <div class="page-header" style="display:flex;align-items:center;gap:0">
+            <div>
+              <div class="page-title">Tráfico web</div>
+              <div class="page-sub">Google Analytics 4 — últimos 30 días</div>
             </div>
-            <div class="web-card">
-              <div class="web-card-icon">🎥</div>
-              <div class="web-card-title">Microsoft Clarity</div>
-              <div class="web-card-sub">Grabaciones de sesiones, heatmaps de clicks y scroll, análisis de comportamiento de usuarios.</div>
+            <button class="ga4-reload" onclick="loadGA4(true)">↺ Actualizar</button>
+          </div>
+
+          <div id="ga4-loading" style="color:#8b949e;font-size:13px;padding:40px 0;text-align:center">Cargando datos de Analytics...</div>
+          <div id="ga4-error" style="color:#f85149;font-size:13px;padding:20px 0;display:none"></div>
+
+          <div id="ga4-content" style="display:none">
+            <!-- Stats -->
+            <div class="ga4-stats">
+              <div class="stat highlight"><div class="stat-label">Sesiones</div><div class="stat-value" id="ga4-sessions">—</div></div>
+              <div class="stat"><div class="stat-label">Usuarios</div><div class="stat-value" id="ga4-users">—</div></div>
+              <div class="stat"><div class="stat-label">Páginas vistas</div><div class="stat-value" id="ga4-pageviews">—</div></div>
+              <div class="stat"><div class="stat-label">Rebote</div><div class="stat-value" id="ga4-bounce">—</div></div>
+              <div class="stat"><div class="stat-label">Duración prom.</div><div class="stat-value" id="ga4-duration">—</div></div>
+            </div>
+
+            <!-- Gráfico diario -->
+            <div class="chart-card ga4-section" style="margin-bottom:20px">
+              <p class="chart-card-title">Sesiones por día (últimos 30 días)</p>
+              <div class="daily-chart" id="ga4-daily"></div>
+            </div>
+
+            <div class="charts-grid" style="margin-bottom:20px">
+              <!-- Top páginas -->
+              <div class="chart-card">
+                <p class="chart-card-title">Páginas más visitadas</p>
+                <div class="bar-list" id="ga4-pages"></div>
+              </div>
+              <!-- Dispositivos -->
+              <div class="chart-card">
+                <p class="chart-card-title">Dispositivos</p>
+                <div class="bar-list" id="ga4-devices"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clarity -->
+          <div class="clarity-card">
+            <div class="clarity-icon">🎥</div>
+            <div class="clarity-info">
+              <div class="clarity-title">Microsoft Clarity</div>
+              <div class="clarity-sub">Grabaciones de sesiones, heatmaps de clicks y scroll. No tiene API pública, abrí el dashboard para ver los datos.</div>
               <a href="https://clarity.microsoft.com" target="_blank">Abrir Clarity →</a>
             </div>
           </div>
@@ -575,6 +617,7 @@ function switchTab(tab) {
   if (tab === "metricas") renderMetricas();
   if (tab === "pedidos") loadPedidos();
   if (tab === "stock") loadStock();
+  if (tab === "web") loadGA4();
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
@@ -1124,6 +1167,75 @@ async function renderMetricas() {
     document.getElementById("m-saldo").textContent="—";
     document.getElementById("m-cobrado").textContent="—";
   }
+}
+
+// ── GA4 ───────────────────────────────────────────────────────────────────
+let ga4Loaded = false;
+
+async function loadGA4(force = false) {
+  if (ga4Loaded && !force) return;
+  document.getElementById("ga4-loading").style.display = "block";
+  document.getElementById("ga4-content").style.display = "none";
+  document.getElementById("ga4-error").style.display   = "none";
+  try {
+    const r = await fetch("/api/admin/orders?type=ga4", { headers: { Authorization: "Bearer " + TOKEN } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || "Error GA4");
+    renderGA4(data);
+    ga4Loaded = true;
+    document.getElementById("ga4-loading").style.display = "none";
+    document.getElementById("ga4-content").style.display = "block";
+  } catch (e) {
+    document.getElementById("ga4-loading").style.display = "none";
+    const errEl = document.getElementById("ga4-error");
+    errEl.textContent = "No se pudo cargar GA4: " + e.message + ". Verificá que el service account tenga acceso al property.";
+    errEl.style.display = "block";
+  }
+}
+
+function fmtDuration(secs) {
+  const m = Math.floor(secs / 60);
+  const s = Math.round(secs % 60);
+  return `${m}m ${s}s`;
+}
+
+function renderGA4(data) {
+  const ov = data.overview;
+  document.getElementById("ga4-sessions").textContent  = ov.sessions.toLocaleString("es-AR");
+  document.getElementById("ga4-users").textContent     = ov.users.toLocaleString("es-AR");
+  document.getElementById("ga4-pageviews").textContent = ov.pageviews.toLocaleString("es-AR");
+  document.getElementById("ga4-bounce").textContent    = (ov.bounceRate * 100).toFixed(1) + "%";
+  document.getElementById("ga4-duration").textContent  = fmtDuration(ov.avgDuration);
+
+  // Gráfico diario
+  const daily = data.daily || [];
+  const maxSess = Math.max(...daily.map(d => d.sessions), 1);
+  document.getElementById("ga4-daily").innerHTML = daily.map(d => {
+    const pct = ((d.sessions / maxSess) * 100).toFixed(1);
+    const fecha = d.date ? `${d.date.slice(6,8)}/${d.date.slice(4,6)}` : "";
+    return `<div class="daily-bar" style="height:${Math.max(pct,2)}%">
+      <div class="daily-bar-tooltip">${fecha}: ${d.sessions} ses. / ${d.users} usr.</div>
+    </div>`;
+  }).join("");
+
+  // Top páginas
+  const maxPV = Math.max(...(data.topPages||[]).map(p => p.pageviews), 1);
+  document.getElementById("ga4-pages").innerHTML = (data.topPages||[]).map(p => `
+    <div class="bar-item">
+      <div class="bar-label" title="${p.path}">${p.path}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(p.pageviews/maxPV*100).toFixed(1)}%"></div></div>
+      <div class="bar-val">${p.pageviews.toLocaleString("es-AR")}</div>
+    </div>`).join("") || "<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
+
+  // Dispositivos
+  const maxDev = Math.max(...(data.devices||[]).map(d => d.sessions), 1);
+  const devIcon = { desktop:"🖥", mobile:"📱", tablet:"📟" };
+  document.getElementById("ga4-devices").innerHTML = (data.devices||[]).map(d => `
+    <div class="bar-item">
+      <div class="bar-label">${devIcon[d.device]||"💻"} ${d.device.charAt(0).toUpperCase()+d.device.slice(1)}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(d.sessions/maxDev*100).toFixed(1)}%"></div></div>
+      <div class="bar-val">${d.sessions.toLocaleString("es-AR")} ses.</div>
+    </div>`).join("") || "<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────
