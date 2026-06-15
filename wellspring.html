@@ -2115,14 +2115,16 @@
   function applyFilters() {
     const q = ((document.getElementById("search-input")?.value || "") + (document.getElementById("search-input-mobile")?.value || "")).toLowerCase().trim();
     const filtered = allProducts.filter(p => {
+      const matchSearch = !q || p.nombre.toLowerCase().includes(q);
+      // Si hay búsqueda activa, ignorar filtros de nivel y género
+      if (q) return matchSearch;
       const matchNivel  = activeNivel  === "todos" || (Array.isArray(p.categorias) && p.categorias.includes(activeNivel));
       const normGenero = (p.genero || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
       const matchGenero = activeGenero === "todos"
         || normGenero === activeGenero
         || normGenero === "unisex"
         || !normGenero;
-      const matchSearch = !q || p.nombre.toLowerCase().includes(q);
-      return matchNivel && matchGenero && matchSearch;
+      return matchNivel && matchGenero;
     });
     renderProducts(filtered);
     updateGridCount(filtered.length);
