@@ -1,11 +1,14 @@
 // GET  /api/admin/orders          — lista todas las órdenes
 // GET  /api/admin/orders?type=clientes — lista clientes
-// GET  /api/admin/orders?type=metrics  — métricas de cobros
+// GET  /api/admin/orders?type=metrics  — métricas de cobros (Pedidos sheet)
+// GET  /api/admin/orders?type=ga4      — métricas de Google Analytics 4
 // PATCH /api/admin/orders?id=XXX  — actualiza estado
 // Header requerido: Authorization: Bearer <token>
 
 const { google } = require("googleapis");
 const crypto = require("crypto");
+
+const GA4_PROPERTY_ID = "541705478";
 
 function makeAuth() {
   return new google.auth.GoogleAuth({
@@ -15,6 +18,17 @@ function makeAuth() {
         ?.replace(/\\n/g, "\n").replace(/^"/, "").replace(/"$/, ""),
     },
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
+}
+
+function makeGA4Auth() {
+  return new google.auth.GoogleAuth({
+    credentials: {
+      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      private_key: process.env.GOOGLE_PRIVATE_KEY
+        ?.replace(/\\n/g, "\n").replace(/^"/, "").replace(/"$/, ""),
+    },
+    scopes: ["https://www.googleapis.com/auth/analytics.readonly"],
   });
 }
 
@@ -29,6 +43,89 @@ function verifyToken(token) {
 function parseNum(val) {
   if (!val) return 0;
   return parseFloat(String(val).replace(/[$,\s]/g, "").replace(",", ".")) || 0;
+}
+
+async function getGA4(res) {
+  const auth = makeGA4Auth();
+  const analyticsdata = google.analyticsdata({ version: "v1beta", auth });
+  const prop = `properties/${GA4_PROPERTY_ID}`;
+
+  const [overviewRes, pagesRes, devicesRes, dailyRes] = await Promise.all([
+    // Resumen últimos 30 días
+    analyticsdata.properties.runReport({
+      property: prop,
+      requestBody: {
+        dateRanges: [{ startDate: "30daysAgo", endDate: "today" }],
+        metrics: [
+          { name: "sessions" },
+          { name: "activeUsers" },
+          { name: "screenPageViews" },
+          { name: "bounceRate" },
+          { name: "averageSessionDuration" },
+        ],
+      },
+    }),
+    // Top páginas
+    analyticsdata.properties.runReport({
+      property: prop,
+      requestBody: {
+        dateRanges: [{ startDate: "30daysAgo", endDate: "today" }],
+        dimensions: [{ name: "pagePath" }],
+        metrics: [{ name: "screenPageViews" }, { name: "activeUsers" }],
+        orderBys: [{ metric: { metricName: "screenPageViews" }, desc: true }],
+        limit: 8,
+      },
+    }),
+    // Dispositivos
+    analyticsdata.properties.runReport({
+      property: prop,
+      requestBody: {
+        dateRanges: [{ startDate: "30daysAgo", endDate: "today" }],
+        dimensions: [{ name: "deviceCategory" }],
+        metrics: [{ name: "sessions" }],
+        orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+      },
+    }),
+    // Sesiones por día (últimos 30)
+    analyticsdata.properties.runReport({
+      property: prop,
+      requestBody: {
+        dateRanges: [{ startDate: "29daysAgo", endDate: "today" }],
+        dimensions: [{ name: "date" }],
+        metrics: [{ name: "sessions" }, { name: "activeUsers" }],
+        orderBys: [{ dimension: { dimensionName: "date" } }],
+      },
+    }),
+  ]);
+
+  const ov = overviewRes.data.rows?.[0]?.metricValues || [];
+  const overview = {
+    sessions:    parseInt(ov[0]?.value || 0),
+    users:       parseInt(ov[1]?.value || 0),
+    pageviews:   parseInt(ov[2]?.value || 0),
+    bounceRate:  parseFloat(ov[3]?.value || 0),
+    avgDuration: parseFloat(ov[4]?.value || 0),
+  };
+
+  const topPages = (pagesRes.data.rows || []).map(r => ({
+    path:      r.dimensionValues[0].value,
+    pageviews: parseInt(r.metricValues[0].value),
+    users:     parseInt(r.metricValues[1].value),
+  }));
+
+  const devices = (devicesRes.data.rows || []).map(r => ({
+    device:   r.dimensionValues[0].value,
+    sessions: parseInt(r.metricValues[0].value),
+  }));
+
+  const daily = (dailyRes.data.rows || []).map(r => ({
+    date:     r.dimensionValues[0].value,
+    sessions: parseInt(r.metricValues[0].value),
+    users:    parseInt(r.metricValues[1].value),
+  }));
+
+  res.setHeader("Cache-Control", "s-maxage=300");
+  res.json({ overview, topPages, devices, daily });
 }
 
 async function getClientes(res) {
@@ -131,6 +228,7 @@ module.exports = async (req, res) => {
     const type = req.query.type;
     if (type === "clientes") return await getClientes(res);
     if (type === "metrics")  return await getMetrics(res);
+    if (type === "ga4")      return await getGA4(res);
     return await getOrders(res);
   } catch (err) {
     res.status(500).json({ error: err.message });
