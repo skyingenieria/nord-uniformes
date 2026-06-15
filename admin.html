@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -306,7 +306,7 @@
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Prendas</th><th>Total</th><th>Pago</th><th>Envío</th><th>Estado</th></tr></thead>
+              <thead><tr><th>Pedido</th><th>Fecha</th><th>Cliente</th><th>Prendas</th><th>Forma de pago</th></tr></thead>
               <tbody id="orders-tbody"></tbody>
             </table>
           </div>
@@ -661,21 +661,18 @@ async function loadOrders() {
 }
 
 function renderStats() {
-  const conf = allOrders.filter(o => o.estado !== "cancelada");
   document.getElementById("s-total").textContent      = allOrders.length;
-  document.getElementById("s-pendiente").textContent  = allOrders.filter(o => o.estado === "pendiente").length;
-  document.getElementById("s-confirmada").textContent = allOrders.filter(o => o.estado === "confirmada").length;
-  const rev = conf.reduce((s, o) => s + (Number(o.total)||0), 0);
-  document.getElementById("s-revenue").textContent = fmt(rev);
-  document.getElementById("s-ticket").textContent  = conf.length ? fmt(rev/conf.length) : "—";
+  document.getElementById("s-pendiente").textContent  = "—";
+  document.getElementById("s-confirmada").textContent = "—";
+  document.getElementById("s-revenue").textContent    = "—";
+  document.getElementById("s-ticket").textContent     = "—";
 }
 
 function getFiltered() {
   return allOrders.filter(o => {
-    const statusOk = currentFilter === "todas" || o.estado === currentFilter;
     const q = searchQuery.toLowerCase();
-    const searchOk = !q || [o.id, o.nombre, o.apellido, o.email].some(v => v?.toLowerCase().includes(q));
-    return statusOk && searchOk;
+    const searchOk = !q || [o.id, o.cliente].some(v => v?.toLowerCase().includes(q));
+    return searchOk;
   });
 }
 
@@ -697,16 +694,13 @@ function renderTable() {
   }
   tbody.innerHTML = filtered.map(o => {
     const items = Array.isArray(o.items) ? o.items : [];
-    const prendas = items.map(i => `${i.nombre} (${i.talle})`).join(", ") || "—";
+    const prendas = items.map(i => `${i.nombre} T.${i.talle}${i.qty>1?' ×'+i.qty:''}`).join(", ") || "—";
     return `<tr onclick="openDetail('${o.id}')">
       <td style="font-family:monospace;font-size:11px;color:#8b949e">${o.id}</td>
-      <td style="color:#8b949e;white-space:nowrap">${o.fecha?.split(",")[0]||"—"}</td>
-      <td><div style="font-weight:700">${o.nombre} ${o.apellido}</div><div style="font-size:11px;color:#8b949e">${o.email}</div></td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8b949e;font-size:12px">${prendas}</td>
-      <td style="font-weight:800;white-space:nowrap">${fmt(o.total)}</td>
-      <td><span class="badge badge-pago-${o.pago}">${o.pago==="transferencia"?"Transf.":"Nave"}</span></td>
-      <td style="font-size:12px;color:#8b949e">${o.envio==="retiro"?"Retiro":"Correo"}</td>
-      <td><span class="badge badge-${o.estado}">${o.estado}</span></td>
+      <td style="color:#8b949e;white-space:nowrap">${o.fecha||"—"}</td>
+      <td style="font-weight:700">${o.cliente}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8b949e;font-size:12px">${prendas}</td>
+      <td style="font-size:12px;color:#8b949e">${o.pago||"—"}</td>
     </tr>`;
   }).join("");
 }
@@ -719,35 +713,18 @@ function openDetail(orderId) {
   const items = Array.isArray(o.items) ? o.items : [];
   document.getElementById("detail-body").innerHTML = `
     <div class="detail-section">
-      <p class="detail-section-title">Cliente</p>
-      <div class="detail-row"><span>Nombre</span><span>${o.nombre} ${o.apellido}</span></div>
-      <div class="detail-row"><span>Email</span><span>${o.email}</span></div>
-      <div class="detail-row"><span>Teléfono</span><span>${o.telefono}</span></div>
+      <p class="detail-section-title">Pedido</p>
+      <div class="detail-row"><span>ID</span><span>${o.id}</span></div>
+      <div class="detail-row"><span>Fecha</span><span>${o.fecha||"—"}</span></div>
+      <div class="detail-row"><span>Cliente</span><span>${o.cliente}</span></div>
+      <div class="detail-row"><span>Forma de pago</span><span>${o.pago||"—"}</span></div>
     </div>
     <div class="detail-section">
       <p class="detail-section-title">Prendas</p>
       ${items.map(i => `<div class="detail-item">
         <div class="detail-item-name">${i.nombre}</div>
-        <div class="detail-item-sub">Talle ${i.talle} × ${i.qty} — ${fmt(i.precio*i.qty)}</div>
+        <div class="detail-item-sub">Talle ${i.talle} × ${i.qty}</div>
       </div>`).join("")}
-      <div class="detail-total"><span>Total</span><span>${fmt(o.total)}</span></div>
-    </div>
-    <div class="detail-section">
-      <p class="detail-section-title">Envío</p>
-      <div class="detail-row"><span>Método</span><span>${o.envio==="retiro"?"Retiro Habitat":"Correo Argentino"}</span></div>
-      ${o.direccion?`<div class="detail-row"><span>Dirección</span><span>${o.direccion}</span></div>`:""}
-      ${o.cp?`<div class="detail-row"><span>CP</span><span>${o.cp}</span></div>`:""}
-      ${o.localidad?`<div class="detail-row"><span>Localidad</span><span>${o.localidad}</span></div>`:""}
-    </div>
-    <div class="detail-section">
-      <p class="detail-section-title">Actualizar estado</p>
-      <select class="status-select" id="status-select">
-        ${["pendiente","confirmada","enviada","cancelada"].map(s =>
-          `<option value="${s}" ${s===o.estado?"selected":""}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
-        ).join("")}
-      </select>
-      <button class="btn-update" onclick="updateStatus('${o.id}')">Actualizar estado</button>
-      <p class="update-msg" id="update-msg">✓ Estado actualizado</p>
     </div>`;
   document.getElementById("detail-overlay").classList.add("open");
 }
