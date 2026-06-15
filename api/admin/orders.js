@@ -196,22 +196,28 @@ async function getOrders(res) {
   const sheets = google.sheets({ version: "v4", auth: makeAuth() });
   const result = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.SPREADSHEET_ID,
-    range: "'Ordenes'!A2:Q2000",
+    range: "'Ordenes'!A2:H2000",
   });
-  const rows  = result.data.values || [];
-  const COLS  = ["id","fecha","nombre","apellido","email","telefono","items",
-                 "subtotal","descuento","codigo","total","pago","envio",
-                 "direccion","cp","localidad","estado"];
-  const orders = rows
-    .map(r => Object.fromEntries(COLS.map((k, i) => [k, r[i] ?? ""])))
-    .filter(o => o.id);
-  orders.forEach(o => {
-    try { o.items = JSON.parse(o.items); } catch { o.items = []; }
-    o.total    = Number(o.total)    || 0;
-    o.subtotal = Number(o.subtotal) || 0;
-  });
+  const rows = result.data.values || [];
+  // A:Fecha B:Pedido C:Colegio D:Cliente E:FormaPago F:Prenda G:Talle H:Cant
+  const grouped = {};
+  for (const r of rows) {
+    const fecha     = r[0] || "";
+    const id        = r[1] || "";
+    const cliente   = r[3] || "";
+    const formaPago = r[4] || "";
+    const prenda    = r[5] || "";
+    const talle     = r[6] || "";
+    const cant      = Number(r[7]) || 1;
+    if (!id) continue;
+    if (!grouped[id]) {
+      grouped[id] = { id, fecha, cliente, pago: formaPago, items: [], total: 0 };
+    }
+    grouped[id].items.push({ nombre: prenda, talle, qty: cant, precio: 0 });
+  }
+  const orders = Object.values(grouped).reverse();
   res.setHeader("Cache-Control", "no-store");
-  res.json(orders.reverse());
+  res.json(orders);
 }
 
 module.exports = async (req, res) => {
