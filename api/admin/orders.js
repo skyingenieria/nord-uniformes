@@ -178,14 +178,14 @@ async function patchOrder(req, res) {
   const sheets = google.sheets({ version: "v4", auth: makeAuth() });
   const result = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.SPREADSHEET_ID,
-    range: "'7 Ordenes'!A:Q",
+    range: "'Ordenes'!A:Q",
   });
   const rows = result.data.values || [];
   const rowIdx = rows.findIndex(r => r[0] === id);
   if (rowIdx < 0) return res.status(404).json({ error: "Orden no encontrada" });
   await sheets.spreadsheets.values.update({
     spreadsheetId: process.env.SPREADSHEET_ID,
-    range: `'7 Ordenes'!Q${rowIdx + 1}`,
+    range: `'Ordenes'!Q${rowIdx + 1}`,
     valueInputOption: "USER_ENTERED",
     requestBody: { values: [[estado]] },
   });
@@ -196,7 +196,7 @@ async function getOrders(res) {
   const sheets = google.sheets({ version: "v4", auth: makeAuth() });
   const result = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.SPREADSHEET_ID,
-    range: "'7 Ordenes'!A2:Q2000",
+    range: "'Ordenes'!A2:Q2000",
   });
   const rows  = result.data.values || [];
   const COLS  = ["id","fecha","nombre","apellido","email","telefono","items",
