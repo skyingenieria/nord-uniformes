@@ -1,6 +1,6 @@
-// POST /api/orders — guarda la orden en "Ordenes" y "Pedidos"
+// POST /api/orders — guarda la orden en "Ordenes"
 //
-// "Ordenes" — UNA FILA POR ITEM:
+// "Ordenes" — UNA FILA POR ITEM (solo se escriben A:H):
 //   A: Fecha       (M/D/YYYY)
 //   B: Pedido      (YY-XX, ej: 26-01)
 //   C: Colegio     (WS)
@@ -9,25 +9,11 @@
 //   F: Prenda      (nombre de la prenda)
 //   G: Talle
 //   H: Cant        (cantidad)
-//   I: SKU         (formula del sheet — no se escribe)
-//   J en adelante: formulas del sheet — no se escriben
+//   I en adelante: formulas del sheet — no se escriben
 //
-// "Pedidos" — UNA FILA POR PEDIDO (resumen consolidado):
-//   A: ID Pedido
-//   B: Cliente
-//   C: Cant. Prendas
-//   D: Monto Pedido
-//   E: Forma de pago
-//   F: Fecha Pago   (se completa manualmente)
-//   G: Monto Pago   (se completa manualmente)
-//   H: Saldo        (formula del sheet)
-//   I: Estado Pago  (Al Cobro al crear)
-//   J: Envio        (se completa manualmente)
-//   K: Estado Envio (se completa manualmente)
+// "Pedidos" y "Clientes": no se escriben, son formula-driven desde Ordenes.
 //
-// Inserta DESPUES del ultimo dato real para no pisar filas-template.
-//
-// Body: { idPedido, codigoCliente, items:[{nombre,talle,qty,precio}], total, pago }
+// Body: { idPedido, codigoCliente, items:[{nombre,talle,qty}], pago }
 
 const { google } = require("googleapis");
 
@@ -36,14 +22,13 @@ function makeAuth() {
     credentials: {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
       private_key: process.env.GOOGLE_PRIVATE_KEY
-        ?.replace(/\\n/g, "\n").replace(/^"/, "").replace(/"$/, ""),
+        ?.replace(/\n/g, "\n").replace(/^"/, "").replace(/"$/, ""),
     },
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 }
 
 // Devuelve el numero de fila del sheet (1-based) donde insertar el proximo dato.
-// Lee colA y busca la ultima fila donde isRealRow(valor) es true.
 async function findNextRow(sheets, sheetName, colLetter, isRealRow) {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.SPREADSHEET_ID,
@@ -72,7 +57,6 @@ module.exports = async (req, res) => {
     const {
       idPedido, codigoCliente,
       items = [],
-      total = 0,
       pago = "transferencia",
     } = req.body;
 
@@ -90,15 +74,10 @@ module.exports = async (req, res) => {
     const formaPago = "Transf. Banc.";
     const colegio = "WS";
 
-    // Encontrar primera fila disponible en cada sheet en paralelo
-    const [nextOrdenRow, nextPedidoRow] = await Promise.all([
-      // Ordenes: col A = Fecha, real si tiene contenido no vacio
-      findNextRow(sheets, "Ordenes", "A", val => val.length > 0),
-      // Pedidos: col B = Cliente, real si empieza con "WS" seguido de numero
-      findNextRow(sheets, "Pedidos", "B", val => /^WS\d/.test(val)),
-    ]);
+    // Primera fila disponible en Ordenes (col A = Fecha)
+    const nextOrdenRow = await findNextRow(sheets, "Ordenes", "A", val => val.length > 0);
 
-    // ── 1. "Ordenes": una fila por item ──────────────────────────────────────
+    // ── "Ordenes": una fila por item, solo A:H ───────────────────────────────
     const filasOrdenes = items.map(item => [
       fecha,           // A: Fecha
       idPedido,        // B: Pedido
@@ -108,7 +87,7 @@ module.exports = async (req, res) => {
       item.nombre,     // F: Prenda
       item.talle,      // G: Talle
       item.qty || 1,   // H: Cant
-      // I: SKU (formula del sheet, no se escribe)
+      // I en adelante: formulas del sheet, no se escriben
     ]);
 
     await sheets.spreadsheets.values.update({
@@ -116,25 +95,6 @@ module.exports = async (req, res) => {
       range: `'Ordenes'!A${nextOrdenRow}:H${nextOrdenRow + filasOrdenes.length - 1}`,
       valueInputOption: "USER_ENTERED",
       requestBody: { values: filasOrdenes },
-    });
-
-    // ── 2. "Pedidos": una fila resumen por pedido ─────────────────────────────
-    const cantPrendas = items.reduce((s, i) => s + (i.qty || 1), 0);
-
-    // Escribimos A:E en un update, e I (Estado Pago) en otro update separado
-    // para no tocar H (Saldo, formula del sheet) ni F/G (se completan manual)
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: process.env.SPREADSHEET_ID,
-      range: `'Pedidos'!A${nextPedidoRow}:E${nextPedidoRow}`,
-      valueInputOption: "USER_ENTERED",
-      requestBody: { values: [[idPedido, codigoCliente, cantPrendas, total, formaPago]] },
-    });
-
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: process.env.SPREADSHEET_ID,
-      range: `'Pedidos'!I${nextPedidoRow}`,
-      valueInputOption: "USER_ENTERED",
-      requestBody: { values: [["Al Cobro"]] },
     });
 
     res.status(200).json({ idPedido, codigoCliente, fecha, itemsGuardados: items.length, success: true });
