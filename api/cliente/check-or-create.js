@@ -6,13 +6,12 @@
 //   B (1): Nombre
 //   C (2): Familia (apellido)
 //   D (3): Colegio
-//   E (4): ID  (WS1-Apellido-Nombre  o  WS1--Nombre si sin apellido)
+//   E (4): ID  — formula del sheet, NO se escribe
 //   F (5): Email
 //   G (6): WhatsApp
 //   H, I: formulas del sheet, no se escriben
 //
-// Inserta en la primera fila vacia despues del ultimo dato real (col A numerica),
-// usando values.update para no pisar filas-template que esten mas abajo.
+// Escribe A:D y F:G en dos updates separados para no pisar la formula de E.
 //
 // Devuelve: { codigo, nro, nombre, apellido, email, telefono, esNuevo }
 
@@ -23,7 +22,7 @@ function makeAuth() {
     credentials: {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
       private_key: process.env.GOOGLE_PRIVATE_KEY
-        ?.replace(/\\n/g, "\n").replace(/^"/, "").replace(/"$/, ""),
+        ?.replace(/\n/g, "\n").replace(/^"/, "").replace(/"$/, ""),
     },
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
@@ -87,27 +86,27 @@ module.exports = async (req, res) => {
     const maxNro = dataRows.reduce((max, r) => Math.max(max, Number(r[0]) || 0), 0);
     const nextNro = maxNro + 1;
 
+    // Calcular ID localmente para devolver en la respuesta
+    // (la celda E tiene formula en el sheet, no se escribe)
     const apellidoStr = (apellido || "").trim();
     const idCliente = apellidoStr
       ? `WS${nextNro}-${apellidoStr}-${nombre}`
       : `WS${nextNro}--${nombre}`;
 
-    const newRow = [
-      nextNro,
-      nombre,
-      apellidoStr,
-      "WS",
-      idCliente,
-      email,
-      telefono || "",
-      // H, I: formulas del sheet, no se escriben
-    ];
-
+    // Escribir A:D (Nro, Nombre, Familia, Colegio) — saltea E (formula)
     await sheets.spreadsheets.values.update({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: `'Clientes'!A${targetRow}:G${targetRow}`,
+      range: `'Clientes'!A${targetRow}:D${targetRow}`,
       valueInputOption: "USER_ENTERED",
-      requestBody: { values: [newRow] },
+      requestBody: { values: [[nextNro, nombre, apellidoStr, "WS"]] },
+    });
+
+    // Escribir F:G (Email, WhatsApp) — saltea E (formula)
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: process.env.SPREADSHEET_ID,
+      range: `'Clientes'!F${targetRow}:G${targetRow}`,
+      valueInputOption: "USER_ENTERED",
+      requestBody: { values: [[email, telefono || ""]] },
     });
 
     res.json({
