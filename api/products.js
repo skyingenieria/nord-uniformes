@@ -6,8 +6,7 @@
 //   5=Compras  6=Ventas  7=Stock actual  8=Costo Unit  9=Precio Unit
 //
 // Columnas 'Lista de precios' (UNFORMATTED_VALUE, 0-indexed desde A2):
-//   0=Colegio  1=Prenda  2=Talle  3=SKU  4=Costo
-//   5=Precio Lista  6=Dcto  7=Precio Trans(H)  8=Margen
+//   0=Colegio  1=Prenda  2=Talle  3=SKU  4=Costo  5=Precio Trans  6=Margen
 //
 // Columnas 'Listado de Prendas':
 //   0=A Colegio  1=B Prenda  2=C Talle  3=D SKU
@@ -45,7 +44,7 @@ async function fetchFromSheets(colegio = "WS") {
     }),
     sheets.spreadsheets.values.get({
       spreadsheetId: sid,
-      range: "'Lista de precios'!A2:I2000",
+      range: "'Lista de precios'!A2:G2000",
       valueRenderOption: "UNFORMATTED_VALUE",
     }),
     sheets.spreadsheets.values.get({
@@ -55,12 +54,12 @@ async function fetchFromSheets(colegio = "WS") {
     }),
   ]);
 
-  // -- Construir mapa de precios: SKU -> Precio Trans (col H, indice 7) ------
+  // -- Construir mapa de precios: SKU -> Precio Trans (col F, indice 5) ------
   const precioMap = {};
   for (const row of (preciosRes.data.values || [])) {
     const colColegio = String(row[0] || "").trim();
     const sku        = String(row[3] || "").trim();
-    const precio     = Math.round(Number(row[7]) || 0); // H = Precio Trans
+    const precio     = Math.round(Number(row[5]) || 0); // F = Precio Trans
     if (colColegio !== colegio || !sku || !precio) continue;
     precioMap[sku] = precio;
   }
@@ -99,8 +98,7 @@ async function fetchFromSheets(colegio = "WS") {
     const talle       = String(row[2] ?? "").trim();
     const sku         = String(row[3] || "").trim();
     const stockActual = Math.round(Number(row[7]) || 0); // H = Stock actual
-    // Precio desde Lista de precios col H (Precio Trans); fallback a Stock col J
-    const precioUnit  = precioMap[sku] || Math.round(Number(row[9]) || 0);
+    const precioUnit  = precioMap[sku] || 0;             // precio desde Lista de precios col F
 
     if (colegioCell !== colegio || !nombre || !talle) continue;
 
