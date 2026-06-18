@@ -381,7 +381,7 @@ async function irAPagar() {
     const idPedido = pedidoIdData.nextId;
     _savedOrderId = idPedido;
 
-    await fetch("/api/orders", {
+    const ordersRes = await fetch("/api/orders", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         idPedido, codigoCliente: clienteData.codigo,
@@ -391,6 +391,10 @@ async function irAPagar() {
         direccion: "", cp: "", localidad: "",
       }),
     });
+    if (!ordersRes.ok) {
+      const errData = await ordersRes.json().catch(() => ({}));
+      throw new Error(errData.error || "Error guardando orden (" + ordersRes.status + ")");
+    }
 
     fetch("/api/mail/send-order-notification", {
       method: "POST", headers: { "Content-Type": "application/json" },
