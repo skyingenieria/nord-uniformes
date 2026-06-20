@@ -1,20 +1,3 @@
-// POST /api/orders — guarda la orden en "Ordenes"
-//
-// "Ordenes" — UNA FILA POR ITEM (solo se escriben A:H):
-//   A: Fecha       (M/D/YYYY)
-//   B: Pedido      (YY-XX, ej: 26-01)
-//   C: Colegio     (WS)
-//   D: Cliente     (ID del cliente, ej: WS2-Luzuriaga-Maria Victoria)
-//   E: Forma pago  (Transf. Banc.)
-//   F: Prenda      (nombre de la prenda)
-//   G: Talle
-//   H: Cant        (cantidad)
-//   I en adelante: formulas del sheet — no se escriben
-//
-// "Pedidos" y "Clientes": no se escriben, son formula-driven desde Ordenes.
-//
-// Body: { idPedido, codigoCliente, items:[{nombre,talle,qty}], pago }
-
 const { google } = require("googleapis");
 
 function makeAuth() {
@@ -22,27 +5,10 @@ function makeAuth() {
     credentials: {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
       private_key: process.env.GOOGLE_PRIVATE_KEY
-        ?.replace(/\\n/g, "\n").replace(/^"/, "").replace(/"$/, ""),
+        ?.replace(/\n/g, "\n").replace(/^"/, "").replace(/"$/, ""),
     },
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
-}
-
-// Devuelve el numero de fila del sheet (1-based) donde insertar el proximo dato.
-async function findNextRow(sheets, sheetName, colLetter, isRealRow) {
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: process.env.SPREADSHEET_ID,
-    range: `'${sheetName}'!${colLetter}:${colLetter}`,
-  });
-  const rows = res.data.values || [];
-  let lastDataSheetRow = 1; // row 1 = header
-  for (let i = 1; i < rows.length; i++) {
-    const val = (rows[i][0] || "").toString().trim();
-    if (isRealRow(val)) {
-      lastDataSheetRow = i + 1; // 1-based
-    }
-  }
-  return lastDataSheetRow + 1;
 }
 
 module.exports = async (req, res) => {
@@ -57,7 +23,6 @@ module.exports = async (req, res) => {
     const {
       idPedido, codigoCliente,
       items = [],
-      pago = "transferencia",
     } = req.body;
 
     if (!idPedido || !codigoCliente) {
@@ -71,29 +36,23 @@ module.exports = async (req, res) => {
 
     const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Argentina/Buenos_Aires" }));
     const fecha = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
-    const formaPago = "Transf. Banc.";
-    const colegio = "WS";
 
-    // Primera fila disponible en Ordenes (col A = Fecha)
-    const nextOrdenRow = await findNextRow(sheets, "Ordenes", "A", val => val.length > 0);
-
-    // ── "Ordenes": una fila por item, solo A:H ───────────────────────────────
     const filasOrdenes = items.map(item => [
-      fecha,           // A: Fecha
-      idPedido,        // B: Pedido
-      colegio,         // C: Colegio
-      codigoCliente,   // D: Cliente
-      formaPago,       // E: Forma de pago
-      item.nombre,     // F: Prenda
-      item.talle,      // G: Talle
-      item.qty || 1,   // H: Cant
-      // I en adelante: formulas del sheet, no se escriben
+      fecha,
+      idPedido,
+      "WS",
+      codigoCliente,
+      "Transf. Banc.",
+      item.nombre,
+      item.talle,
+      item.qty || 1,
     ]);
 
-    await sheets.spreadsheets.values.update({
+    await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: `'Ordenes'!A${nextOrdenRow}:H${nextOrdenRow + filasOrdenes.length - 1}`,
+      range: "'Ordenes'!A:H",
       valueInputOption: "USER_ENTERED",
+      insertDataOption: "OVERWRITE",
       requestBody: { values: filasOrdenes },
     });
 
