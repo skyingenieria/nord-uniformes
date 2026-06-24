@@ -136,7 +136,25 @@ async function fetchFromSheets(colegio = "WS") {
     productsMap[nombre].talles.push({ talle, stock: stockActual, precio: precioUnit });
   }
 
-  return Object.values(productsMap);
+  const SIZE_ORDER = ['XS','S','M','L','XL','XXL','XXXL'];
+
+  function talleSort(a, b) {
+    const na = Number(a.talle);
+    const nb = Number(b.talle);
+    const aIsNum = !isNaN(na) && a.talle.trim() !== '';
+    const bIsNum = !isNaN(nb) && b.talle.trim() !== '';
+    if (aIsNum && bIsNum) return na - nb;
+    if (aIsNum) return -1;
+    if (bIsNum) return 1;
+    const ai = SIZE_ORDER.indexOf(a.talle.toUpperCase());
+    const bi = SIZE_ORDER.indexOf(b.talle.toUpperCase());
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    return a.talle.localeCompare(b.talle);
+  }
+
+  const products = Object.values(productsMap);
+  products.forEach(p => p.talles.sort(talleSort));
+  return products;
 }
 
 module.exports = async (req, res) => {
