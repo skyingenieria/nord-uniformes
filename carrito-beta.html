@@ -99,12 +99,26 @@
     .btn-copy{background:none;border:1px solid var(--niebla-200);border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--azul-600);transition:all .2s}
     .btn-copy:hover{background:var(--azul-900);color:white;border-color:var(--azul-900)}
 
-    /* Nave redirect notice */
-    .nave-redirect{display:none;background:#ede9fe;border:1px solid #c4b5fd;border-radius:10px;padding:18px;margin-top:16px;text-align:center}
-    .nave-redirect.visible{display:block}
-    .nave-redirect p{font-size:13px;color:#4c1d95;line-height:1.6}
-    .nave-redirect .spinner{display:inline-block;width:20px;height:20px;border:2px solid #c4b5fd;border-top-color:#6d28d9;border-radius:50%;animation:spin .7s linear infinite;margin-bottom:8px}
+    /* Nave loading indicator (mientras carga el modal) */
+    .nave-loading{display:none;align-items:center;justify-content:center;gap:10px;margin-top:14px;font-size:12px;color:#6d28d9;font-weight:700}
+    .nave-loading.visible{display:flex}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid #c4b5fd;border-top-color:#6d28d9;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
     @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Nave modal iframe */
+    .nave-modal{display:none;position:fixed;inset:0;background:rgba(15,23,46,.75);z-index:9999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+    .nave-modal.open{display:flex}
+    .nave-modal-inner{position:relative;width:100%;max-width:500px;height:min(700px,90vh);background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 32px 100px rgba(15,23,46,.35)}
+    .nave-modal-close{position:absolute;top:12px;right:12px;z-index:10;background:rgba(0,0,0,.12);border:none;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;color:#333;transition:background .15s}
+    .nave-modal-close:hover{background:rgba(0,0,0,.22)}
+    #nave-iframe{width:100%;height:100%;border:none;display:block}
+
+    /* Panel éxito Nave */
+    .nave-ok{display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:20px;margin-top:16px;text-align:center}
+    .nave-ok.visible{display:block}
+    .nave-ok-icon{font-size:36px;margin-bottom:8px}
+    .nave-ok h3{font-size:16px;font-weight:800;color:#166534;margin-bottom:6px}
+    .nave-ok p{font-size:13px;color:#166534;line-height:1.5}
 
     .accordion{margin-top:10px;border:1px solid var(--niebla-200);border-radius:10px;overflow:hidden}
     .accordion-item{border-bottom:1px solid var(--niebla-200)}
@@ -158,6 +172,14 @@
   </div>
 </div>
 
+<!-- Modal iframe Nave -->
+<div class="nave-modal" id="nave-modal">
+  <div class="nave-modal-inner">
+    <button class="nave-modal-close" onclick="cerrarModalNave()" title="Cerrar">✕</button>
+    <iframe id="nave-iframe" src="" allow="payment"></iframe>
+  </div>
+</div>
+
 <script>
 function getCart() {
   try { return JSON.parse(localStorage.getItem("nord_cart") || "[]"); } catch { return []; }
@@ -205,10 +227,9 @@ function onMetodoPagoChange() {
     btn.classList.remove("nave-btn");
   }
   // Ocultar paneles de resultado si el usuario cambia de método
-  const dp = document.getElementById("datos-pago");
-  const nr = document.getElementById("nave-redirect");
-  if (dp) dp.classList.remove("visible");
-  if (nr) nr.classList.remove("visible");
+  ["datos-pago","nave-loading","nave-ok"].forEach(id => {
+    document.getElementById(id)?.classList.remove("visible");
+  });
 }
 
 function render() {
@@ -289,7 +310,7 @@ function render() {
                 Pagar con Nave
                 <span class="badge-new">NUEVO</span>
               </div>
-              <div class="pago-option-desc">Tarjeta de débito/crédito o QR. Redirige al checkout de Nave.</div>
+              <div class="pago-option-desc">Tarjeta de débito/crédito o QR. El checkout se abre sin salir de la página.</div>
             </div>
           </label>
         </div>
@@ -338,10 +359,17 @@ function render() {
         </button>
       </div>
 
-      <!-- Panel Nave (redirect) -->
-      <div class="nave-redirect" id="nave-redirect">
+      <!-- Loading mientras abre el modal de Nave -->
+      <div class="nave-loading" id="nave-loading">
         <div class="spinner"></div>
-        <p><strong>Redirigiendo a Nave...</strong><br>Vas a completar el pago en la plataforma de Nave.</p>
+        Abriendo checkout de Nave…
+      </div>
+
+      <!-- Éxito Nave -->
+      <div class="nave-ok" id="nave-ok">
+        <div class="nave-ok-icon">✅</div>
+        <h3>¡Pago aprobado!</h3>
+        <p>Tu pedido quedó confirmado. Te vamos a contactar por WhatsApp para coordinar el retiro.</p>
       </div>
 
       <div class="accordion">
@@ -496,13 +524,54 @@ async function pagarConNave({ idPedido, sub, nombre, apellido, email, tel, cart,
     throw new Error((naveData.error || "Error Nave") + (detail ? "\n\nDetalle: " + detail : ""));
   }
 
-  // Mostrar spinner y redirigir
-  document.getElementById("nave-redirect").classList.add("visible");
-  btn.textContent = "Redirigiendo…";
-  document.getElementById("nave-redirect").scrollIntoView({ behavior: "smooth", block: "start" });
+  // Mostrar loading brevemente y abrir modal con iframe
+  document.getElementById("nave-loading").classList.add("visible");
+  btn.textContent = "PAGAR CON NAVE →";
+  btn.disabled = false;
 
-  setTimeout(() => { window.location.href = naveData.checkout_url; }, 800);
+  setTimeout(() => {
+    document.getElementById("nave-loading").classList.remove("visible");
+    abrirModalNave(naveData.checkout_url);
+  }, 600);
 }
+
+function abrirModalNave(url) {
+  document.getElementById("nave-iframe").src = url;
+  document.getElementById("nave-modal").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function cerrarModalNave() {
+  document.getElementById("nave-modal").classList.remove("open");
+  document.getElementById("nave-iframe").src = "";
+  document.body.style.overflow = "";
+}
+
+function mostrarExitoNave() {
+  const btn = document.querySelector(".btn-pagar");
+  if (btn) { btn.textContent = "✓ PAGO CONFIRMADO"; btn.style.background = "#166534"; btn.disabled = true; }
+  const ok = document.getElementById("nave-ok");
+  if (ok) { ok.classList.add("visible"); ok.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  saveCart([]);
+}
+
+// Escuchar eventos del iframe de Nave
+window.addEventListener("message", (e) => {
+  if (!e.data || e.data.type !== "PAYMENT_MODAL_RESPONSE") return;
+  const d = e.data.data || {};
+  if (d.success && !d.closeModal) {
+    cerrarModalNave();
+    mostrarExitoNave();
+  } else if (d.closeModal) {
+    cerrarModalNave();
+  } else if (d.expiration) {
+    cerrarModalNave();
+    alert("La sesión de pago venció. Podés intentar de nuevo.");
+  } else if (d.rejected) {
+    cerrarModalNave();
+    alert("El pago fue rechazado. Podés intentar con otra tarjeta.");
+  }
+});
 
 function toggleAccordion(btn) {
   const item = btn.closest(".accordion-item");
