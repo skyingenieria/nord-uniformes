@@ -402,17 +402,19 @@ async function irAPagar() {
   btn.disabled = true;
 
   try {
-    // 1. Crear / obtener cliente
-    const clienteRes = await fetch("/api/cliente/check-or-create", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre, apellido, email, telefono: tel }),
-    });
-    const clienteData = await clienteRes.json();
+    // 1 y 2 en paralelo: cliente + próximo ID de pedido
+    const [clienteRes, pedidoIdRes] = await Promise.all([
+      fetch("/api/cliente/check-or-create", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre, apellido, email, telefono: tel }),
+      }),
+      fetch("/api/pedidos/next-id"),
+    ]);
+    const [clienteData, pedidoIdData] = await Promise.all([
+      clienteRes.json(),
+      pedidoIdRes.json(),
+    ]);
     if (!clienteData.codigo) throw new Error(clienteData.error || "Error cliente");
-
-    // 2. Obtener próximo ID de pedido
-    const pedidoIdRes  = await fetch("/api/pedidos/next-id");
-    const pedidoIdData = await pedidoIdRes.json();
     if (!pedidoIdData.nextId) throw new Error(pedidoIdData.error || "Error ID pedido");
     const idPedido = pedidoIdData.nextId;
     _savedOrderId  = idPedido;
