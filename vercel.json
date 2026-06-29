@@ -5,6 +5,7 @@
     { "source": "/carrito",    "destination": "/carrito.html" },
     { "source": "/pago-transferencia", "destination": "/pago-transferencia.html" },
     { "source": "/confirmacion", "destination": "/confirmacion.html" },
-    { "source": "/admin",      "destination": "/admin.html" }
+    { "source": "/admin",      "destination": "/admin.html" },
+    { "source": "/carrito-beta", "destination": "/carrito-beta.html" }
   ]
 }
