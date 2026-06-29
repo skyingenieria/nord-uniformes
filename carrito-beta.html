@@ -488,7 +488,10 @@ async function pagarConNave({ idPedido, sub, nombre, apellido, email, tel, cart,
 
   const naveData = await naveRes.json();
   if (!naveRes.ok || !naveData.checkout_url) {
-    throw new Error(naveData.error || naveData.details?.message || "No se pudo crear el pago en Nave");
+    const detail = typeof naveData.details === "object"
+      ? JSON.stringify(naveData.details)
+      : (naveData.details || "");
+    throw new Error((naveData.error || "Error Nave") + (detail ? "\n\nDetalle: " + detail : ""));
   }
 
   // Mostrar spinner y redirigir
