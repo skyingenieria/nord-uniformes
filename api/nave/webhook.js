@@ -48,23 +48,25 @@ module.exports = async (req, res) => {
     const sheets = google.sheets({ version: "v4", auth: makeAuth() });
     const ordersResult = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'7 Ordenes'!A:Q",
+      range: "'Ordenes'!A:Q",
     });
 
     const rows = ordersResult.data.values || [];
-    const rowIdx = rows.findIndex(r => r[0] === external_payment_id);
+    // Columna B (índice 1) = idPedido. Puede haber varias filas por pedido (una por item)
+    const matchingRows = rows
+      .map((r, i) => ({ r, i }))
+      .filter(({ r }) => String(r[1] || "").trim() === String(external_payment_id).trim());
 
-    if (rowIdx >= 0) {
-      // Actualizar estado (columna Q, índice 16)
+    for (const { i } of matchingRows) {
       await sheets.spreadsheets.values.update({
         spreadsheetId: process.env.SPREADSHEET_ID,
-        range: `'7 Ordenes'!Q${rowIdx + 1}`,
+        range: `'Ordenes'!Q${i + 1}`,
         valueInputOption: "USER_ENTERED",
         requestBody: { values: [[sheetStatus]] },
       });
-
-      console.log(`Orden ${external_payment_id} actualizada a ${sheetStatus}`);
     }
+
+    console.log(`Orden ${external_payment_id}: ${matchingRows.length} fila(s) actualizadas a ${sheetStatus}`);
 
     // 4. Responder a Nave con 200 OK
     res.status(200).json({ received: true });
