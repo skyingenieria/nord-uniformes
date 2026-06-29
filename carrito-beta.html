@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NORD | Carrito (Beta)</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%230F172E'/><text x='16' y='14' dominant-baseline='central' text-anchor='middle' font-family='system-ui,sans-serif' font-weight='900' font-size='20' fill='white'>N</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --azul:#1E2D4A;--azul-900:#0F172E;--azul-600:#34466A;--azul-400:#6B7B9C;
+      --dorado:#C8A96E;--dorado-700:#A6884B;--dorado-300:#E0CBA0;
+      --niebla:#8A9AB5;--niebla-200:#D3DAE5;
+      --crema:#F4F1EA;--crema-2:#ECE7DC;--blanco:#FFFFFF;
+      --sans:"Mulish",system-ui,sans-serif;--serif:"Cormorant Garamond",serif;
+      --pad-x:clamp(20px,5vw,80px);--max:1200px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--sans);background:var(--crema);color:var(--azul-900);line-height:1.55;-webkit-font-smoothing:antialiased}
+    a{text-decoration:none}
+
+    header{background:rgba(244,241,234,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(30,45,74,.08);position:sticky;top:0;z-index:100}
+    .header-container{max-width:var(--max);margin:0 auto;padding:0 var(--pad-x);height:64px;display:flex;justify-content:space-between;align-items:center}
+    .brand-logo .nord{font-weight:900;font-size:22px;letter-spacing:.06em;display:block;color:var(--azul-900)}
+    .brand-logo .uniformes{font-weight:300;font-size:6px;letter-spacing:.55em;display:block;margin-top:2px;padding-left:.55em;color:var(--azul-900)}
+    .back-link{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--azul-400);display:flex;align-items:center;gap:6px;transition:color .2s}
+    .back-link:hover{color:var(--azul-900)}
+    .beta-badge{background:#7c3aed;color:#fff;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:4px;margin-left:8px}
+
+    .page{max-width:var(--max);margin:0 auto;padding:48px var(--pad-x) 80px}
+    .page-title{font-size:clamp(28px,4vw,40px);font-weight:900;letter-spacing:-.02em;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+    .page-subtitle{font-size:12px;color:var(--azul-400);margin-bottom:40px}
+    .checkout-grid{display:grid;grid-template-columns:1fr 380px;gap:40px;align-items:start}
+
+    .left{display:flex;flex-direction:column;gap:28px}
+
+    .section-block{background:var(--blanco);border:1px solid var(--niebla-200);padding:24px 28px;border-radius:14px;box-shadow:0 2px 12px rgba(30,45,74,.06);transition:box-shadow .3s}
+    .section-block:hover{box-shadow:0 4px 20px rgba(30,45,74,.1)}
+    .section-block-title{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--azul-400);margin-bottom:18px}
+
+    .cart-item{display:flex;align-items:center;padding:14px 0;border-bottom:1px solid var(--niebla-200);gap:14px}
+    .cart-item:first-child{border-top:1px solid var(--niebla-200)}
+    .item-info{flex:1}
+    .item-name{font-size:14px;font-weight:700}
+    .item-talle{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--azul-400);margin-top:2px}
+    .qty-wrap{display:flex;align-items:center;gap:10px}
+    .qty-btn{width:27px;height:27px;border:1px solid var(--niebla-200);background:none;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--azul);transition:all .15s;border-radius:6px}
+    .qty-btn:hover{background:var(--azul-900);color:var(--crema);border-color:var(--azul-900)}
+    .qty-num{font-size:14px;font-weight:700;min-width:18px;text-align:center}
+    .item-price{font-size:15px;font-weight:700;white-space:nowrap}
+    .item-remove{background:none;border:none;cursor:pointer;color:var(--niebla);padding:4px;display:flex;transition:color .15s}
+    .item-remove:hover{color:#c0392b}
+
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    .form-row.full{grid-template-columns:1fr}
+    .form-group label{display:block;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--azul-400);margin-bottom:6px}
+    .form-group input{width:100%;border:1px solid var(--niebla-200);background:var(--crema);padding:11px 13px;font-family:var(--sans);font-size:14px;color:var(--azul-900);outline:none;transition:border-color .15s, box-shadow .15s;border-radius:8px}
+    .form-group input:focus{border-color:var(--azul);box-shadow:0 0 0 3px rgba(200,169,110,.1)}
+    .form-group input::placeholder{color:#b0bac9}
+
+    /* ── Selector de método de pago ── */
+    .pago-options{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+    .pago-option{border:2px solid var(--niebla-200);padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:border-color .15s,background .15s,box-shadow .15s;border-radius:12px}
+    .pago-option:hover{border-color:var(--azul-400);box-shadow:0 2px 8px rgba(30,45,74,.08)}
+    .pago-option.selected{border-color:var(--azul-900);background:#f0f2f6;box-shadow:0 2px 8px rgba(30,45,74,.12)}
+    .pago-option input[type=radio]{accent-color:var(--azul-900);width:16px;height:16px;flex-shrink:0}
+    .pago-option-label{flex:1}
+    .pago-option-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .pago-option-desc{font-size:12px;color:var(--azul-400);margin-top:3px}
+    .nave-logo{font-size:13px;font-weight:900;letter-spacing:-.02em;color:#6d28d9}
+    .badge-new{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:#ede9fe;color:#6d28d9}
+
+    .summary-panel{background:var(--blanco);border:1px solid var(--niebla-200);padding:28px;position:sticky;top:80px;border-radius:14px;box-shadow:0 2px 12px rgba(30,45,74,.06)}
+    .summary-title{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--azul-400);margin-bottom:20px}
+    .sum-row{display:flex;justify-content:space-between;font-size:14px;padding:7px 0;color:var(--azul-600)}
+    .sum-row.total{border-top:1px solid var(--niebla-200);margin-top:8px;padding-top:16px;font-size:20px;font-weight:800;color:var(--azul-900)}
+
+    .req{color:#c0392b;margin-left:2px}
+    .field-error{border-color:#c0392b !important}
+
+    .btn-pagar{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;background:var(--azul-900);color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s;border-radius:10px}
+    .btn-pagar:hover:not(:disabled){background:var(--azul)}
+    .btn-pagar:disabled{opacity:.7;cursor:not-allowed}
+    .btn-pagar.nave-btn{background:#6d28d9}
+    .btn-pagar.nave-btn:hover:not(:disabled){background:#5b21b6}
+    .btn-wp{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:10px;background:#25D366;color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s;text-decoration:none;border-radius:10px}
+    .btn-wp:hover{background:#1ebe5d}
+    .note{margin-top:12px;font-size:11px;color:var(--azul-400);text-align:center;line-height:1.5}
+
+    /* Datos transferencia */
+    .datos-pago{display:none;background:var(--crema);border:1px solid var(--niebla-200);border-radius:10px;padding:18px;margin-top:16px}
+    .datos-pago.visible{display:block}
+    .dato-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--niebla-200);font-size:13px}
+    .dato-row:last-child{border-bottom:none}
+    .dato-label{color:var(--azul-400);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+    .dato-val{font-weight:700;font-size:14px;color:var(--azul-900)}
+    .btn-copy{background:none;border:1px solid var(--niebla-200);border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--azul-600);transition:all .2s}
+    .btn-copy:hover{background:var(--azul-900);color:white;border-color:var(--azul-900)}
+
+    /* Nave redirect notice */
+    .nave-redirect{display:none;background:#ede9fe;border:1px solid #c4b5fd;border-radius:10px;padding:18px;margin-top:16px;text-align:center}
+    .nave-redirect.visible{display:block}
+    .nave-redirect p{font-size:13px;color:#4c1d95;line-height:1.6}
+    .nave-redirect .spinner{display:inline-block;width:20px;height:20px;border:2px solid #c4b5fd;border-top-color:#6d28d9;border-radius:50%;animation:spin .7s linear infinite;margin-bottom:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .accordion{margin-top:10px;border:1px solid var(--niebla-200);border-radius:10px;overflow:hidden}
+    .accordion-item{border-bottom:1px solid var(--niebla-200)}
+    .accordion-item:last-child{border-bottom:none}
+    .accordion-btn{width:100%;background:none;border:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:13px 16px;font-family:var(--sans);font-size:13px;font-weight:700;color:var(--azul-900);text-align:left;transition:background .15s}
+    .accordion-btn:hover{background:var(--crema-2)}
+    .accordion-btn svg{flex-shrink:0;transition:transform .2s;color:var(--azul-400)}
+    .accordion-item.open .accordion-btn svg{transform:rotate(180deg)}
+    .accordion-body{display:none;padding:0 16px 14px;font-size:13px;color:var(--azul-600);line-height:1.6}
+    .accordion-item.open .accordion-body{display:block}
+    .accordion-body p{margin-bottom:8px}
+    .accordion-body p:last-child{margin-bottom:0}
+    .accordion-body strong{color:var(--azul-900);font-weight:700}
+    .retiro-link{color:var(--azul-900);font-weight:700;text-decoration:underline}
+
+    .cart-empty{text-align:center;padding:80px 0;grid-column:1/-1}
+    .cart-empty p{font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--azul-400);margin-bottom:24px}
+    .btn-outline{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--azul);color:var(--azul);padding:12px 28px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;transition:all .2s;border-radius:10px}
+    .btn-outline:hover{background:var(--azul-900);color:var(--crema);border-color:var(--azul-900);box-shadow:0 4px 12px rgba(15,23,46,.2)}
+
+    @media(max-width:900px){
+      .checkout-grid{grid-template-columns:1fr}
+      .summary-panel{position:static}
+      .form-row{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-container">
+    <a href="/" class="brand-logo">
+      <span class="nord">NORD</span>
+      <span class="uniformes">UNIFORMES</span>
+    </a>
+    <a href="/wellspring" class="back-link">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      Seguir comprando
+    </a>
+  </div>
+</header>
+
+<div class="page">
+  <h1 class="page-title">Tu carrito <span class="beta-badge">BETA</span></h1>
+  <p class="page-subtitle">Página de prueba — los cambios aquí no afectan el carrito principal.</p>
+  <div class="checkout-grid" id="checkout-grid">
+    <div class="cart-empty">
+      <p>Tu carrito está vacío</p>
+      <a href="/wellspring" class="btn-outline">Ver catálogo</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function getCart() {
+  try { return JSON.parse(localStorage.getItem("nord_cart") || "[]"); } catch { return []; }
+}
+function saveCart(c) { localStorage.setItem("nord_cart", JSON.stringify(c)); }
+function fmt(n) { return "$" + Number(n).toLocaleString("es-AR"); }
+
+function changeQty(key, d) {
+  const cart = getCart();
+  const item = cart.find(i => i.key === key);
+  if (!item) return;
+  item.qty += d;
+  if (item.qty <= 0) cart.splice(cart.indexOf(item), 1);
+  saveCart(cart); render();
+}
+function removeItem(key) { saveCart(getCart().filter(i => i.key !== key)); render(); }
+
+function getMetodoPago() {
+  const r = document.querySelector('input[name="metodo-pago"]:checked');
+  return r ? r.value : "transferencia";
+}
+
+function validate() {
+  const fields = ["inp-nombre","inp-apellido","inp-tel","inp-email"];
+  let ok = true;
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!el.value.trim()) { el.classList.add("field-error"); ok = false; }
+    else el.classList.remove("field-error");
+  });
+  if (!ok) { document.getElementById("inp-nombre")?.scrollIntoView({behavior:"smooth",block:"center"}); }
+  return ok;
+}
+
+function onMetodoPagoChange() {
+  const metodo = getMetodoPago();
+  const btn = document.querySelector(".btn-pagar");
+  if (!btn) return;
+  if (metodo === "nave") {
+    btn.textContent = "PAGAR CON NAVE →";
+    btn.classList.add("nave-btn");
+  } else {
+    btn.textContent = "IR A PAGAR";
+    btn.classList.remove("nave-btn");
+  }
+  // Ocultar paneles de resultado si el usuario cambia de método
+  const dp = document.getElementById("datos-pago");
+  const nr = document.getElementById("nave-redirect");
+  if (dp) dp.classList.remove("visible");
+  if (nr) nr.classList.remove("visible");
+}
+
+function render() {
+  const cart = getCart();
+  const grid = document.getElementById("checkout-grid");
+
+  if (!cart.length) {
+    grid.innerHTML = `<div class="cart-empty"><p>Tu carrito está vacío</p><a href="/wellspring" class="btn-outline">Ver catálogo</a></div>`;
+    return;
+  }
+
+  const sub = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+  const totalItems = cart.reduce((s, i) => s + i.qty, 0);
+
+  const itemsHtml = cart.map(i => `
+    <div class="cart-item">
+      <div class="item-info">
+        <p class="item-name">${i.nombre}</p>
+        <p class="item-talle">Talle ${i.talle}</p>
+      </div>
+      <div class="qty-wrap">
+        <button class="qty-btn" onclick="changeQty('${i.key}',-1)">−</button>
+        <span class="qty-num">${i.qty}</span>
+        <button class="qty-btn" onclick="changeQty('${i.key}',1)">+</button>
+      </div>
+      <div class="item-price">${fmt(i.precio * i.qty)}</div>
+      <button class="item-remove" onclick="removeItem('${i.key}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`).join("");
+
+  grid.innerHTML = `
+    <div class="left">
+      <div class="section-block">
+        <p class="section-block-title">Artículos (${totalItems})</p>
+        ${itemsHtml}
+      </div>
+
+      <div class="section-block">
+        <p class="section-block-title">Tus datos</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre<span class="req">*</span></label>
+            <input id="inp-nombre" type="text" placeholder="Ej: María" required oninput="this.classList.remove('field-error')">
+          </div>
+          <div class="form-group">
+            <label>Apellido de familia<span class="req">*</span></label>
+            <input id="inp-apellido" type="text" placeholder="Ej: García" required oninput="this.classList.remove('field-error')">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Teléfono<span class="req">*</span></label>
+            <input id="inp-tel" type="tel" placeholder="11 1234-5678" required oninput="this.classList.remove('field-error')">
+          </div>
+          <div class="form-group">
+            <label>Email<span class="req">*</span></label>
+            <input id="inp-email" type="email" placeholder="tu@email.com" required oninput="this.classList.remove('field-error')">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <p class="section-block-title">Forma de pago</p>
+        <div class="pago-options">
+          <label class="pago-option selected" onclick="this.classList.add('selected');this.parentElement.querySelectorAll('.pago-option').forEach(o=>o!==this&&o.classList.remove('selected'));onMetodoPagoChange()">
+            <input type="radio" name="metodo-pago" value="transferencia" checked>
+            <div class="pago-option-label">
+              <div class="pago-option-title">🏦 Transferencia bancaria</div>
+              <div class="pago-option-desc">Te enviamos los datos al confirmar. Sin costo extra.</div>
+            </div>
+          </label>
+          <label class="pago-option" onclick="this.classList.add('selected');this.parentElement.querySelectorAll('.pago-option').forEach(o=>o!==this&&o.classList.remove('selected'));onMetodoPagoChange()">
+            <input type="radio" name="metodo-pago" value="nave">
+            <div class="pago-option-label">
+              <div class="pago-option-title">
+                <span class="nave-logo">nave</span>
+                Pagar con Nave
+                <span class="badge-new">NUEVO</span>
+              </div>
+              <div class="pago-option-desc">Tarjeta de débito/crédito o QR. Redirige al checkout de Nave.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-panel">
+      <p class="summary-title">Resumen del pedido</p>
+      ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(i.precio*i.qty)}</span></div>`).join("")}
+      <div class="sum-row total"><span>Total</span><span>${fmt(sub)}</span></div>
+
+      <button class="btn-pagar" onclick="irAPagar()">IR A PAGAR</button>
+
+      <!-- Panel transferencia -->
+      <div class="datos-pago" id="datos-pago">
+        <p style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--azul-400);margin-bottom:12px;">Datos para la transferencia</p>
+        <div class="dato-row">
+          <span class="dato-label">Titular</span>
+          <span class="dato-val">Florencia Cordeviola</span>
+        </div>
+        <div class="dato-row">
+          <span class="dato-label">Banco</span>
+          <span class="dato-val">Galicia</span>
+        </div>
+        <div class="dato-row">
+          <span class="dato-label">Alias</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="dato-val">nord.uniformes</span>
+            <button class="btn-copy" onclick="copiar('nord.uniformes', this)">Copiar</button>
+          </div>
+        </div>
+        <div class="dato-row">
+          <span class="dato-label">CBU</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="dato-val" style="font-size:12px">0070999030004239948231</span>
+            <button class="btn-copy" onclick="copiar('0070999030004239948231', this)">Copiar</button>
+          </div>
+        </div>
+        <div class="dato-row">
+          <span class="dato-label">Total a transferir</span>
+          <span class="dato-val" id="total-a-pagar">—</span>
+        </div>
+        <button class="btn-wp" onclick="enviarComprobante()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          ENVIAR COMPROBANTE POR WHATSAPP
+        </button>
+      </div>
+
+      <!-- Panel Nave (redirect) -->
+      <div class="nave-redirect" id="nave-redirect">
+        <div class="spinner"></div>
+        <p><strong>Redirigiendo a Nave...</strong><br>Vas a completar el pago en la plataforma de Nave.</p>
+      </div>
+
+      <div class="accordion">
+        <div class="accordion-item">
+          <button class="accordion-btn" onclick="toggleAccordion(this)">
+            📍 Punto de retiro
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="accordion-body">
+            <p>Carlos Calvo 590, Barrio Habitat Residencias, La Lonja, Gran Buenos Aires.</p>
+            <p>Horario a coordinar por WhatsApp.</p>
+            <p><a href="https://maps.app.goo.gl/x2ec2a3AeP1LGCzJ7" target="_blank" class="retiro-link">Ver en Google Maps →</a></p>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-btn" onclick="toggleAccordion(this)">
+            🛵 Envío a domicilio
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="accordion-body">
+            <p>Podemos coordinar envío por motomensajería con costo adicional.</p>
+            <p>Consultanos por WhatsApp antes de confirmar el pedido para coordinar el envío.</p>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-btn" onclick="toggleAccordion(this)">
+            🔄 Políticas de cambio
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="accordion-body">
+            <p><strong>Cambios de talle:</strong> Aceptamos cambios dentro de los 30 días de recibido el pedido.</p>
+            <p><strong>Proceso:</strong> Contactanos por WhatsApp con el número de pedido y el talle que necesitás.</p>
+            <p><strong>Condiciones:</strong> Sin uso, sin lavado y con todas las etiquetas.</p>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">Todos los campos con <span style="color:#c0392b">*</span> son obligatorios.</p>
+    </div>`;
+}
+
+// ── IR A PAGAR ────────────────────────────────────────────────────────────
+let _savedOrderId = null;
+
+async function irAPagar() {
+  if (!validate()) return;
+
+  const metodo   = getMetodoPago();
+  const nombre   = document.getElementById("inp-nombre").value.trim();
+  const apellido = document.getElementById("inp-apellido").value.trim();
+  const tel      = document.getElementById("inp-tel").value.trim();
+  const email    = document.getElementById("inp-email").value.trim();
+  const cart     = getCart();
+  const sub      = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+
+  const btn = document.querySelector(".btn-pagar");
+  btn.textContent = "Guardando pedido…";
+  btn.disabled = true;
+
+  try {
+    // 1. Crear / obtener cliente
+    const clienteRes = await fetch("/api/cliente/check-or-create", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre, apellido, email, telefono: tel }),
+    });
+    const clienteData = await clienteRes.json();
+    if (!clienteData.codigo) throw new Error(clienteData.error || "Error cliente");
+
+    // 2. Obtener próximo ID de pedido
+    const pedidoIdRes  = await fetch("/api/pedidos/next-id");
+    const pedidoIdData = await pedidoIdRes.json();
+    if (!pedidoIdData.nextId) throw new Error(pedidoIdData.error || "Error ID pedido");
+    const idPedido = pedidoIdData.nextId;
+    _savedOrderId  = idPedido;
+
+    // 3. Guardar orden en Sheets
+    const ordersRes = await fetch("/api/orders", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        idPedido, codigoCliente: clienteData.codigo,
+        nombre, apellido, email, telefono: tel,
+        items: cart, subtotal: sub, descuento: 0, codigo: "", total: sub,
+        pago: metodo, envio: "retiro",
+        direccion: "", cp: "", localidad: "",
+      }),
+    });
+    if (!ordersRes.ok) {
+      const errData = await ordersRes.json().catch(() => ({}));
+      throw new Error(errData.error || "Error guardando orden (" + ordersRes.status + ")");
+    }
+
+    // 4. Guardar en session
+    sessionStorage.setItem("nord_last_order", JSON.stringify({
+      idPedido, nombre, apellido, items: cart, total: sub,
+    }));
+
+    // 5. Flujo según método
+    if (metodo === "nave") {
+      await pagarConNave({ idPedido, sub, nombre, apellido, email, tel, cart, btn });
+    } else {
+      pagarConTransferencia({ sub, idPedido, clienteData, nombre, apellido, email, cart, btn });
+    }
+
+  } catch (err) {
+    btn.textContent = getMetodoPago() === "nave" ? "PAGAR CON NAVE →" : "IR A PAGAR";
+    btn.disabled = false;
+    alert("Error: " + err.message);
+  }
+}
+
+function pagarConTransferencia({ sub, idPedido, clienteData, nombre, apellido, email, cart, btn }) {
+  fetch("/api/mail/send-order-notification", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      idPedido, codigoCliente: clienteData?.codigo,
+      nombre, apellido, email, items: cart,
+      subtotal: sub, descuento: 0, total: sub,
+      pago: "transferencia", envio: "retiro",
+    }),
+  }).catch(() => {});
+
+  document.getElementById("total-a-pagar").textContent = fmt(sub);
+  document.getElementById("datos-pago").classList.add("visible");
+  btn.textContent = "✓ PEDIDO REGISTRADO";
+  btn.style.background = "#2e7d52";
+  btn.disabled = true;
+  document.getElementById("datos-pago").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function pagarConNave({ idPedido, sub, nombre, apellido, email, tel, cart, btn }) {
+  btn.textContent = "Conectando con Nave…";
+
+  const naveRes = await fetch("/api/nave/create-payment", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      orderId: idPedido,
+      total: sub,
+      nombreCliente: `${nombre} ${apellido}`,
+      email,
+      telefono: tel,
+      items: cart,
+    }),
+  });
+
+  const naveData = await naveRes.json();
+  if (!naveRes.ok || !naveData.checkout_url) {
+    throw new Error(naveData.error || naveData.details?.message || "No se pudo crear el pago en Nave");
+  }
+
+  // Mostrar spinner y redirigir
+  document.getElementById("nave-redirect").classList.add("visible");
+  btn.textContent = "Redirigiendo…";
+  document.getElementById("nave-redirect").scrollIntoView({ behavior: "smooth", block: "start" });
+
+  setTimeout(() => { window.location.href = naveData.checkout_url; }, 800);
+}
+
+function toggleAccordion(btn) {
+  const item = btn.closest(".accordion-item");
+  const isOpen = item.classList.contains("open");
+  item.closest(".accordion").querySelectorAll(".accordion-item").forEach(i => i.classList.remove("open"));
+  if (!isOpen) item.classList.add("open");
+}
+
+function copiar(texto, btn) {
+  navigator.clipboard.writeText(texto).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = "✓ Copiado";
+    btn.style.background = "var(--azul-900)";
+    btn.style.color = "white";
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ""; btn.style.color = ""; }, 1800);
+  });
+}
+
+function enviarComprobante() {
+  const cart = getCart();
+  const sub  = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+  const nombre   = document.getElementById("inp-nombre")?.value.trim() || "";
+  const apellido = document.getElementById("inp-apellido")?.value.trim() || "";
+  const idPedido = _savedOrderId || "—";
+  const items = cart.map(i => `• ${i.nombre} talle ${i.talle} x${i.qty}: ${fmt(i.precio * i.qty)}`).join("\n");
+  const msg = `Hola NORD Uniformes! Acá va mi comprobante de pago 🧾\n\n*Pedido #${idPedido}*\n*Familia: ${apellido} - ${nombre}*\n\n${items}\n\n*Total transferido: ${fmt(sub)}*\n\nAlias: nord.uniformes\n\n¡Gracias! 🙌`;
+  window.open(`https://wa.me/5491135057838?text=${encodeURIComponent(msg)}`, "_blank");
+}
+
+render();
+</script>
+</body>
+</html>
