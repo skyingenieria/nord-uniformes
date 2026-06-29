@@ -93,18 +93,24 @@ module.exports = async (req, res) => {
       ? `WS${nextNro}-${apellidoStr}-${nombre}`
       : `WS${nextNro}--${nombre}`;
 
-    // Escribir A:D (Nro, Nombre, Familia, Colegio) — saltea E (formula)
-    await sheets.spreadsheets.values.update({
+    // Escribir A:D con append para que extienda la hoja automáticamente si no hay filas suficientes
+    const appendRes = await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: `'Clientes'!A${targetRow}:D${targetRow}`,
+      range: `'Clientes'!A:D`,
       valueInputOption: "USER_ENTERED",
+      insertDataOption: "INSERT_ROWS",
       requestBody: { values: [[nextNro, nombre, apellidoStr, "WS"]] },
     });
 
-    // Escribir F:G (Email, WhatsApp) — saltea E (formula)
+    // Extraer el número de fila real donde se escribió (ej: "'Clientes'!A13:D13" → 13)
+    const updatedRange = appendRes.data.updates?.updatedRange || "";
+    const rowMatch = updatedRange.match(/[A-Z](\d+)/);
+    const actualRow = rowMatch ? parseInt(rowMatch[1]) : targetRow;
+
+    // Escribir F:G (Email, WhatsApp) en la misma fila — la fila ya existe así que update funciona
     await sheets.spreadsheets.values.update({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: `'Clientes'!F${targetRow}:G${targetRow}`,
+      range: `'Clientes'!F${actualRow}:G${actualRow}`,
       valueInputOption: "USER_ENTERED",
       requestBody: { values: [[email, telefono || ""]] },
     });
