@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NORD — Generador de QR</title>
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;900&display=swap" rel="stylesheet">
+  <style>
+    /* ── Para cambiar la URL del QR, el texto central o los colores,
+         editá las variables en la sección CONFIG más abajo ── */
+    body {
+      font-family: 'Mulish', sans-serif;
+      background: #F4F1EA;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      gap: 24px;
+    }
+    h1 { font-size: 13px; font-weight: 300; letter-spacing: .3em; text-transform: uppercase; color: #6B7B9C; margin: 0; }
+    #preview { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 24px rgba(30,45,74,.1); }
+    #preview img { display: block; max-width: 100%; }
+    #qr-hidden { position: absolute; left: -9999px; }
+    button {
+      background: #1E2D4A; color: #fff; border: none;
+      padding: 12px 32px; font-family: 'Mulish', sans-serif;
+      font-size: 11px; font-weight: 900; letter-spacing: .2em;
+      text-transform: uppercase; cursor: pointer; border-radius: 8px;
+      transition: background .2s;
+    }
+    button:hover { background: #34466A; }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+    p.hint { font-size: 12px; color: #8A9AB5; margin: 0; }
+  </style>
+</head>
+<body>
+
+<h1>Generador de QR — Nord Uniformes</h1>
+
+<div id="qr-hidden"><div id="qrcode"></div></div>
+
+<div id="preview"><img id="qr-img" alt="QR Nord Uniformes"></div>
+
+<button id="dl-btn" disabled>Descargar PNG</button>
+<p class="hint" id="status">Generando...</p>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* ══════════════════════════════════════
+   CONFIG — editá acá para personalizar
+   ══════════════════════════════════════ */
+var CONFIG = {
+  url:        'https://www.norduniformes.com.ar/wellspring',
+  texto:      'NORD',           // texto central
+  fontSize:   54,               // tamaño del texto central (px)
+  colorQR:    '#1E2D4A',        // color de los módulos del QR
+  colorTexto: '#1E2D4A',        // color del texto central
+  fondoBadge: '#FFFFFF',        // fondo detrás del texto
+  qrSize:     300,              // tamaño del QR (px)
+  padding:    32,               // margen exterior del PNG final
+  archivo:    'QR-Nord-Wellspring.png',
+};
+/* ══════════════════════════════════════ */
+
+document.fonts.load('900 ' + CONFIG.fontSize + 'px Mulish').then(function() {
+  new QRCode(document.getElementById('qrcode'), {
+    text: CONFIG.url,
+    width: CONFIG.qrSize,
+    height: CONFIG.qrSize,
+    colorDark: CONFIG.colorQR,
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H,
+  });
+
+  setTimeout(function() {
+    var src = document.querySelector('#qrcode canvas');
+    var out = componer(src);
+
+    var img = document.getElementById('qr-img');
+    img.src = out.toDataURL('image/png');
+
+    var btn = document.getElementById('dl-btn');
+    btn.disabled = false;
+    btn.onclick = function() {
+      var a = document.createElement('a');
+      a.download = CONFIG.archivo;
+      a.href = out.toDataURL('image/png');
+      a.click();
+    };
+
+    document.getElementById('status').textContent = CONFIG.url;
+  }, 500);
+});
+
+function componer(src) {
+  var pad = CONFIG.padding;
+  var out = document.createElement('canvas');
+  out.width  = src.width  + pad * 2;
+  out.height = src.height + pad * 2;
+  var ctx = out.getContext('2d');
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, out.width, out.height);
+  ctx.drawImage(src, pad, pad);
+
+  var cx = out.width / 2, cy = out.height / 2;
+  ctx.font = '900 ' + CONFIG.fontSize + 'px Mulish, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  var tw = ctx.measureText(CONFIG.texto).width;
+  var bw = tw + 28, bh = CONFIG.fontSize + 18;
+
+  ctx.fillStyle = CONFIG.fondoBadge;
+  ctx.fillRect(cx - bw / 2, cy - bh / 2, bw, bh);
+
+  ctx.fillStyle = CONFIG.colorTexto;
+  ctx.fillText(CONFIG.texto, cx, cy);
+
+  return out;
+}
+</script>
+</body>
+</html>
