@@ -50,7 +50,7 @@ async function getGA4(res) {
   const analyticsdata = google.analyticsdata({ version: "v1beta", auth });
   const prop = `properties/${GA4_PROPERTY_ID}`;
 
-  const [overviewRes, pagesRes, devicesRes, dailyRes] = await Promise.all([
+  const [overviewRes, pagesRes, devicesRes, dailyRes, channelsRes, sourcesRes] = await Promise.all([
     // Resumen últimos 30 días
     analyticsdata.properties.runReport({
       property: prop,
@@ -96,6 +96,28 @@ async function getGA4(res) {
         orderBys: [{ dimension: { dimensionName: "date" } }],
       },
     }),
+    // Fuentes de tráfico
+    analyticsdata.properties.runReport({
+      property: prop,
+      requestBody: {
+        dateRanges: [{ startDate: "30daysAgo", endDate: "today" }],
+        dimensions: [{ name: "sessionDefaultChannelGroup" }],
+        metrics: [{ name: "sessions" }, { name: "activeUsers" }],
+        orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+        limit: 10,
+      },
+    }),
+    // Fuente / medio detallado
+    analyticsdata.properties.runReport({
+      property: prop,
+      requestBody: {
+        dateRanges: [{ startDate: "30daysAgo", endDate: "today" }],
+        dimensions: [{ name: "sessionSourceMedium" }],
+        metrics: [{ name: "sessions" }],
+        orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+        limit: 10,
+      },
+    }),
   ]);
 
   const ov = overviewRes.data.rows?.[0]?.metricValues || [];
@@ -124,8 +146,19 @@ async function getGA4(res) {
     users:    parseInt(r.metricValues[1].value),
   }));
 
+  const channels = (channelsRes.data.rows || []).map(r => ({
+    channel:  r.dimensionValues[0].value,
+    sessions: parseInt(r.metricValues[0].value),
+    users:    parseInt(r.metricValues[1].value),
+  }));
+
+  const sources = (sourcesRes.data.rows || []).map(r => ({
+    sourceMedium: r.dimensionValues[0].value,
+    sessions:     parseInt(r.metricValues[0].value),
+  }));
+
   res.setHeader("Cache-Control", "s-maxage=300");
-  res.json({ overview, topPages, devices, daily });
+  res.json({ overview, topPages, devices, daily, channels, sources });
 }
 
 async function getClientes(res) {

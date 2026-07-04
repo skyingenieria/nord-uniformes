@@ -512,6 +512,19 @@
             </div>
 
             <div class="charts-grid" style="margin-bottom:20px">
+              <!-- Canales de origen -->
+              <div class="chart-card">
+                <p class="chart-card-title">Canales de origen</p>
+                <div class="bar-list" id="ga4-channels"></div>
+              </div>
+              <!-- Fuente / medio detallado -->
+              <div class="chart-card">
+                <p class="chart-card-title">Fuente / Medio</p>
+                <div class="bar-list" id="ga4-sources"></div>
+              </div>
+            </div>
+
+            <div class="charts-grid" style="margin-bottom:20px">
               <!-- Top páginas -->
               <div class="chart-card">
                 <p class="chart-card-title">Páginas más visitadas</p>
@@ -1202,6 +1215,29 @@ function renderGA4(data) {
       <div class="bar-label" title="${p.path}">${p.path}</div>
       <div class="bar-track"><div class="bar-fill" style="width:${(p.pageviews/maxPV*100).toFixed(1)}%"></div></div>
       <div class="bar-val">${p.pageviews.toLocaleString("es-AR")}</div>
+    </div>`).join("") || "<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
+
+  // Canales de origen
+  const channelIcon = {
+    "Organic Search": "🔍", "Direct": "🔗", "Referral": "↗️",
+    "Organic Social": "📱", "Email": "📧", "Paid Search": "💰",
+    "Organic Video": "🎥", "Unassigned": "❓",
+  };
+  const maxCh = Math.max(...(data.channels||[]).map(c => c.sessions), 1);
+  document.getElementById("ga4-channels").innerHTML = (data.channels||[]).map(c => `
+    <div class="bar-item">
+      <div class="bar-label">${channelIcon[c.channel]||"🌐"} ${c.channel}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(c.sessions/maxCh*100).toFixed(1)}%"></div></div>
+      <div class="bar-val">${c.sessions.toLocaleString("es-AR")} ses.</div>
+    </div>`).join("") || "<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
+
+  // Fuente / Medio
+  const maxSrc = Math.max(...(data.sources||[]).map(s => s.sessions), 1);
+  document.getElementById("ga4-sources").innerHTML = (data.sources||[]).map(s => `
+    <div class="bar-item">
+      <div class="bar-label" title="${s.sourceMedium}">${s.sourceMedium}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(s.sessions/maxSrc*100).toFixed(1)}%"></div></div>
+      <div class="bar-val">${s.sessions.toLocaleString("es-AR")} ses.</div>
     </div>`).join("") || "<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
 
   // Dispositivos
