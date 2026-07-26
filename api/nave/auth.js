@@ -15,6 +15,7 @@ async function getAccessToken() {
   const url = process.env.NAVE_ENV === "prod"
     ? "https://services.apinaranja.com/security-ms/api/security/auth0/b2b/m2msPrivate"
     : "https://homoservices.apinaranja.com/security-ms/api/security/auth0/b2b/m2msPrivate";
+  console.log("[nave-auth] NAVE_ENV:", process.env.NAVE_ENV, "→ url:", url);
 
   const body = {
     client_id: process.env.NAVE_CLIENT_ID,
