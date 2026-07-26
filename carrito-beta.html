@@ -535,16 +535,23 @@ async function pagarConNave({ idPedido, sub, nombre, apellido, email, tel, cart,
   }, 600);
 }
 
+let navePopup = null;
+
 function abrirModalNave(url) {
-  document.getElementById("nave-iframe").src = url;
-  document.getElementById("nave-modal").classList.add("open");
-  document.body.style.overflow = "hidden";
+  const w = 500, h = 700;
+  const left = Math.round(screen.width / 2 - w / 2);
+  const top  = Math.round(screen.height / 2 - h / 2);
+  navePopup = window.open(url, "nave-checkout",
+    `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+  if (!navePopup) {
+    // Si el navegador bloqueó el popup, redirigir en la misma pestaña
+    window.location.href = url;
+  }
 }
 
 function cerrarModalNave() {
-  document.getElementById("nave-modal").classList.remove("open");
-  document.getElementById("nave-iframe").src = "";
-  document.body.style.overflow = "";
+  if (navePopup && !navePopup.closed) navePopup.close();
+  navePopup = null;
 }
 
 function mostrarExitoNave() {
