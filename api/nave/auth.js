@@ -13,13 +13,18 @@ async function getAccessToken() {
   }
 
   const naveEnv = (process.env.NAVE_ENV || "").replace(/﻿/g, "").trim();
+  const rawId = process.env.NAVE_CLIENT_ID || "";
+  const cleanId = rawId.replace(/﻿/g, "").trim();
+  const rawSecret = process.env.NAVE_CLIENT_SECRET || "";
+  const cleanSecret = rawSecret.replace(/﻿/g, "").trim();
+  console.log("[nave-auth] env:", naveEnv, "id_len:", cleanId.length, "id_start:", cleanId.slice(0,6), "secret_len:", cleanSecret.length);
   const url = naveEnv === "prod"
     ? "https://services.apinaranja.com/security-ms/api/security/auth0/b2b/m2msPrivate"
     : "https://homoservices.apinaranja.com/security-ms/api/security/auth0/b2b/m2msPrivate";
 
   const body = {
-    client_id: process.env.NAVE_CLIENT_ID,
-    client_secret: process.env.NAVE_CLIENT_SECRET,
+    client_id: cleanId,
+    client_secret: cleanSecret,
     audience: "https://naranja.com/ranty/merchants/api",
   };
 
