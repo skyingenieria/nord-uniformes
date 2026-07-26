@@ -227,6 +227,8 @@ function onMetodoPagoChange() {
       totalDisplay.textContent = fmt(sub);
     }
   }
+  // Pre-calentar token de Nave para reducir latencia al pagar
+  if (metodo === "nave") fetch("/api/nave/warmup").catch(() => {});
   // Ocultar paneles de resultado si el usuario cambia de método
   ["datos-pago","nave-loading","nave-ok"].forEach(id => {
     document.getElementById(id)?.classList.remove("visible");
