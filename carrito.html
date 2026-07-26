@@ -302,7 +302,7 @@ function render() {
             <input type="radio" name="metodo-pago" value="transferencia" checked>
             <div class="pago-option-label">
               <div class="pago-option-title">🏦 Transferencia bancaria</div>
-              <div class="pago-option-desc">Te enviamos los datos al confirmar. Sin costo extra.</div>
+              <div class="pago-option-desc">Te enviamos los datos al confirmar.</div>
             </div>
           </label>
           <label class="pago-option" onclick="this.classList.add('selected');this.parentElement.querySelectorAll('.pago-option').forEach(o=>o!==this&&o.classList.remove('selected'));onMetodoPagoChange()">
