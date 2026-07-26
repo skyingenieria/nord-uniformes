@@ -488,6 +488,12 @@ function pagarConTransferencia({ sub, idPedido, clienteData, nombre, apellido, e
 
 async function pagarConNave({ idPedido, sub, nombre, apellido, email, tel, cart, btn }) {
   btn.textContent = "Conectando con Nave…";
+  // Abrir popup ANTES del fetch para que esté dentro del user-gesture (necesario en mobile)
+  const w = 500, h = 700;
+  const left = Math.round(screen.width / 2 - w / 2);
+  const top  = Math.round(screen.height / 2 - h / 2);
+  navePopup = window.open("about:blank", "nave-checkout",
+    `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`);
 
   const naveRes = await fetch("/api/nave/create-payment", {
     method: "POST", headers: { "Content-Type": "application/json" },
@@ -503,34 +509,23 @@ async function pagarConNave({ idPedido, sub, nombre, apellido, email, tel, cart,
 
   const naveData = await naveRes.json();
   if (!naveRes.ok || !naveData.checkout_url) {
+    cerrarModalNave(); // cerrar el popup en blanco si hubo error
     const detail = typeof naveData.details === "object"
       ? JSON.stringify(naveData.details)
       : (naveData.details || "");
     throw new Error((naveData.error || "Error Nave") + (detail ? "\n\nDetalle: " + detail : ""));
   }
 
-  // Mostrar loading brevemente y abrir modal con iframe
-  document.getElementById("nave-loading").classList.add("visible");
+  document.getElementById("nave-loading").classList.remove("visible");
   btn.textContent = "PAGAR CON NAVE →";
   btn.disabled = false;
 
-  setTimeout(() => {
-    document.getElementById("nave-loading").classList.remove("visible");
-    abrirModalNave(naveData.checkout_url);
-  }, 600);
-}
-
-let navePopup = null;
-
-function abrirModalNave(url) {
-  const w = 500, h = 700;
-  const left = Math.round(screen.width / 2 - w / 2);
-  const top  = Math.round(screen.height / 2 - h / 2);
-  navePopup = window.open(url, "nave-checkout",
-    `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`);
-  if (!navePopup) {
-    // Si el navegador bloqueó el popup, redirigir en la misma pestaña
-    window.location.href = url;
+  // Navegar el popup ya abierto (abierto en el user-gesture para que mobile no lo bloquee)
+  if (navePopup && !navePopup.closed) {
+    navePopup.location.href = naveData.checkout_url;
+    navePopup.focus();
+  } else {
+    window.location.href = naveData.checkout_url;
   }
 }
 
