@@ -1239,8 +1239,10 @@ function renderGA4(data) {
     </div>`).join("") || "<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
 
   // Fuente / Medio
-  const maxSrc = Math.max(...(data.sources||[]).map(s => s.sessions), 1);
-  document.getElementById("ga4-sources").innerHTML = (data.sources||[]).map(s => `
+  const srcBlocklist = ["bing / organic","l.wl.co / referral","(not set)","vercel.com / referral","facebook.com / referral","scour.com / referral","zeekly.com / referral"];
+  const filteredSources = (data.sources||[]).filter(s => !srcBlocklist.includes(s.sourceMedium));
+  const maxSrc = Math.max(...filteredSources.map(s => s.sessions), 1);
+  document.getElementById("ga4-sources").innerHTML = filteredSources.map(s => `
     <div class="bar-item">
       <div class="bar-label" title="${s.sourceMedium}">${s.sourceMedium}</div>
       <div class="bar-track"><div class="bar-fill" style="width:${(s.sessions/maxSrc*100).toFixed(1)}%"></div></div>
