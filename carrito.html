@@ -211,6 +211,22 @@ function onMetodoPagoChange() {
     btn.textContent = "IR A PAGAR";
     btn.classList.remove("nave-btn");
   }
+  // Mostrar/ocultar recargo y actualizar total en el resumen
+  const sub = getCart().reduce((s, i) => s + i.precio * i.qty, 0);
+  const recargoRow = document.getElementById("recargo-row");
+  const recargoVal = document.getElementById("recargo-val");
+  const totalDisplay = document.getElementById("total-display");
+  if (recargoRow && totalDisplay) {
+    if (metodo === "nave") {
+      const recargo = Math.round(sub * 0.10);
+      recargoRow.style.display = "";
+      recargoVal.textContent = fmt(recargo);
+      totalDisplay.textContent = fmt(sub + recargo);
+    } else {
+      recargoRow.style.display = "none";
+      totalDisplay.textContent = fmt(sub);
+    }
+  }
   // Ocultar paneles de resultado si el usuario cambia de método
   ["datos-pago","nave-loading","nave-ok"].forEach(id => {
     document.getElementById(id)?.classList.remove("visible");
@@ -295,7 +311,7 @@ function render() {
                 Pagar con Nave
                 <span class="badge-new">NUEVO</span>
               </div>
-              <div class="pago-option-desc">Tarjeta de débito/crédito o QR. El checkout se abre sin salir de la página.</div>
+              <div class="pago-option-desc">Tarjeta de débito/crédito · 3 cuotas sin interés · <strong style="color:#92400e">Recargo 10% sobre el total</strong></div>
             </div>
           </label>
         </div>
@@ -305,7 +321,8 @@ function render() {
     <div class="summary-panel">
       <p class="summary-title">Resumen del pedido</p>
       ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(i.precio*i.qty)}</span></div>`).join("")}
-      <div class="sum-row total"><span>Total</span><span>${fmt(sub)}</span></div>
+      <div class="sum-row" id="recargo-row" style="display:none"><span>Recargo tarjeta (10%)</span><span id="recargo-val"></span></div>
+      <div class="sum-row total"><span>Total</span><span id="total-display">${fmt(sub)}</span></div>
 
       <button class="btn-pagar" onclick="irAPagar()">IR A PAGAR</button>
 
@@ -499,7 +516,7 @@ async function pagarConNave({ idPedido, sub, nombre, apellido, email, tel, cart,
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       orderId: idPedido,
-      total: sub,
+      total: Math.round(sub * 1.10),
       nombreCliente: `${nombre} ${apellido}`,
       email,
       telefono: tel,
