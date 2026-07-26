@@ -205,7 +205,7 @@ function onMetodoPagoChange() {
   const btn = document.querySelector(".btn-pagar");
   if (!btn) return;
   if (metodo === "nave") {
-    btn.textContent = "PAGAR CON NAVE →";
+    btn.textContent = "PAGAR CON TARJETA →";
     btn.classList.add("nave-btn");
   } else {
     btn.textContent = "IR A PAGAR";
@@ -309,11 +309,9 @@ function render() {
             <input type="radio" name="metodo-pago" value="nave">
             <div class="pago-option-label">
               <div class="pago-option-title">
-                <span class="nave-logo">nave</span>
-                Pagar con Nave
-                <span class="badge-new">NUEVO</span>
+                💳 Pagar con Tarjeta
               </div>
-              <div class="pago-option-desc">Tarjeta de débito/crédito · 3 cuotas sin interés · <strong style="color:#92400e">Recargo 10% sobre el total</strong></div>
+              <div class="pago-option-desc">Débito o crédito en 3 cuotas SIN INTERÉS · <strong style="color:#92400e">Recargo 10% sobre el total</strong></div>
             </div>
           </label>
         </div>
@@ -481,7 +479,7 @@ async function irAPagar() {
     }
 
   } catch (err) {
-    btn.textContent = getMetodoPago() === "nave" ? "PAGAR CON NAVE →" : "IR A PAGAR";
+    btn.textContent = getMetodoPago() === "nave" ? "PAGAR CON TARJETA →" : "IR A PAGAR";
     btn.disabled = false;
     alert("Error: " + err.message);
   }
@@ -537,7 +535,7 @@ async function pagarConNave({ idPedido, sub, nombre, apellido, email, tel, cart,
   }
 
   document.getElementById("nave-loading").classList.remove("visible");
-  btn.textContent = "PAGAR CON NAVE →";
+  btn.textContent = "PAGAR CON TARJETA →";
   btn.disabled = false;
 
   // Navegar el popup ya abierto (abierto en el user-gesture para que mobile no lo bloquee)
