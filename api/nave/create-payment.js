@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
     const payload = {
       external_payment_id: orderId,
       seller: {
-        pos_id: process.env.NAVE_POS_ID,
+        pos_id: (process.env.NAVE_POS_ID || "").replace(/﻿/g, "").trim(),
       },
       transactions: [
         {
