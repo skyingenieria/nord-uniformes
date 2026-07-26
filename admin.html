@@ -511,6 +511,13 @@
               <div class="daily-chart" id="ga4-daily"></div>
             </div>
 
+            <!-- QRs por fuente -->
+            <div class="chart-card ga4-section" style="margin-bottom:20px">
+              <p class="chart-card-title">QRs — Escaneos por fuente (últimos 30 días)</p>
+              <div id="ga4-qr-legend" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-size:11px;font-weight:700"></div>
+              <svg id="ga4-qr-chart" width="100%" style="display:block;overflow:visible" aria-label="QR escaneos por fuente"></svg>
+            </div>
+
             <div class="charts-grid" style="margin-bottom:20px">
               <!-- Canales de origen -->
               <div class="chart-card">
@@ -1239,6 +1246,75 @@ function renderGA4(data) {
       <div class="bar-track"><div class="bar-fill" style="width:${(s.sessions/maxSrc*100).toFixed(1)}%"></div></div>
       <div class="bar-val">${s.sessions.toLocaleString("es-AR")} ses.</div>
     </div>`).join("") || "<div style='color:#8b949e;font-size:13px'>Sin datos</div>";
+
+  // QRs — gráfico de líneas por fuente
+  const qrData = data.qrDaily || [];
+  const qrSvg  = document.getElementById("ga4-qr-chart");
+  const qrLeg  = document.getElementById("ga4-qr-legend");
+  qrLeg.innerHTML = "";
+  if (!qrData.length) {
+    qrSvg.style.display = "none";
+    qrLeg.innerHTML = "<span style='color:#8b949e'>Sin datos de QRs aún</span>";
+  } else {
+    const QR_COLORS = {
+      "via_publica / qr":       "#C8A96E",
+      "folleto / qr":           "#6d28d9",
+      "cartelera_colegio / qr": "#2e7d52",
+    };
+    const FALLBACK = ["#e05252","#3b82f6","#f59e0b","#ec4899"];
+    const allDates   = [...new Set(qrData.map(r => r.date))].sort();
+    const allSources = [...new Set(qrData.map(r => r.sourceMedium))];
+    const bySource   = {};
+    allSources.forEach(src => {
+      bySource[src] = {};
+      allDates.forEach(d => bySource[src][d] = 0);
+    });
+    qrData.forEach(r => bySource[r.sourceMedium][r.date] = r.sessions);
+    const maxVal = Math.max(...qrData.map(r => r.sessions), 1);
+
+    const W = 600, H = 120, PL = 28, PR = 8, PT = 8, PB = 20;
+    const IW = W - PL - PR, IH = H - PT - PB;
+    const xStep = allDates.length > 1 ? IW / (allDates.length - 1) : IW;
+
+    const xPos = i => PL + i * xStep;
+    const yPos = v => PT + IH - (v / maxVal) * IH;
+
+    let svgInner = `<defs><clipPath id="qr-clip"><rect x="${PL}" y="${PT}" width="${IW}" height="${IH}"/></clipPath></defs>`;
+
+    // grid lines
+    [0, 0.5, 1].forEach(t => {
+      const y = PT + IH * (1 - t);
+      svgInner += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#30363d" stroke-width="1"/>`;
+      if (t > 0) svgInner += `<text x="${PL-4}" y="${y+4}" font-size="9" fill="#8b949e" text-anchor="end">${Math.round(maxVal*t)}</text>`;
+    });
+
+    // x labels (show first, middle, last)
+    [0, Math.floor(allDates.length/2), allDates.length-1].forEach(i => {
+      if (allDates[i]) {
+        const d = allDates[i];
+        const label = `${d.slice(6,8)}/${d.slice(4,6)}`;
+        svgInner += `<text x="${xPos(i)}" y="${H-4}" font-size="9" fill="#8b949e" text-anchor="middle">${label}</text>`;
+      }
+    });
+
+    allSources.forEach((src, si) => {
+      const color = QR_COLORS[src] || FALLBACK[si % FALLBACK.length];
+      const pts = allDates.map((d, i) => `${xPos(i)},${yPos(bySource[src][d])}`).join(" ");
+      svgInner += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" clip-path="url(#qr-clip)"/>`;
+      allDates.forEach((d, i) => {
+        const v = bySource[src][d];
+        if (v > 0) svgInner += `<circle cx="${xPos(i)}" cy="${yPos(v)}" r="3.5" fill="${color}"><title>${src}: ${v} ses. (${d.slice(6,8)}/${d.slice(4,6)})</title></circle>`;
+      });
+      const total = allDates.reduce((s,d) => s + bySource[src][d], 0);
+      const label = src.replace(" / qr","").replace(/_/g," ");
+      qrLeg.innerHTML += `<span style="color:${color};display:flex;align-items:center;gap:5px"><svg width="16" height="4"><line x1="0" y1="2" x2="16" y2="2" stroke="${color}" stroke-width="2.5"/></svg>${label} <span style="font-weight:300;color:#8b949e">(${total} total)</span></span>`;
+    });
+
+    qrSvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    qrSvg.setAttribute("height", H);
+    qrSvg.style.display = "block";
+    qrSvg.innerHTML = svgInner;
+  }
 
   // Dispositivos
   const maxDev = Math.max(...(data.devices||[]).map(d => d.sessions), 1);

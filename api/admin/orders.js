@@ -50,7 +50,7 @@ async function getGA4(res) {
   const analyticsdata = google.analyticsdata({ version: "v1beta", auth });
   const prop = `properties/${GA4_PROPERTY_ID}`;
 
-  const [overviewRes, pagesRes, devicesRes, dailyRes, channelsRes, sourcesRes] = await Promise.all([
+  const [overviewRes, pagesRes, devicesRes, dailyRes, channelsRes, sourcesRes, qrDailyRes] = await Promise.all([
     // Resumen últimos 30 días
     analyticsdata.properties.runReport({
       property: prop,
@@ -118,6 +118,22 @@ async function getGA4(res) {
         limit: 10,
       },
     }),
+    // QRs — sesiones diarias por fuente (utm_medium=qr)
+    analyticsdata.properties.runReport({
+      property: prop,
+      requestBody: {
+        dateRanges: [{ startDate: "29daysAgo", endDate: "today" }],
+        dimensions: [{ name: "date" }, { name: "sessionSourceMedium" }],
+        metrics: [{ name: "sessions" }],
+        orderBys: [{ dimension: { dimensionName: "date" } }],
+        dimensionFilter: {
+          filter: {
+            fieldName: "sessionMedium",
+            stringFilter: { matchType: "EXACT", value: "qr" },
+          },
+        },
+      },
+    }),
   ]);
 
   const ov = overviewRes.data.rows?.[0]?.metricValues || [];
@@ -157,8 +173,14 @@ async function getGA4(res) {
     sessions:     parseInt(r.metricValues[0].value),
   }));
 
+  const qrDaily = (qrDailyRes.data.rows || []).map(r => ({
+    date:        r.dimensionValues[0].value,
+    sourceMedium: r.dimensionValues[1].value,
+    sessions:    parseInt(r.metricValues[0].value),
+  }));
+
   res.setHeader("Cache-Control", "s-maxage=300");
-  res.json({ overview, topPages, devices, daily, channels, sources });
+  res.json({ overview, topPages, devices, daily, channels, sources, qrDaily });
 }
 
 async function getClientes(res) {
