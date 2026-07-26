@@ -25,7 +25,11 @@ async function getAccessToken() {
 
   const r = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "User-Agent": "Mozilla/5.0",
+    },
     body: JSON.stringify(body),
   });
 
