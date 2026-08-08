@@ -333,7 +333,7 @@
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>ID</th><th>Cliente</th><th>Prendas</th><th>Monto</th><th>Forma Pago</th><th>Cobrado</th><th>Saldo</th><th>Estado</th></tr></thead>
+              <thead><tr><th>ID</th><th>Cliente</th><th>Prendas</th><th>Monto</th><th>Descuento</th><th>Forma Pago</th><th>Cobrado</th><th>Saldo</th><th>Estado</th></tr></thead>
               <tbody id="pedidos-tbody"></tbody>
             </table>
           </div>
@@ -406,6 +406,12 @@
               <p class="venta-panel-title">3. Resumen del pedido</p>
               <div class="item-list" id="venta-items">
                 <p style="color:#8b949e;font-size:13px;text-align:center;padding:24px 0">Sin prendas agregadas</p>
+              </div>
+              <div class="venta-total" style="font-size:14px;font-weight:600;color:#8b949e;border-top:none;padding-top:8px"><span>Subtotal prendas</span><span id="venta-subtotal-val">$0</span></div>
+              <div class="form-group" id="venta-envio-group" style="margin-top:8px">
+                <label class="form-label">Envío</label>
+                <input class="form-input" type="number" id="venta-envio" value="0" min="0" step="100" placeholder="0" oninput="renderVentaItems()">
+                <p class="form-label" id="venta-envio-hint" style="color:#d29922;font-size:11px;margin-top:4px;display:none">⚠ Compra menor a $130.000 — corresponde cobrar envío</p>
               </div>
               <div class="venta-total"><span>Total</span><span id="venta-total-val">$0</span></div>
               <button class="btn-confirmar" id="btn-confirmar-venta" onclick="confirmarVenta()" disabled>Confirmar venta</button>
@@ -799,7 +805,7 @@ function renderPedidos() {
   );
   const tbody = document.getElementById("pedidos-tbody");
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#8b949e;padding:32px">Sin pedidos</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#8b949e;padding:32px">Sin pedidos</td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(p => `<tr class="${p.saldo<=0?'pedido-row-pagado':''}">
@@ -807,6 +813,7 @@ function renderPedidos() {
     <td style="font-weight:700">${p.cliente}</td>
     <td style="color:#8b949e">${p.cant} prenda${p.cant!==1?'s':''}</td>
     <td style="font-weight:700">${fmt(p.monto)}</td>
+    <td style="${p.descuento>0?'color:#d29922;font-weight:700':'color:#8b949e'}">${p.descuento>0?'−'+fmt(p.descuento):'—'}</td>
     <td style="color:#8b949e;font-size:12px">${p.formaPago||"—"}</td>
     <td style="color:#3fb950;font-weight:700">${fmt(p.montoPago)}</td>
     <td style="${p.saldo>0?'color:#f85149':'color:#3fb950'};font-weight:800">${fmt(p.saldo)}</td>
@@ -882,6 +889,7 @@ async function guardarCliente() {
 // ── NUEVA VENTA ───────────────────────────────────────────────────────────
 let ventaItems = [];
 let selectedCliente = null;
+const ENVIO_UMBRAL = 130000; // Envío gratis desde este monto (inclusive)
 
 async function loadProducts() {
   const r = await fetch("/api/products");
@@ -963,20 +971,27 @@ function removeItem(idx) { ventaItems.splice(idx,1); renderVentaItems(); updateC
 
 function renderVentaItems() {
   const el = document.getElementById("venta-items");
+  const subtotal = ventaItems.reduce((s,i)=>s+i.precio*i.qty,0);
+  const envio = parseFloat(document.getElementById("venta-envio")?.value) || 0;
+
   if (!ventaItems.length) {
     el.innerHTML=`<p style="color:#8b949e;font-size:13px;text-align:center;padding:24px 0">Sin prendas agregadas</p>`;
-    document.getElementById("venta-total-val").textContent="$0";
-    return;
+  } else {
+    el.innerHTML=ventaItems.map((i,idx)=>`
+      <div class="item-row">
+        <span class="item-name">${i.nombre}${i.sinStock?' <span style="color:#f85149;font-size:10px">SIN STOCK</span>':''}</span>
+        <span class="item-talle">T. ${i.talle}</span>
+        <span class="item-qty">×${i.qty}</span>
+        <span class="item-precio">${fmt(i.precio*i.qty)}</span>
+        <button class="item-del" onclick="removeItem(${idx})">×</button>
+      </div>`).join("");
   }
-  el.innerHTML=ventaItems.map((i,idx)=>`
-    <div class="item-row">
-      <span class="item-name">${i.nombre}${i.sinStock?' <span style="color:#f85149;font-size:10px">SIN STOCK</span>':''}</span>
-      <span class="item-talle">T. ${i.talle}</span>
-      <span class="item-qty">×${i.qty}</span>
-      <span class="item-precio">${fmt(i.precio*i.qty)}</span>
-      <button class="item-del" onclick="removeItem(${idx})">×</button>
-    </div>`).join("");
-  document.getElementById("venta-total-val").textContent=fmt(ventaItems.reduce((s,i)=>s+i.precio*i.qty,0));
+
+  document.getElementById("venta-subtotal-val").textContent = fmt(subtotal);
+  // Sugerir envío cuando la compra es menor al umbral (envío gratis desde el umbral).
+  const hint = document.getElementById("venta-envio-hint");
+  if (hint) hint.style.display = (ventaItems.length && subtotal < ENVIO_UMBRAL && envio <= 0) ? "block" : "none";
+  document.getElementById("venta-total-val").textContent = fmt(subtotal + envio);
 }
 
 function updateConfirmarBtn() {
@@ -992,11 +1007,13 @@ async function confirmarVenta() {
   try {
     const idResp = await fetch("/api/pedidos/next-id");
     const { nextId } = await idResp.json();
-    const total = ventaItems.reduce((s,i)=>s+i.precio*i.qty,0);
+    const subtotal = ventaItems.reduce((s,i)=>s+i.precio*i.qty,0);
+    const envio = parseFloat(document.getElementById("venta-envio")?.value) || 0;
+    const total = subtotal + envio;
     const r = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idPedido: nextId, codigoCliente: selectedCliente.codigo, items: ventaItems, total, pago: "transferencia" }),
+      body: JSON.stringify({ idPedido: nextId, codigoCliente: selectedCliente.codigo, items: ventaItems, envio, total, pago: "transferencia" }),
     });
     const data = await r.json();
     if (r.ok) {
@@ -1005,6 +1022,7 @@ async function confirmarVenta() {
       ventaItems=[]; selectedCliente=null;
       document.getElementById("venta-cliente-search").value="";
       document.getElementById("venta-selected-client").style.display="none";
+      document.getElementById("venta-envio").value="0";
       renderVentaItems();
       allPedidos=[];
       loadOrders();

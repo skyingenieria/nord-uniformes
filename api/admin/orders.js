@@ -202,9 +202,11 @@ async function getMetrics(res) {
   const sheets = google.sheets({ version: "v4", auth: makeAuth() });
   const result = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.SPREADSHEET_ID,
-    range: "'Pedidos'!A:K",
+    range: "'Pedidos'!A:L",
   });
   const rows = result.data.values || [];
+  // A:ID B:Cliente C:Cant D:Monto E:Descuento F:FormaPago G:FechaPago
+  // H:MontoPago I:Saldo J:EstadoPago K:Envio L:EstadoEnvio
   const pedidos = rows.slice(1)
     .filter(r => r[0]?.trim() && /^WS\d/.test(r[1] || ""))
     .map(r => ({
@@ -212,19 +214,21 @@ async function getMetrics(res) {
       cliente:     r[1] || "",
       cant:        parseNum(r[2]),
       monto:       parseNum(r[3]),
-      formaPago:   r[4] || "",
-      fechaPago:   r[5] || "",
-      montoPago:   parseNum(r[6]),
-      saldo:       parseNum(r[7]),
-      estadoPago:  r[8] || "",
-      envio:       r[9] || "",
-      estadoEnvio: r[10] || "",
+      descuento:   parseNum(r[4]),
+      formaPago:   r[5] || "",
+      fechaPago:   r[6] || "",
+      montoPago:   parseNum(r[7]),
+      saldo:       parseNum(r[8]),
+      estadoPago:  r[9] || "",
+      envio:       r[10] || "",
+      estadoEnvio: r[11] || "",
     }));
-  const pendientes   = pedidos.filter(p => p.saldo > 0);
-  const totalSaldo   = pendientes.reduce((s, p) => s + p.saldo, 0);
-  const totalCobrado = pedidos.reduce((s, p) => s + p.montoPago, 0);
+  const pendientes     = pedidos.filter(p => p.saldo > 0);
+  const totalSaldo     = pendientes.reduce((s, p) => s + p.saldo, 0);
+  const totalCobrado   = pedidos.reduce((s, p) => s + p.montoPago, 0);
+  const totalDescuento = pedidos.reduce((s, p) => s + p.descuento, 0);
   res.setHeader("Cache-Control", "no-store");
-  res.json({ pedidos, pendientes, totalSaldo, totalCobrado });
+  res.json({ pedidos, pendientes, totalSaldo, totalCobrado, totalDescuento });
 }
 
 async function patchOrder(req, res) {
