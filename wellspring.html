@@ -1223,10 +1223,27 @@
       margin-bottom: 4px;
     }
 
+    .modal-precio-lista {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--azul-400);
+      margin-bottom: 2px;
+    }
     .modal-product-price {
       font-size: 32px;
       font-weight: 900;
-      color: var(--azul-900);
+      color: var(--dorado-700);
+    }
+    .modal-transf-tag {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dorado-700);
+      margin-left: 4px;
+    }
+    .modal-cuotas {
+      font-size: 12px;
+      color: var(--azul-400);
+      margin-top: 6px;
     }
 
     .modal-talles-section {
@@ -1697,7 +1714,7 @@
         </button>
         <div class="drawer-acc-body">
           <p><strong>Transferencia bancaria:</strong> Te enviamos los datos al confirmar.</p>
-          <p><strong>Tarjeta:</strong> Débito o crédito en 3 cuotas SIN INTERÉS. Recargo del 15% sobre el total.</p>
+          <p><strong>Tarjeta:</strong> Débito o crédito en 3 cuotas SIN INTERÉS, al precio de lista.</p>
         </div>
       </div>
       <div class="drawer-acc-item">
@@ -1749,7 +1766,7 @@
     <div class="politica-item">
       <h4>💳 Forma de pago</h4>
       <p><strong>Transferencia bancaria:</strong> Te enviamos los datos al confirmar.</p>
-      <p><strong>Tarjeta:</strong> Débito o crédito en 3 cuotas SIN INTERÉS. Recargo del 15% sobre el total.</p>
+      <p><strong>Tarjeta:</strong> Débito o crédito en 3 cuotas SIN INTERÉS, al precio de lista.</p>
     </div>
     <div class="politica-item">
       <h4>📍 Punto de retiro</h4>
@@ -1859,8 +1876,10 @@
       </div>
 
       <div class="modal-price-section">
-        <div id="modal-product-price" class="modal-product-price">$0</div>
-        <div style="font-size:11px;color:var(--azul-400);margin-top:4px;">El pago se realizará únicamente por transferencia bancaria.</div>
+        <div id="modal-precio-lista" class="modal-precio-lista"></div>
+        <div><span id="modal-product-price" class="modal-product-price">$0</span><span class="modal-transf-tag">con Transferencia</span></div>
+        <div id="modal-cuotas" class="modal-cuotas"></div>
+        <div style="font-size:11px;color:var(--azul-400);margin-top:8px;">Precio con transferencia · con tarjeta, 3 cuotas sin interés al precio de lista.</div>
       </div>
 
       <!-- Fila: Selecciona tu talle + Guía de talles -->
@@ -1960,6 +1979,17 @@
   // ── Formatear precio ─────────────────────────────────────────────────
   function fmt(n) {
     return "$" + Number(n).toLocaleString("es-AR");
+  }
+
+  // Setea el bloque de precios del modal: lista + transferencia + cuotas
+  function setModalPrecio(precio) {
+    const lista = Math.round(precio * 1.15);
+    const elT = document.getElementById("modal-product-price");
+    if (elT) elT.textContent = fmt(Math.round(precio));
+    const elL = document.getElementById("modal-precio-lista");
+    if (elL) elL.textContent = fmt(lista);
+    const elC = document.getElementById("modal-cuotas");
+    if (elC) elC.textContent = "3 cuotas sin interés de " + fmt(Math.round(lista / 3));
   }
 
   // ── Renderizar productos ─────────────────────────────────────────────
@@ -2092,7 +2122,7 @@
       return;
     }
 
-    const total = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+    const total = cart.reduce((s, i) => s + Math.round(i.precio * 1.15) * i.qty, 0);
     itemsEl.innerHTML = cart.map(item => `
       <div class="drawer-item">
         <div class="drawer-item-info">
@@ -2104,7 +2134,7 @@
           <span class="drawer-qty-num">${item.qty}</span>
           <button class="drawer-qty-btn" onclick="drawerQty('${item.key}',1)">+</button>
         </div>
-        <div class="drawer-item-price">${fmt(item.precio * item.qty)}</div>
+        <div class="drawer-item-price">${fmt(Math.round(item.precio * 1.15) * item.qty)}</div>
         <button class="drawer-remove" onclick="drawerRemove('${item.key}')" title="Eliminar">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -2417,7 +2447,7 @@
     });
     const primerTalle = tallesOrdenados.find(t => t.precio > 0);
     if (primerTalle) {
-      document.getElementById("modal-product-price").textContent = fmt(Math.round(primerTalle.precio));
+      setModalPrecio(primerTalle.precio);
     }
 
     // Resetear selección de talle y banner sin stock
@@ -2475,7 +2505,7 @@
       addBtn.style.display = "";
       addBtn.disabled = false;
       addBtn.textContent = "AÑADIR AL CARRITO";
-      document.getElementById("modal-product-price").textContent = fmt(Math.round(precio));
+      setModalPrecio(precio);
     }
   }
 

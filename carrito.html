@@ -211,20 +211,20 @@ function onMetodoPagoChange() {
     btn.textContent = "IR A PAGAR";
     btn.classList.remove("nave-btn");
   }
-  // Mostrar/ocultar recargo y actualizar total en el resumen
-  const sub = getCart().reduce((s, i) => s + i.precio * i.qty, 0);
-  const recargoRow = document.getElementById("recargo-row");
-  const recargoVal = document.getElementById("recargo-val");
+  // Mostrar/ocultar descuento por transferencia y actualizar total
+  const subTransfer = getCart().reduce((s, i) => s + i.precio * i.qty, 0);
+  const subLista    = getCart().reduce((s, i) => s + Math.round(i.precio * 1.15) * i.qty, 0);
+  const descuentoRow = document.getElementById("descuento-row");
+  const descuentoVal = document.getElementById("descuento-val");
   const totalDisplay = document.getElementById("total-display");
-  if (recargoRow && totalDisplay) {
+  if (descuentoRow && totalDisplay) {
     if (metodo === "nave") {
-      const recargo = Math.round(sub * 0.15);
-      recargoRow.style.display = "";
-      recargoVal.textContent = fmt(recargo);
-      totalDisplay.textContent = fmt(sub + recargo);
+      descuentoRow.style.display = "none";
+      totalDisplay.textContent = fmt(subLista);
     } else {
-      recargoRow.style.display = "none";
-      totalDisplay.textContent = fmt(sub);
+      descuentoRow.style.display = "";
+      descuentoVal.textContent = "-" + fmt(subLista - subTransfer);
+      totalDisplay.textContent = fmt(subTransfer);
     }
   }
   // Pre-calentar token de Nave para reducir latencia al pagar
@@ -244,8 +244,10 @@ function render() {
     return;
   }
 
-  const sub = cart.reduce((s, i) => s + i.precio * i.qty, 0);
-  const totalItems = cart.reduce((s, i) => s + i.qty, 0);
+  const subTransfer = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+  const subLista    = cart.reduce((s, i) => s + Math.round(i.precio * 1.15) * i.qty, 0);
+  const descuento   = subLista - subTransfer;
+  const totalItems  = cart.reduce((s, i) => s + i.qty, 0);
 
   const itemsHtml = cart.map(i => `
     <div class="cart-item">
@@ -258,7 +260,7 @@ function render() {
         <span class="qty-num">${i.qty}</span>
         <button class="qty-btn" onclick="changeQty('${i.key}',1)">+</button>
       </div>
-      <div class="item-price">${fmt(i.precio * i.qty)}</div>
+      <div class="item-price">${fmt(Math.round(i.precio * 1.15) * i.qty)}</div>
       <button class="item-remove" onclick="removeItem('${i.key}')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -302,7 +304,7 @@ function render() {
             <input type="radio" name="metodo-pago" value="transferencia" checked>
             <div class="pago-option-label">
               <div class="pago-option-title">🏦 Transferencia bancaria</div>
-              <div class="pago-option-desc">Te enviamos los datos al confirmar.</div>
+              <div class="pago-option-desc"><strong style="color:#2e7d52">Mejor precio</strong> · te enviamos los datos al confirmar.</div>
             </div>
           </label>
           <label class="pago-option" onclick="this.classList.add('selected');this.parentElement.querySelectorAll('.pago-option').forEach(o=>o!==this&&o.classList.remove('selected'));onMetodoPagoChange()">
@@ -311,7 +313,7 @@ function render() {
               <div class="pago-option-title">
                 💳 Pagar con Tarjeta
               </div>
-              <div class="pago-option-desc">Débito o crédito en 3 cuotas SIN INTERÉS · <strong style="color:#92400e">Recargo 15% sobre el total</strong></div>
+              <div class="pago-option-desc">Débito o crédito en 3 cuotas SIN INTERÉS · al precio de lista.</div>
             </div>
           </label>
         </div>
@@ -320,9 +322,9 @@ function render() {
 
     <div class="summary-panel">
       <p class="summary-title">Resumen del pedido</p>
-      ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(i.precio*i.qty)}</span></div>`).join("")}
-      <div class="sum-row" id="recargo-row" style="display:none"><span>Recargo tarjeta (15%)</span><span id="recargo-val"></span></div>
-      <div class="sum-row total"><span>Total</span><span id="total-display">${fmt(sub)}</span></div>
+      ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(Math.round(i.precio*1.15)*i.qty)}</span></div>`).join("")}
+      <div class="sum-row" id="descuento-row" style="color:#2e7d52"><span>Descuento por transferencia</span><span id="descuento-val">-${fmt(descuento)}</span></div>
+      <div class="sum-row total"><span>Total</span><span id="total-display">${fmt(subTransfer)}</span></div>
 
       <button class="btn-pagar" onclick="irAPagar()">IR A PAGAR</button>
 
@@ -425,8 +427,11 @@ async function irAPagar() {
   const apellido = document.getElementById("inp-apellido").value.trim();
   const tel      = document.getElementById("inp-tel").value.trim();
   const email    = document.getElementById("inp-email").value.trim();
-  const cart     = getCart();
-  const sub      = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+  const cart        = getCart();
+  const subTransfer = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+  const subLista    = cart.reduce((s, i) => s + Math.round(i.precio * 1.15) * i.qty, 0);
+  const descuento   = subLista - subTransfer;
+  const totalFinal  = metodo === "nave" ? subLista : subTransfer;
 
   const btn = document.querySelector(".btn-pagar");
   btn.textContent = "Guardando pedido…";
@@ -456,7 +461,7 @@ async function irAPagar() {
       body: JSON.stringify({
         idPedido, codigoCliente: clienteData.codigo,
         nombre, apellido, email, telefono: tel,
-        items: cart, subtotal: sub, descuento: 0, codigo: "", total: sub,
+        items: cart, subtotal: subLista, descuento: metodo === "nave" ? 0 : descuento, codigo: "", total: totalFinal,
         pago: metodo, envio: "retiro",
         direccion: "", cp: "", localidad: "",
       }),
@@ -468,14 +473,14 @@ async function irAPagar() {
 
     // 4. Guardar en session
     sessionStorage.setItem("nord_last_order", JSON.stringify({
-      idPedido, nombre, apellido, items: cart, total: sub,
+      idPedido, nombre, apellido, items: cart, total: totalFinal,
     }));
 
     // 5. Flujo según método
     if (metodo === "nave") {
-      await pagarConNave({ idPedido, sub, nombre, apellido, email, tel, cart, btn });
+      await pagarConNave({ idPedido, total: subLista, nombre, apellido, email, tel, cart, btn });
     } else {
-      pagarConTransferencia({ sub, idPedido, clienteData, nombre, apellido, email, cart, btn });
+      pagarConTransferencia({ subTransfer, subLista, descuento, idPedido, clienteData, nombre, apellido, email, cart, btn });
     }
 
   } catch (err) {
@@ -485,18 +490,18 @@ async function irAPagar() {
   }
 }
 
-function pagarConTransferencia({ sub, idPedido, clienteData, nombre, apellido, email, cart, btn }) {
+function pagarConTransferencia({ subTransfer, subLista, descuento, idPedido, clienteData, nombre, apellido, email, cart, btn }) {
   fetch("/api/mail/send-order-notification", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       idPedido, codigoCliente: clienteData?.codigo,
       nombre, apellido, email, items: cart,
-      subtotal: sub, descuento: 0, total: sub,
+      subtotal: subLista, descuento: descuento, total: subTransfer,
       pago: "transferencia", envio: "retiro",
     }),
   }).catch(() => {});
 
-  document.getElementById("total-a-pagar").textContent = fmt(sub);
+  document.getElementById("total-a-pagar").textContent = fmt(subTransfer);
   document.getElementById("datos-pago").classList.add("visible");
   btn.textContent = "✓ PEDIDO REGISTRADO";
   btn.style.background = "#2e7d52";
@@ -504,7 +509,7 @@ function pagarConTransferencia({ sub, idPedido, clienteData, nombre, apellido, e
   document.getElementById("datos-pago").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-async function pagarConNave({ idPedido, sub, nombre, apellido, email, tel, cart, btn }) {
+async function pagarConNave({ idPedido, total, nombre, apellido, email, tel, cart, btn }) {
   btn.textContent = "Conectando con Nave…";
   // Abrir popup ANTES del fetch para que esté dentro del user-gesture (necesario en mobile)
   const w = 500, h = 700;
@@ -517,7 +522,7 @@ async function pagarConNave({ idPedido, sub, nombre, apellido, email, tel, cart,
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       orderId: idPedido,
-      total: Math.round(sub * 1.15),
+      total: total,
       nombreCliente: `${nombre} ${apellido}`,
       email,
       telefono: tel,
