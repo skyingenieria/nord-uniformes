@@ -2125,7 +2125,7 @@
     try {
       const res = await fetch("/api/products");
       if (!res.ok) throw new Error("Error HTTP " + res.status);
-      const OCULTOS = ["campera azul"];
+      const OCULTOS = [];
       allProducts = (await res.json()).filter(p => !OCULTOS.includes(p.nombre.toLowerCase().trim()));
       renderProducts(allProducts);
       updateCounts();
