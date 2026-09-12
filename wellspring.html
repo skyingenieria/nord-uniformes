@@ -603,10 +603,14 @@
     }
     /* PRECIOS */
     .price-lista {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--azul-900);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--azul-400);
       line-height: 1.2;
+    }
+    .price-lista span {
+      font-weight: 700;
+      color: var(--azul-600);
     }
     .price-transferencia {
       font-size: 14px;
@@ -615,10 +619,12 @@
       margin-top: 4px;
     }
     .price-transferencia strong {
-      font-size: 17px;
+      font-size: 21px;
     }
     .price-cuotas {
-      display: none;
+      font-size: 12px;
+      color: var(--azul-400);
+      margin-top: 5px;
     }
     .price-cuotas strong {
       color: var(--azul-900);
@@ -1020,7 +1026,9 @@
       /* Tarjeta más compacta en mobile */
       .product-body { padding: 12px; gap: 10px; }
       .product-name { font-size: 13px; }
-      .price-transferencia strong { font-size: 14px; }
+      .price-lista { font-size: 12px; }
+      .price-transferencia strong { font-size: 18px; }
+      .price-cuotas { font-size: 11px; }
       .btn-agregar { padding: 11px; font-size: 10px; letter-spacing: .1em; }
 
       /* Imagen más alta en tarjeta */
@@ -1991,6 +1999,10 @@
         ? p.precio
         : (p.talles.find(t => t.precio > 0)?.precio || 0);
 
+      // Precio de lista (tarjeta = transferencia + 15%) y cuota (3 sin interés)
+      const precioLista = Math.round(precioMostrar * 1.15);
+      const precioCuota = Math.round(precioLista / 3);
+
       const generoRaw = (p.genero || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
       const generoLabel = generoRaw === "varon" ? "Varón" : generoRaw === "mujer" ? "Mujer" : generoRaw === "unisex" ? "Unisex" : "";
       const generoClass = generoRaw === "varon" ? "genero-varon" : generoRaw === "mujer" ? "genero-mujer" : "genero-unisex";
@@ -2007,7 +2019,9 @@
               ${generoTag}
               <h2 class="product-name" onclick="openProductModal('${p.id}')" style="cursor:pointer;">${p.nombre}</h2>
               ${precioMostrar > 0
-                ? `<div class="price-transferencia"><strong>${fmt(Math.round(precioMostrar))}</strong></div>`
+                ? `<div class="price-lista">Precio de lista <span>${fmt(precioLista)}</span></div>
+                   <div class="price-transferencia"><strong>${fmt(Math.round(precioMostrar))}</strong> con Transferencia</div>
+                   <div class="price-cuotas">3 cuotas sin interés de ${fmt(precioCuota)}</div>`
                 : `<div class="price-transferencia" style="color:var(--azul-400);font-size:13px">Sin precio</div>`
               }
             </div>
