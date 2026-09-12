@@ -2019,7 +2019,7 @@
               ${generoTag}
               <h2 class="product-name" onclick="openProductModal('${p.id}')" style="cursor:pointer;">${p.nombre}</h2>
               ${precioMostrar > 0
-                ? `<div class="price-lista">Precio de lista <span>${fmt(precioLista)}</span></div>
+                ? `<div class="price-lista"><span>${fmt(precioLista)}</span></div>
                    <div class="price-transferencia"><strong>${fmt(Math.round(precioMostrar))}</strong> con Transferencia</div>
                    <div class="price-cuotas">3 cuotas sin interés de ${fmt(precioCuota)}</div>`
                 : `<div class="price-transferencia" style="color:var(--azul-400);font-size:13px">Sin precio</div>`
