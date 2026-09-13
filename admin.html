@@ -273,6 +273,9 @@
         <button class="tab-btn" data-tab="web" onclick="switchTab('web')">
           <span class="tab-icon">🌐</span><span>Web</span>
         </button>
+        <button class="tab-btn" data-tab="facturacion" onclick="switchTab('facturacion')">
+          <span class="tab-icon">🧾</span><span>Facturación</span>
+        </button>
       </nav>
       <div class="sidebar-footer">
         <button class="btn-logout" onclick="logout()">Salir</button>
@@ -482,6 +485,48 @@
       </div>
 
       <!-- ══════════ TAB: WEB ══════════ -->
+      <!-- ══════════ TAB: FACTURACIÓN ══════════ -->
+      <div id="tab-facturacion" class="tab-panel">
+        <div class="container">
+          <div class="page-header">
+            <div class="page-title">Facturación</div>
+            <div class="page-sub">Factura electrónica C (Monotributo) — ARCA</div>
+          </div>
+
+          <div class="table-wrap" style="padding:18px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8b949e">Estado de ARCA</div>
+              <button onclick="loadFacturacion()" style="background:#1c2128;border:1px solid #30363d;color:#e6edf3;padding:7px 12px;border-radius:8px;cursor:pointer;font-size:12px">↺ Verificar</button>
+            </div>
+            <div id="fac-status" style="margin-top:14px;font-size:13px;color:#8b949e">Tocá "Verificar" para chequear credenciales y conexión.</div>
+          </div>
+
+          <div class="table-wrap" style="padding:18px">
+            <div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8b949e;margin-bottom:16px">Emitir Factura C</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+              <div>
+                <label style="display:block;font-size:11px;color:#8b949e;margin-bottom:6px">Receptor</label>
+                <select id="fac-doctipo" onchange="facToggleDoc()" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:9px;border-radius:8px;font-size:13px">
+                  <option value="99">Consumidor Final</option>
+                  <option value="96">DNI</option>
+                  <option value="80">CUIT</option>
+                </select>
+              </div>
+              <div id="fac-docnro-wrap" style="display:none">
+                <label style="display:block;font-size:11px;color:#8b949e;margin-bottom:6px">Nº de documento</label>
+                <input id="fac-docnro" type="text" placeholder="Sin puntos ni guiones" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:9px;border-radius:8px;font-size:13px">
+              </div>
+              <div>
+                <label style="display:block;font-size:11px;color:#8b949e;margin-bottom:6px">Importe total ($)</label>
+                <input id="fac-importe" type="number" step="0.01" min="0" placeholder="0.00" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:9px;border-radius:8px;font-size:13px">
+              </div>
+            </div>
+            <button id="fac-emitir-btn" onclick="emitirFactura()" style="margin-top:18px;background:var(--dorado);border:none;color:#0d1117;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:12px 20px;border-radius:8px;cursor:pointer;font-size:12px">Emitir Factura C</button>
+            <div id="fac-resultado" style="margin-top:18px"></div>
+          </div>
+        </div>
+      </div>
+
       <div id="tab-web" class="tab-panel">
         <div class="container">
           <div class="page-header" style="display:flex;align-items:center;gap:0">
@@ -638,6 +683,65 @@ function switchTab(tab) {
   if (tab === "pedidos") loadPedidos();
   if (tab === "stock") loadStock();
   if (tab === "web") loadGA4();
+  if (tab === "facturacion") loadFacturacion();
+}
+
+// ── FACTURACIÓN (ARCA) ──────────────────────────────────────────────────────
+function facToggleDoc() {
+  const t = document.getElementById("fac-doctipo").value;
+  document.getElementById("fac-docnro-wrap").style.display = (t === "99") ? "none" : "";
+}
+
+async function loadFacturacion() {
+  const el = document.getElementById("fac-status");
+  el.innerHTML = "Verificando…";
+  try {
+    const r = await fetch("/api/arca/status", { headers: { Authorization: "Bearer " + TOKEN } });
+    const d = await r.json();
+    if (!d.ok) { el.innerHTML = `<span style="color:#f85149">${d.error || "Error"}</span>`; return; }
+    const chip = (ok, txt) => `<span style="color:${ok ? '#3fb950' : '#f85149'}">${ok ? '●' : '○'} ${txt}</span>`;
+    el.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div>Entorno: <strong style="color:#e6edf3">${d.entorno}</strong> · Punto de venta: <strong style="color:#e6edf3">${d.ptoVta}</strong> · CUIT: <strong style="color:#e6edf3">${d.cuit || '—'}</strong></div>
+        <div>${chip(d.credenciales, d.credenciales ? 'Credenciales cargadas' : 'Faltan credenciales')}</div>
+        <div>${chip(!!d.conectividad, 'Conectividad WSFE')}</div>
+        <div>${chip(d.certificadoOk, 'Certificado / login WSAA')}</div>
+        <div style="color:#8b949e;font-size:12px;margin-top:4px">${d.detalle || ''}</div>
+      </div>`;
+  } catch (e) { el.innerHTML = `<span style="color:#f85149">${e.message}</span>`; }
+}
+
+async function emitirFactura() {
+  const btn = document.getElementById("fac-emitir-btn");
+  const out = document.getElementById("fac-resultado");
+  const docTipo = document.getElementById("fac-doctipo").value;
+  const docNro  = document.getElementById("fac-docnro").value.trim();
+  const importe = parseFloat(document.getElementById("fac-importe").value);
+  if (!importe || importe <= 0) { out.innerHTML = `<span style="color:#f85149">Ingresá un importe válido.</span>`; return; }
+  if (docTipo !== "99" && !docNro) { out.innerHTML = `<span style="color:#f85149">Ingresá el número de documento.</span>`; return; }
+  if (!confirm(`¿Emitir Factura C por $${importe}?`)) return;
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = "Emitiendo…"; out.innerHTML = "";
+  try {
+    const r = await fetch("/api/arca/facturar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + TOKEN },
+      body: JSON.stringify({ docTipo, docNro, importe }),
+    });
+    const d = await r.json();
+    if (!d.ok) {
+      out.innerHTML = `<div style="color:#f85149;background:#2d1416;border:1px solid #f8514933;padding:12px;border-radius:8px">✗ ${d.error}</div>`;
+    } else {
+      const f = d.factura;
+      const vto = f.caeVto ? `${f.caeVto.slice(6, 8)}/${f.caeVto.slice(4, 6)}/${f.caeVto.slice(0, 4)}` : "—";
+      out.innerHTML = `<div style="color:#3fb950;background:#0f2417;border:1px solid #3fb95033;padding:14px;border-radius:8px;line-height:1.7">
+        ✓ <strong>Factura C emitida</strong> <span style="color:#8b949e">(${f.env})</span><br>
+        Comprobante: <strong>${String(f.ptoVta).padStart(4, '0')}-${String(f.cbteNro).padStart(8, '0')}</strong><br>
+        CAE: <strong>${f.cae}</strong> · Vto: ${vto}<br>
+        Importe: <strong>$${f.importe}</strong>
+      </div>`;
+    }
+  } catch (e) { out.innerHTML = `<div style="color:#f85149">${e.message}</div>`; }
+  finally { btn.disabled = false; btn.textContent = orig; }
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
