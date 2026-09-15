@@ -470,6 +470,17 @@ async function irAPagar() {
       throw new Error(errData.error || "Error guardando orden (" + ordersRes.status + ")");
     }
 
+    // 3b. Notificar el pedido por mail (a norduniformes@gmail.com + CC Flor), en cualquier método. No bloquea el flujo.
+    fetch("/api/mail/send-order-notification", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        idPedido, codigoCliente: clienteData.codigo,
+        nombre, apellido, email, telefono: tel, items: cart,
+        subtotal: subLista, descuento: metodo === "nave" ? 0 : descuento, total: totalFinal,
+        pago: metodo, envio: "retiro",
+      }),
+    }).catch(() => {});
+
     // 4. Guardar en session
     sessionStorage.setItem("nord_last_order", JSON.stringify({
       idPedido, nombre, apellido, items: cart, total: totalFinal,
@@ -490,16 +501,6 @@ async function irAPagar() {
 }
 
 function pagarConTransferencia({ subTransfer, subLista, descuento, idPedido, clienteData, nombre, apellido, email, cart, btn }) {
-  fetch("/api/mail/send-order-notification", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      idPedido, codigoCliente: clienteData?.codigo,
-      nombre, apellido, email, items: cart,
-      subtotal: subLista, descuento: descuento, total: subTransfer,
-      pago: "transferencia", envio: "retiro",
-    }),
-  }).catch(() => {});
-
   document.getElementById("total-a-pagar").textContent = fmt(subTransfer);
   document.getElementById("datos-pago").classList.add("visible");
   btn.textContent = "✓ PEDIDO REGISTRADO";

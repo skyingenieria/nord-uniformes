@@ -696,7 +696,7 @@ async function loadFacturacion() {
   const el = document.getElementById("fac-status");
   el.innerHTML = "Verificando…";
   try {
-    const r = await fetch("/api/arca/status", { headers: { Authorization: "Bearer " + TOKEN } });
+    const r = await fetch("/api/arca", { headers: { Authorization: "Bearer " + TOKEN } });
     const d = await r.json();
     if (!d.ok) { el.innerHTML = `<span style="color:#f85149">${d.error || "Error"}</span>`; return; }
     const chip = (ok, txt) => `<span style="color:${ok ? '#3fb950' : '#f85149'}">${ok ? '●' : '○'} ${txt}</span>`;
@@ -722,7 +722,7 @@ async function emitirFactura() {
   if (!confirm(`¿Emitir Factura C por $${importe}?`)) return;
   btn.disabled = true; const orig = btn.textContent; btn.textContent = "Emitiendo…"; out.innerHTML = "";
   try {
-    const r = await fetch("/api/arca/facturar", {
+    const r = await fetch("/api/arca", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + TOKEN },
       body: JSON.stringify({ docTipo, docNro, importe }),

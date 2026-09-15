@@ -1,7 +1,7 @@
 // POST /api/nave/create-payment — crea intención de pago en Nave
 // Body: { orderId, total, nombreCliente, email, telefono, items }
 
-const getAccessToken = require("./auth");
+const getAccessToken = require("./_auth");
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

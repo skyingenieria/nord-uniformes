@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
   try {
-    const { idPedido, codigoCliente, nombre, apellido, email, items, subtotal, descuento, total, pago, envio } = req.body;
+    const { idPedido, codigoCliente, nombre, apellido, email, telefono, items, subtotal, descuento, total, pago, envio } = req.body;
 
     if (!idPedido || !nombre || !email) {
       return res.status(400).json({ error: "Faltan datos requeridos" });
@@ -35,10 +35,17 @@ module.exports = async (req, res) => {
 
     const descuentoHtml = descuento > 0 ? `<tr style="color:#2e7d52"><td colspan="3">Descuento (${pago})</td><td>-$${descuento.toLocaleString("es-AR")}</td></tr>` : "";
 
+    const telDigits = String(telefono || "").replace(/\D/g, "");
+    const waNum = telDigits ? (telDigits.startsWith("54") ? telDigits : "549" + telDigits.replace(/^0/, "")) : "";
+    const telHtml = telefono
+      ? `<p><strong>Teléfono:</strong> ${telefono}${waNum ? ` — <a href="https://wa.me/${waNum}">Escribir por WhatsApp</a>` : ""}</p>`
+      : "";
+
     const htmlContent = `
       <h2>Nuevo Pedido #${idPedido}</h2>
       <p><strong>Cliente:</strong> ${nombre} ${apellido} (${codigoCliente})</p>
       <p><strong>Email:</strong> ${email}</p>
+      ${telHtml}
       <p><strong>Forma de Pago:</strong> ${pago}</p>
       <p><strong>Envío:</strong> ${envio}</p>
 
@@ -68,6 +75,8 @@ module.exports = async (req, res) => {
     await transporter.sendMail({
       from: process.env.SMTP_USER || "norduniformes@gmail.com",
       to: "norduniformes@gmail.com",
+      cc: "flor.cordeviola@hotmail.com",
+      replyTo: email,
       subject: `Nuevo Pedido #${idPedido} - ${nombre} ${apellido}`,
       html: htmlContent,
     });

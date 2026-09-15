@@ -3,7 +3,7 @@
 // Nosotros verificamos el estado en payment_check_url y actualizamos Sheets
 
 const { google } = require("googleapis");
-const getAccessToken = require("./auth");
+const getAccessToken = require("./_auth");
 
 function makeAuth() {
   return new google.auth.GoogleAuth({

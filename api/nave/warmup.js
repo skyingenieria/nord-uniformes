@@ -1,5 +1,5 @@
 // GET /api/nave/warmup — pre-calienta el token de auth para reducir latencia
-const getAccessToken = require("./auth");
+const getAccessToken = require("./_auth");
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
