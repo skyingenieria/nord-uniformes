@@ -1,6 +1,12 @@
 // GET /api/pedidos/next-id
 // Devuelve el siguiente ID Pedido en formato YY-NN (ej: 26-05)
-// Solo cuenta pedidos reales: col B (Cliente) debe empezar con "WS" + digito.
+// Solo cuenta pedidos reales: el Cliente debe empezar con "WS" + digito.
+//
+// Layout actual de las hojas (tras agregar "Cargo Envio" y "Descuento"):
+//   Pedidos: A=ID Pedido, B=Fecha pedido, C=Cliente, ...
+//   Ordenes: A=Fecha, B=Pedido, C=Colegio, D=Cliente, ...
+// Se toma el máximo entre ambas hojas para no repetir números aunque una
+// se actualice antes que la otra (la web escribe en Ordenes al vender).
 
 const { google } = require("googleapis");
 
@@ -25,26 +31,34 @@ module.exports = async (req, res) => {
   try {
     const sheets = google.sheets({ version: "v4", auth: makeAuth() });
 
-    // Leer A:B para poder filtrar por cliente real (col B)
-    const result = await sheets.spreadsheets.values.get({
+    // Leer ambas hojas: en Pedidos el ID esta en A y el Cliente en C;
+    // en Ordenes el ID (Pedido) esta en B y el Cliente en D.
+    const result = await sheets.spreadsheets.values.batchGet({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'Pedidos'!A:B",
+      ranges: ["'Pedidos'!A:C", "'Ordenes'!B:D"],
     });
 
-    const rows = result.data.values || [];
+    const [pedidosRows = [], ordenesRows = []] = (result.data.valueRanges || [])
+      .map(vr => vr.values || []);
     const today = new Date();
     const currentYear = String(today.getFullYear()).slice(-2);
 
-    // Solo contar IDs de pedidos reales del año actual
-    // (cliente en col B debe empezar con "WS" + digito, excluye "Pedido Inexistente" etc)
-    const currentYearNums = rows
+    // Extrae los numeros de pedido reales del año actual de una hoja.
+    // idIdx = columna del ID Pedido, cliIdx = columna del Cliente.
+    // (cliente debe empezar con "WS" + digito, excluye "Pedido Inexistente" etc)
+    const numsFrom = (rows, idIdx, cliIdx) => rows
       .slice(1)
       .filter(r => {
-        const idPedido = (r[0] || "").trim();
-        const cliente = (r[1] || "").trim();
+        const idPedido = (r[idIdx] || "").trim();
+        const cliente = (r[cliIdx] || "").trim();
         return idPedido.startsWith(currentYear + "-") && /^WS\d/.test(cliente);
       })
-      .map(r => parseInt(r[0].split("-")[1]) || 0);
+      .map(r => parseInt((r[idIdx] || "").split("-")[1]) || 0);
+
+    const currentYearNums = [
+      ...numsFrom(pedidosRows, 0, 2),
+      ...numsFrom(ordenesRows, 0, 2),
+    ];
 
     const maxNum = currentYearNums.length > 0 ? Math.max(...currentYearNums) : 0;
     const nextNum = maxNum + 1;

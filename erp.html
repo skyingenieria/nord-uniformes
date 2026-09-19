@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>NORD ERP</title>
+<meta name="theme-color" content="#0F172E">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/le1ffh0hi1kxv30m17q3_400x400.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NORD ERP">
+<style>
+  :root{
+    --azul-900:#0F172E; --azul:#1E2D4A; --azul-600:#34466A; --azul-400:#6B7B9C;
+    --dorado:#C8A96E; --crema:#F4F1EA;
+    --bg:#F4F1EA; --card:#ffffff; --ink:#0F172E; --muted:#6B7280; --line:#E6E1D6;
+    --green:#1f9d5b; --green-bg:#e7f6ee; --red:#d64545; --red-bg:#fbeaea; --amber:#c98a1e; --amber-bg:#fbf3e2;
+    --nav-h:64px; --shadow:0 2px 10px rgba(15,23,46,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.4}
+  button{font-family:inherit;cursor:pointer}
+  input,select{font-family:inherit;font-size:16px}
+
+  /* LOGIN */
+  #login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;
+    background:radial-gradient(120% 100% at 50% 0%, #1a2b4a 0%, #0F172E 70%)}
+  .login-card{background:var(--card);border-radius:20px;padding:32px 24px;width:100%;max-width:360px;box-shadow:0 20px 50px rgba(0,0,0,.35);text-align:center}
+  .login-card img{width:76px;height:76px;border-radius:18px;margin-bottom:14px}
+  .login-card h1{margin:0 0 4px;font-size:20px;letter-spacing:.02em}
+  .login-card p{margin:0 0 22px;color:var(--muted);font-size:13px}
+  .login-card input{width:100%;padding:14px;border:1.5px solid var(--line);border-radius:12px;outline:none;margin-bottom:12px;text-align:center}
+  .login-card input:focus{border-color:var(--dorado)}
+  .login-err{color:var(--red);font-size:13px;min-height:18px;margin-top:6px}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:12px;
+    padding:14px 18px;font-weight:700;font-size:15px;background:var(--azul-900);color:#fff;width:100%}
+  .btn:active{transform:scale(.99)}
+  .btn.gold{background:var(--dorado);color:var(--azul-900)}
+  .btn.ghost{background:transparent;color:var(--azul-900);border:1.5px solid var(--line)}
+  .btn.sm{padding:9px 12px;font-size:13px;border-radius:10px;width:auto}
+  .btn:disabled{opacity:.55}
+
+  /* APP SHELL */
+  #app{display:none;min-height:100vh;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom))}
+  header{position:sticky;top:0;z-index:20;background:var(--azul-900);color:#fff;
+    padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;display:flex;align-items:center;justify-content:space-between}
+  header .h-title{font-size:17px;font-weight:800;letter-spacing:.02em}
+  header .h-sub{font-size:11px;color:var(--azul-400);font-weight:600;text-transform:uppercase;letter-spacing:.12em}
+  header .h-actions{display:flex;gap:8px}
+  .icon-btn{background:rgba(255,255,255,.1);border:none;color:#fff;width:38px;height:38px;border-radius:11px;font-size:17px;display:grid;place-items:center}
+
+  #view{padding:16px 16px 24px;max-width:640px;margin:0 auto}
+  .view-title{font-size:22px;font-weight:800;margin:2px 0 14px}
+
+  /* BOTTOM NAV */
+  nav{position:fixed;bottom:0;left:0;right:0;z-index:30;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);background:#fff;border-top:1px solid var(--line);
+    display:grid;grid-template-columns:repeat(5,1fr);box-shadow:0 -2px 14px rgba(15,23,46,.06)}
+  nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:10.5px;font-weight:600;padding-top:8px}
+  nav button .ic{font-size:20px;line-height:1}
+  nav button.active{color:var(--azul-900)}
+  nav button.active .ic{transform:translateY(-1px)}
+
+  /* CARDS */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+  .card + .card{margin-top:12px}
+  .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow)}
+  .kpi .lbl{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+  .kpi .val{font-size:22px;font-weight:800;margin-top:4px;letter-spacing:-.01em}
+  .kpi .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .kpi.hl{background:linear-gradient(135deg,#1a2b4a,#0F172E);color:#fff;border:none}
+  .kpi.hl .lbl{color:var(--azul-400)} .kpi.hl .sub{color:#b9c4da}
+  .kpi.gold{background:linear-gradient(135deg,#d8bd88,#C8A96E);border:none;color:var(--azul-900)}
+  .kpi.gold .lbl{color:#6b551f}
+
+  .section-h{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:22px 2px 10px}
+
+  .search{position:relative;margin-bottom:12px}
+  .search input{width:100%;padding:13px 14px 13px 40px;border:1.5px solid var(--line);border-radius:13px;outline:none;background:#fff}
+  .search input:focus{border-color:var(--dorado)}
+  .search .mag{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted)}
+
+  .row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:none}
+  .row .grow{flex:1;min-width:0}
+  .row .name{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .meta{font-size:12.5px;color:var(--muted);margin-top:1px}
+
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;font-size:12px;font-weight:700}
+  .chip.g{background:var(--green-bg);color:var(--green)} .chip.r{background:var(--red-bg);color:var(--red)} .chip.a{background:var(--amber-bg);color:var(--amber)}
+  .chip.n{background:#eef1f6;color:var(--azul-600)}
+
+  .talles{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .talle{border:1.5px solid var(--line);border-radius:11px;padding:8px 10px;min-width:58px;text-align:center;background:#fff}
+  .talle .t{font-weight:800;font-size:14px}
+  .talle .s{font-size:11px;margin-top:2px;font-weight:700}
+  .talle.ok .s{color:var(--green)} .talle.low .s{color:var(--amber)} .talle.no{opacity:.5} .talle.no .s{color:var(--red)}
+  .talle.add{cursor:pointer} .talle.add:active{border-color:var(--dorado);background:var(--crema)}
+
+  .empty{text-align:center;color:var(--muted);padding:36px 16px;font-size:14px}
+  .spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--azul-900);border-radius:50%;animation:spin .7s linear infinite;margin:36px auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* CART */
+  .cart-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .qty{display:flex;align-items:center;gap:0;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+  .qty button{width:34px;height:34px;border:none;background:#fff;font-size:18px;font-weight:700;color:var(--azul-900)}
+  .qty span{min-width:30px;text-align:center;font-weight:800;font-size:14px}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px}
+  .field input,.field select{width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:12px;outline:none;background:#fff}
+  .field input:focus,.field select:focus{border-color:var(--dorado)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .tot-line{display:flex;justify-content:space-between;padding:5px 0;font-size:14px}
+  .tot-line.big{font-size:19px;font-weight:800;border-top:1.5px solid var(--line);margin-top:6px;padding-top:12px}
+  .tot-line .disc{color:var(--green)}
+
+  /* MODAL / SHEET */
+  .sheet-bg{position:fixed;inset:0;background:rgba(15,23,46,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+  .sheet-bg.open{opacity:1;pointer-events:auto}
+  .sheet{background:#fff;width:100%;max-width:640px;border-radius:22px 22px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto;transform:translateY(30px);transition:transform .22s}
+  .sheet-bg.open .sheet{transform:translateY(0)}
+  .sheet h3{margin:0 0 3px;font-size:19px}
+  .sheet .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+  .grabber{width:40px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 14px}
+
+  .toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 20px);transform:translateX(-50%) translateY(20px);
+    background:var(--azul-900);color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;z-index:80;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90%;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.err{background:var(--red)}
+
+  .seg{display:flex;background:#eef1f6;border-radius:12px;padding:4px;margin-bottom:14px}
+  .seg button{flex:1;border:none;background:none;padding:9px;border-radius:9px;font-weight:700;font-size:13px;color:var(--muted)}
+  .seg button.on{background:#fff;color:var(--azul-900);box-shadow:var(--shadow)}
+
+  /* CHART */
+  .chart-cap{font-size:12.5px;color:var(--muted);text-align:center;margin-top:8px;min-height:18px}
+  .legend{display:flex;gap:16px;justify-content:center;margin-top:6px;font-size:12px;color:var(--muted)}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-card">
+    <img src="/le1ffh0hi1kxv30m17q3_400x400.png" alt="NORD">
+    <h1>NORD ERP</h1>
+    <p>Gestión — stock, ventas y cobros</p>
+    <input type="password" id="pwd" placeholder="Contraseña" autocomplete="current-password">
+    <button class="btn" onclick="login()" id="login-btn">Ingresar</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div>
+      <div class="h-sub" id="h-sub">NORD Uniformes</div>
+      <div class="h-title" id="h-title">Inicio</div>
+    </div>
+    <div class="h-actions">
+      <button class="icon-btn" onclick="refresh()" title="Actualizar">⟳</button>
+      <button class="icon-btn" onclick="logout()" title="Salir">⎋</button>
+    </div>
+  </header>
+
+  <div id="view"><div class="spinner"></div></div>
+
+  <nav>
+    <button data-tab="inicio"   class="active" onclick="go('inicio')"><span class="ic">🏠</span>Inicio</button>
+    <button data-tab="stock"    onclick="go('stock')"><span class="ic">📦</span>Stock</button>
+    <button data-tab="vender"   onclick="go('vender')"><span class="ic">🛒</span>Vender</button>
+    <button data-tab="cobros"   onclick="go('cobros')"><span class="ic">💵</span>Cobros</button>
+    <button data-tab="entregas" onclick="go('entregas')"><span class="ic">🚚</span>Entregas</button>
+  </nav>
+</div>
+
+<div class="sheet-bg" id="sheet-bg" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet" id="sheet"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────────── ESTADO
+let TOKEN = localStorage.getItem("nord_erp_token") || "";
+let TAB = "inicio";
+const DATA = { stock:null, stockFlat:null, clientes:null, pedidos:null, dashboard:null };
+let cart = [];
+let venta = { cliente:null, descuento:0, envio:0, pago:"Transf. Banc." };
+
+const $ = (s,el=document)=>el.querySelector(s);
+const fmt = (n)=> "$" + Math.round(Number(n)||0).toLocaleString("es-AR");
+const esc = (s)=> String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayAR = ()=> new Date().toLocaleDateString("en-US",{timeZone:"America/Argentina/Buenos_Aires"});
+
+function toast(msg, err){ const t=$("#toast"); t.textContent=msg; t.className="toast show"+(err?" err":""); setTimeout(()=>t.className="toast",2600); }
+
+// ─────────────────────────────────────────────────────────────── API
+async function api(action, opts={}){
+  const res = await fetch(`/api/erp?action=${action}`, {
+    method: opts.method||"GET",
+    headers: { "Content-Type":"application/json", "Authorization":"Bearer "+TOKEN },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if(res.status===401){ logout(); throw new Error("Sesión expirada, ingresá de nuevo"); }
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error || ("Error "+res.status));
+  return data;
+}
+
+// ─────────────────────────────────────────────────────────────── AUTH
+async function login(){
+  const pwd = $("#pwd").value;
+  const btn = $("#login-btn"); btn.disabled=true; btn.textContent="Ingresando…";
+  try{
+    const r = await fetch("/api/admin/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pwd})});
+    const d = await r.json();
+    if(d.ok){ TOKEN=d.token; localStorage.setItem("nord_erp_token",TOKEN); showApp(); }
+    else { $("#login-err").textContent="Contraseña incorrecta"; }
+  }catch(e){ $("#login-err").textContent="Error de conexión"; }
+  btn.disabled=false; btn.textContent="Ingresar";
+}
+function logout(){ TOKEN=""; localStorage.removeItem("nord_erp_token"); $("#app").style.display="none"; $("#login").style.display="flex"; }
+function showApp(){ $("#login").style.display="none"; $("#app").style.display="block"; go("inicio"); }
+
+// ─────────────────────────────────────────────────────────────── NAV
+const TITLES = {inicio:"Inicio", stock:"Stock", vender:"Vender", cobros:"Cobros", entregas:"Entregas"};
+function go(tab){
+  TAB=tab;
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  $("#h-title").textContent = TITLES[tab];
+  window.scrollTo(0,0);
+  render();
+}
+function refresh(){ DATA[mapData(TAB)] = null; render(true); toast("Actualizado"); }
+function mapData(tab){ return tab==="inicio"?"dashboard": tab==="vender"?"stock": tab; }
+
+async function render(force){
+  const v = $("#view");
+  if(TAB==="inicio")   return viewInicio(v,force);
+  if(TAB==="stock")    return viewStock(v,force);
+  if(TAB==="vender")   return viewVender(v,force);
+  if(TAB==="cobros")   return viewCobros(v,force);
+  if(TAB==="entregas") return viewEntregas(v,force);
+}
+function loading(v){ v.innerHTML='<div class="spinner"></div>'; }
+function errBox(v,e){ v.innerHTML=`<div class="empty">⚠️ ${esc(e.message)}<br><br><button class="btn ghost sm" onclick="render(true)">Reintentar</button></div>`; }
+
+// ─────────────────────────────────────────────────────────────── INICIO / DASHBOARD
+async function viewInicio(v,force){
+  try{
+    if(force||!DATA.dashboard){ loading(v); DATA.dashboard = await api("dashboard"); }
+    const d = DATA.dashboard;
+    const maxV = Math.max(1, ...d.serie.map(s=>s.ventas));
+    const bars = d.serie.map((s,i)=>{
+      const h = Math.round((s.ventas/maxV)*100);
+      return `<div class="bar" data-i="${i}" style="height:${Math.max(h,2)}%" title="${esc(s.label)}"></div>`;
+    }).join("");
+    const gPts = d.serie.map((s,i)=>{
+      const x = (i/(d.serie.length-1))*100;
+      const y = 100 - Math.min(100,(s.ganancia/maxV)*100);
+      return `${x},${y}`;
+    }).join(" ");
+    const labels = d.serie.map((s,i)=> i%2===0?`<span>${esc(s.label.split(" ")[0])}</span>`:`<span></span>`).join("");
+
+    v.innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi hl"><div class="lbl">Ventas del mes</div><div class="val">${fmt(d.ventasMes)}</div><div class="sub">Año: ${fmt(d.ventasAnio)}</div></div>
+        <div class="kpi gold"><div class="lbl">Ganancia mes</div><div class="val">${fmt(d.gananciaMes)}</div><div class="sub">Año: ${fmt(d.gananciaAnio)}</div></div>
+      </div>
+      <div class="kpi" style="margin-top:12px" onclick="go('cobros')">
+        <div class="lbl">Cobros pendientes</div>
+        <div class="val" style="color:${d.totalPendiente>0?'var(--red)':'var(--green)'}">${fmt(d.totalPendiente)}</div>
+        <div class="sub">${d.pendientesCount} pedido${d.pendientesCount!==1?'s':''} sin saldar · tocá para ver →</div>
+      </div>
+
+      <div class="section-h">Ventas por mes (últimos 12)</div>
+      <div class="card">
+        <div style="display:flex;align-items:flex-end;gap:4px;height:130px" id="bars">${bars}</div>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="display:block;width:100%;height:130px;margin-top:-130px;pointer-events:none;overflow:visible">
+          <polyline points="${gPts}" fill="none" stroke="var(--dorado)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);margin-top:8px">${labels}</div>
+        <div class="chart-cap" id="chart-cap">Tocá una barra para ver el detalle</div>
+        <div class="legend"><span><i style="background:var(--azul-900)"></i>Ventas</span><span><i style="background:var(--dorado)"></i>Ganancia</span></div>
+      </div>
+
+      <div class="section-h">Top prendas vendidas</div>
+      <div class="card">${
+        d.topProductos.length ? d.topProductos.map(p=>`
+          <div class="row"><div class="grow"><div class="name">${esc(p.nombre)}</div><div class="meta">${fmt(p.ventas)} en ventas</div></div>
+          <span class="chip n">${p.qty} u.</span></div>`).join("")
+        : '<div class="empty">Sin datos todavía</div>'
+      }</div>`;
+
+    // estilo barras + interacción
+    document.querySelectorAll("#bars .bar").forEach(b=>{
+      b.style.flex="1"; b.style.background="var(--azul-900)"; b.style.borderRadius="4px 4px 0 0"; b.style.minHeight="2px"; b.style.opacity=".9";
+      b.onclick=()=>{ const s=d.serie[+b.dataset.i]; $("#chart-cap").innerHTML=`<b>${esc(s.label)}</b> · Ventas ${fmt(s.ventas)} · Ganancia ${fmt(s.ganancia)}`;
+        document.querySelectorAll("#bars .bar").forEach(x=>x.style.opacity=".35"); b.style.opacity="1"; };
+    });
+  }catch(e){ errBox(v,e); }
+}
+
+// ─────────────────────────────────────────────────────────────── STOCK
+function flattenStock(products){
+  const flat=[];
+  products.forEach(p=>p.talles.forEach(t=>flat.push({nombre:p.nombre,colegio:p.colegio,talle:t.talle,sku:t.sku,stock:t.stock,precio:t.precio,costo:t.costo})));
+  return flat;
+}
+function talleClass(s){ return s<=0?"no": s<=3?"low":"ok"; }
+async function viewStock(v,force){
+  try{
+    if(force||!DATA.stock){ loading(v); DATA.stock = await api("stock"); DATA.stockFlat=flattenStock(DATA.stock); }
+    const q0 = (window._stockQ||"");
+    v.innerHTML = `
+      <div class="search"><span class="mag">🔎</span><input id="stock-q" placeholder="Buscar prenda…" value="${esc(q0)}"></div>
+      <div id="stock-list"></div>`;
+    const inp=$("#stock-q");
+    const draw=()=>{
+      const q=inp.value.trim().toLowerCase(); window._stockQ=inp.value;
+      const list = DATA.stock.filter(p=>p.nombre.toLowerCase().includes(q));
+      $("#stock-list").innerHTML = list.length ? list.map(p=>{
+        const tot=p.talles.reduce((s,t)=>s+t.stock,0);
+        const precios=p.talles.map(t=>t.precio).filter(x=>x>0);
+        const precio=precios.length?Math.min(...precios):0;
+        return `<div class="card" style="margin-bottom:12px">
+          <div class="row" style="padding:0 0 4px">
+            <div class="grow"><div class="name">${esc(p.nombre)}</div><div class="meta">${esc(p.colegio)} · desde ${fmt(precio)}</div></div>
+            <span class="chip ${tot<=0?'r':tot<=8?'a':'g'}">${tot} u.</span>
+          </div>
+          <div class="talles">${p.talles.map(t=>`<div class="talle ${talleClass(t.stock)}"><div class="t">${esc(t.talle)}</div><div class="s">${t.stock}</div></div>`).join("")}</div>
+        </div>`;
+      }).join("") : '<div class="empty">Sin resultados</div>';
+    };
+    inp.oninput=draw; draw();
+  }catch(e){ errBox(v,e); }
+}
+
+// ─────────────────────────────────────────────────────────────── VENDER
+function cartSubtotal(){ return cart.reduce((s,i)=>s+i.precio*i.qty,0); }
+function cartTotal(){ return Math.max(0, cartSubtotal() - (venta.descuento||0) + (venta.envio||0)); }
+async function viewVender(v,force){
+  try{
+    if(force||!DATA.stock){ loading(v); DATA.stock = await api("stock"); DATA.stockFlat=flattenStock(DATA.stock); }
+    v.innerHTML = `
+      <div class="search"><span class="mag">🔎</span><input id="v-q" placeholder="Agregar prenda al pedido…"></div>
+      <div id="v-results"></div>
+      <div class="section-h">Pedido</div>
+      <div class="card" id="v-cart"></div>
+      <div id="v-checkout"></div>`;
+    const inp=$("#v-q");
+    inp.oninput=()=>{
+      const q=inp.value.trim().toLowerCase();
+      const box=$("#v-results");
+      if(!q){ box.innerHTML=""; return; }
+      const res = DATA.stockFlat.filter(r=>(`${r.nombre} ${r.talle}`).toLowerCase().includes(q)).slice(0,30);
+      box.innerHTML = `<div class="card">${res.length?res.map((r,i)=>`
+        <div class="row"><div class="grow"><div class="name">${esc(r.nombre)} · T${esc(r.talle)}</div>
+        <div class="meta">${fmt(r.precio)} · stock ${r.stock}</div></div>
+        <button class="btn gold sm" onclick='addItem(${JSON.stringify(r).replace(/'/g,"&#39;")})'>+ Agregar</button></div>`).join(""):'<div class="empty">Sin resultados</div>'}</div>`;
+    };
+    drawCart();
+  }catch(e){ errBox(v,e); }
+}
+function addItem(r){
+  const ex = cart.find(i=>i.sku===r.sku && i.talle===r.talle && i.nombre===r.nombre);
+  if(ex) ex.qty++; else cart.push({nombre:r.nombre,talle:r.talle,sku:r.sku,precio:r.precio,qty:1});
+  toast(`${r.nombre} T${r.talle} agregado`); drawCart();
+}
+function chQty(idx,d){ cart[idx].qty+=d; if(cart[idx].qty<=0)cart.splice(idx,1); drawCart(); }
+function drawCart(){
+  const c=$("#v-cart"); if(!c) return;
+  if(!cart.length){ c.innerHTML='<div class="empty">Todavía no agregaste prendas</div>'; $("#v-checkout").innerHTML=""; return; }
+  c.innerHTML = cart.map((i,idx)=>`
+    <div class="cart-item">
+      <div class="grow"><div class="name">${esc(i.nombre)} · T${esc(i.talle)}</div><div class="meta">${fmt(i.precio)} c/u · ${fmt(i.precio*i.qty)}</div></div>
+      <div class="qty"><button onclick="chQty(${idx},-1)">−</button><span>${i.qty}</span><button onclick="chQty(${idx},1)">+</button></div>
+    </div>`).join("");
+
+  const cli = venta.cliente;
+  $("#v-checkout").innerHTML = `
+    <div class="card" style="margin-top:12px">
+      <div class="field"><label>Cliente</label>
+        <button class="btn ghost" onclick="openCliente()">${cli?esc(cli.nombre+" "+cli.apellido):"Elegir o crear cliente"}</button>
+      </div>
+      <div class="two">
+        <div class="field"><label>Descuento ($)</label><input type="number" inputmode="numeric" id="v-desc" value="${venta.descuento||''}" placeholder="0" oninput="venta.descuento=+this.value||0;drawTotals()"></div>
+        <div class="field"><label>Cargo envío ($)</label><input type="number" inputmode="numeric" id="v-env" value="${venta.envio||''}" placeholder="0" oninput="venta.envio=+this.value||0;drawTotals()"></div>
+      </div>
+      <div class="field"><label>Forma de pago</label>
+        <select id="v-pago" onchange="venta.pago=this.value">
+          <option ${venta.pago==="Transf. Banc."?"selected":""}>Transf. Banc.</option>
+          <option ${venta.pago==="Efectivo"?"selected":""}>Efectivo</option>
+          <option ${venta.pago==="Tarjeta"?"selected":""}>Tarjeta</option>
+        </select>
+      </div>
+      <div id="v-totals"></div>
+      <button class="btn" style="margin-top:14px" id="v-submit" onclick="registrarPedido()">Registrar pedido</button>
+    </div>`;
+  drawTotals();
+}
+function drawTotals(){
+  const t=$("#v-totals"); if(!t) return;
+  t.innerHTML=`
+    <div class="tot-line"><span>Subtotal</span><span>${fmt(cartSubtotal())}</span></div>
+    ${venta.descuento?`<div class="tot-line disc"><span>Descuento</span><span>−${fmt(venta.descuento)}</span></div>`:""}
+    ${venta.envio?`<div class="tot-line"><span>Envío</span><span>${fmt(venta.envio)}</span></div>`:""}
+    <div class="tot-line big"><span>Total</span><span>${fmt(cartTotal())}</span></div>`;
+}
+async function registrarPedido(){
+  if(!cart.length) return toast("Agregá prendas primero",true);
+  if(!venta.cliente) return toast("Elegí un cliente",true);
+  const btn=$("#v-submit"); btn.disabled=true; btn.textContent="Registrando…";
+  try{
+    const r = await api("pedido",{method:"POST",body:{
+      codigoCliente: venta.cliente.codigo, colegio: venta.cliente.colegio||"WS",
+      formaPago: venta.pago, items: cart.map(i=>({nombre:i.nombre,talle:i.talle,qty:i.qty})),
+    }});
+    const total=cartTotal(); const resumen=buildResumen(r.idPedido,total);
+    $("#view").innerHTML=`
+      <div class="card" style="text-align:center;padding:28px 20px">
+        <div style="font-size:44px">✅</div>
+        <h2 style="margin:8px 0 2px">Pedido ${esc(r.idPedido)}</h2>
+        <p style="color:var(--muted);margin:0 0 4px">${esc(venta.cliente.nombre+" "+venta.cliente.apellido)}</p>
+        <div style="font-size:26px;font-weight:800;margin:10px 0">${fmt(total)}</div>
+        <button class="btn gold" onclick='waResumen(${JSON.stringify(resumen)})'>Copiar resumen para WhatsApp</button>
+        <button class="btn ghost" style="margin-top:10px" onclick="nuevoPedido()">Nuevo pedido</button>
+      </div>`;
+    cart=[]; venta={cliente:null,descuento:0,envio:0,pago:"Transf. Banc."};
+    DATA.pedidos=null; DATA.dashboard=null; DATA.stock=null;
+  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Registrar pedido"; }
+}
+function buildResumen(id,total){
+  const items = cart.map(i=>`• ${i.nombre} T${i.talle} x${i.qty} — ${fmt(i.precio*i.qty)}`).join("\n");
+  let s=`*Pedido #${id}* — NORD Uniformes\nCliente: ${venta.cliente.nombre} ${venta.cliente.apellido}\n\n${items}\n`;
+  if(venta.descuento) s+=`Descuento: −${fmt(venta.descuento)}\n`;
+  if(venta.envio) s+=`Envío: ${fmt(venta.envio)}\n`;
+  s+=`\n*Total: ${fmt(total)}*\nForma de pago: ${venta.pago}`;
+  return s;
+}
+function waResumen(txt){ navigator.clipboard?.writeText(txt).then(()=>toast("Resumen copiado")).catch(()=>{});
+  window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank"); }
+function nuevoPedido(){ go("vender"); }
+
+// Cliente picker
+async function openCliente(){
+  openSheet(`<div class="grabber"></div><h3>Cliente</h3><p class="sub">Buscá uno existente o creá uno nuevo</p>
+    <div class="seg"><button class="on" id="seg-buscar" onclick="cliSeg('buscar')">Buscar</button><button id="seg-nuevo" onclick="cliSeg('nuevo')">Nuevo</button></div>
+    <div id="cli-body"><div class="spinner"></div></div>`);
+  cliSeg("buscar");
+}
+async function cliSeg(mode){
+  $("#seg-buscar").classList.toggle("on",mode==="buscar"); $("#seg-nuevo").classList.toggle("on",mode==="nuevo");
+  const body=$("#cli-body");
+  if(mode==="nuevo"){
+    body.innerHTML=`
+      <div class="field"><label>Nombre</label><input id="c-nom"></div>
+      <div class="field"><label>Apellido / Familia</label><input id="c-ape"></div>
+      <div class="field"><label>Email</label><input id="c-mail" type="email" inputmode="email"></div>
+      <div class="field"><label>WhatsApp</label><input id="c-tel" inputmode="tel"></div>
+      <button class="btn" id="c-save" onclick="crearCliente()">Crear cliente</button>`;
+    return;
+  }
+  body.innerHTML='<div class="spinner"></div>';
+  try{
+    if(!DATA.clientes) DATA.clientes = await api("clientes");
+    body.innerHTML=`<div class="search"><span class="mag">🔎</span><input id="cli-q" placeholder="Nombre, apellido o email…"></div><div id="cli-list"></div>`;
+    const inp=$("#cli-q");
+    const draw=()=>{
+      const q=inp.value.trim().toLowerCase();
+      const list=DATA.clientes.filter(c=>c.codigo && (`${c.nombre} ${c.apellido} ${c.email}`).toLowerCase().includes(q)).slice(0,40);
+      $("#cli-list").innerHTML=list.length?list.map(c=>`
+        <div class="row" onclick='pickCliente(${JSON.stringify(c).replace(/'/g,"&#39;")})' style="cursor:pointer">
+          <div class="grow"><div class="name">${esc(c.nombre)} ${esc(c.apellido)}</div><div class="meta">${esc(c.codigo)}${c.email?" · "+esc(c.email):""}</div></div>
+          <span style="color:var(--dorado);font-size:20px">›</span></div>`).join(""):'<div class="empty">Sin resultados</div>';
+    };
+    inp.oninput=draw; draw();
+  }catch(e){ body.innerHTML=`<div class="empty">${esc(e.message)}</div>`; }
+}
+function pickCliente(c){ venta.cliente=c; closeSheet(); drawCart(); }
+async function crearCliente(){
+  const nombre=$("#c-nom").value.trim(), apellido=$("#c-ape").value.trim(), email=$("#c-mail").value.trim(), telefono=$("#c-tel").value.trim();
+  if(!nombre||!email) return toast("Nombre y email son obligatorios",true);
+  const btn=$("#c-save"); btn.disabled=true; btn.textContent="Creando…";
+  try{
+    const r=await fetch("/api/cliente/check-or-create",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre,apellido,email,telefono})});
+    const d=await r.json(); if(!d.codigo) throw new Error(d.error||"Error creando cliente");
+    DATA.clientes=null; pickCliente({nombre:d.nombre,apellido:d.apellido,codigo:d.codigo,colegio:d.colegio||"WS",email:d.email});
+    toast(d.esNuevo?"Cliente creado":"Cliente ya existía");
+  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Crear cliente"; }
+}
+
+// ─────────────────────────────────────────────────────────────── COBROS
+async function viewCobros(v,force){
+  try{
+    if(force||!DATA.pedidos){ loading(v); DATA.pedidos = await api("pedidos"); }
+    window._cobFilter = window._cobFilter||"pend";
+    const draw=()=>{
+      const f=window._cobFilter;
+      let list=DATA.pedidos;
+      if(f==="pend") list=list.filter(p=>p.saldo>0.5);
+      else if(f==="pag") list=list.filter(p=>p.saldo<=0.5);
+      $("#cob-list").innerHTML = list.length?list.map(p=>`
+        <div class="card" style="margin-bottom:10px;cursor:pointer" onclick='openPago(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
+          <div class="row" style="padding:0">
+            <div class="grow"><div class="name">${esc(p.id)} · ${esc(p.cliente)}</div>
+              <div class="meta">Total ${fmt(p.totalVenta||p.monto)} · pagado ${fmt(p.montoPago)}</div></div>
+            <span class="chip ${p.saldo>0.5?'r':'g'}">${p.saldo>0.5?"Debe "+fmt(p.saldo):"Pagado"}</span>
+          </div></div>`).join(""):'<div class="empty">No hay pedidos acá</div>';
+    };
+    v.innerHTML=`
+      <div class="seg">
+        <button class="${window._cobFilter==='pend'?'on':''}" onclick="window._cobFilter='pend';render()">Pendientes</button>
+        <button class="${window._cobFilter==='pag'?'on':''}" onclick="window._cobFilter='pag';render()">Pagados</button>
+        <button class="${window._cobFilter==='all'?'on':''}" onclick="window._cobFilter='all';render()">Todos</button>
+      </div><div id="cob-list"></div>`;
+    draw();
+  }catch(e){ errBox(v,e); }
+}
+function openPago(p){
+  openSheet(`<div class="grabber"></div><h3>Registrar pago</h3><p class="sub">${esc(p.id)} · ${esc(p.cliente)}</p>
+    <div class="tot-line"><span>Total venta</span><span>${fmt(p.totalVenta||p.monto)}</span></div>
+    <div class="tot-line"><span>Pagado</span><span>${fmt(p.montoPago)}</span></div>
+    <div class="tot-line big"><span>Saldo</span><span style="color:${p.saldo>0.5?'var(--red)':'var(--green)'}">${fmt(p.saldo)}</span></div>
+    <div class="field" style="margin-top:16px"><label>Monto que recibís ($)</label><input type="number" inputmode="numeric" id="pg-monto" value="${Math.max(0,Math.round(p.saldo))||''}"></div>
+    <div class="two">
+      <div class="field"><label>Fecha</label><input id="pg-fecha" value="${todayAR()}"></div>
+      <div class="field"><label>Forma de pago</label><select id="pg-forma"><option>Transf. Banc.</option><option>Efectivo</option><option>Tarjeta</option></select></div>
+    </div>
+    <button class="btn" id="pg-save" onclick='savePago(${JSON.stringify({id:p.id}).replace(/'/g,"&#39;")})'>Registrar pago</button>`);
+}
+async function savePago(p){
+  const monto=+$("#pg-monto").value; if(!monto||monto<=0) return toast("Ingresá el monto",true);
+  const btn=$("#pg-save"); btn.disabled=true; btn.textContent="Guardando…";
+  try{
+    await api("pago",{method:"POST",body:{idPedido:p.id, montoPago:monto, fechaPago:$("#pg-fecha").value.trim(), formaPago:$("#pg-forma").value}});
+    closeSheet(); toast("Pago registrado"); DATA.pedidos=null; DATA.dashboard=null; render(true);
+  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Registrar pago"; }
+}
+
+// ─────────────────────────────────────────────────────────────── ENTREGAS
+async function viewEntregas(v,force){
+  try{
+    if(force||!DATA.pedidos){ loading(v); DATA.pedidos = await api("pedidos"); }
+    window._entFilter = window._entFilter||"pend";
+    const isEnt = e => /entreg/i.test(e||"");
+    let list = DATA.pedidos;
+    if(window._entFilter==="pend") list=list.filter(p=>!isEnt(p.estadoEnvio));
+    else if(window._entFilter==="ent") list=list.filter(p=>isEnt(p.estadoEnvio));
+    v.innerHTML=`
+      <div class="seg">
+        <button class="${window._entFilter==='pend'?'on':''}" onclick="window._entFilter='pend';render()">A entregar</button>
+        <button class="${window._entFilter==='ent'?'on':''}" onclick="window._entFilter='ent';render()">Entregados</button>
+        <button class="${window._entFilter==='all'?'on':''}" onclick="window._entFilter='all';render()">Todos</button>
+      </div>
+      ${list.length?list.map(p=>`
+        <div class="card" style="margin-bottom:10px;cursor:pointer" onclick='openEntrega(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
+          <div class="row" style="padding:0">
+            <div class="grow"><div class="name">${esc(p.id)} · ${esc(p.cliente)}</div>
+              <div class="meta">${esc(p.envio||"—")}${p.saldo>0.5?' · <span style="color:var(--red)">debe '+fmt(p.saldo)+'</span>':''}</div></div>
+            <span class="chip ${isEnt(p.estadoEnvio)?'g':'a'}">${esc(p.estadoEnvio||"Pendiente")}</span>
+          </div></div>`).join(""):'<div class="empty">No hay pedidos acá</div>'}`;
+  }catch(e){ errBox(v,e); }
+}
+function openEntrega(p){
+  const opts=["Pendiente","En Preparación","Preparado","Entregado"];
+  if(p.estadoEnvio && !opts.includes(p.estadoEnvio)) opts.unshift(p.estadoEnvio);
+  const envs=["Retiro Habitat","Envío a domicilio"];
+  if(p.envio && !envs.includes(p.envio)) envs.unshift(p.envio);
+  openSheet(`<div class="grabber"></div><h3>Entrega</h3><p class="sub">${esc(p.id)} · ${esc(p.cliente)}</p>
+    <div class="field"><label>Estado de entrega</label><select id="en-est">${opts.map(o=>`<option ${p.estadoEnvio===o?"selected":""}>${o}</option>`).join("")}</select></div>
+    <div class="field"><label>Método</label><select id="en-env">${envs.map(o=>`<option ${p.envio===o?"selected":""}>${o}</option>`).join("")}</select></div>
+    <button class="btn" id="en-save" onclick='saveEntrega(${JSON.stringify({id:p.id}).replace(/'/g,"&#39;")})'>Guardar</button>`);
+}
+async function saveEntrega(p){
+  const btn=$("#en-save"); btn.disabled=true; btn.textContent="Guardando…";
+  try{
+    await api("entrega",{method:"POST",body:{idPedido:p.id, estadoEnvio:$("#en-est").value, envio:$("#en-env").value}});
+    closeSheet(); toast("Entrega actualizada"); DATA.pedidos=null; render(true);
+  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Guardar"; }
+}
+
+// ─────────────────────────────────────────────────────────────── SHEET
+function openSheet(html){ $("#sheet").innerHTML=html; $("#sheet-bg").classList.add("open"); }
+function closeSheet(){ $("#sheet-bg").classList.remove("open"); }
+
+// ─────────────────────────────────────────────────────────────── INIT
+if(TOKEN) showApp(); else { $("#login").style.display="flex"; }
+$("#pwd").addEventListener("keydown",e=>{ if(e.key==="Enter")login(); });
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("/sw-erp.js",{scope:"/erp"}).catch(()=>{}); }
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "NORD ERP",
+  "short_name": "NORD ERP",
+  "description": "Gestión NORD Uniformes — stock, ventas, cobros y entregas",
+  "start_url": "/erp",
+  "scope": "/erp",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F172E",
+  "theme_color": "#0F172E",
+  "lang": "es-AR",
+  "icons": [
+    {
+      "src": "/le1ffh0hi1kxv30m17q3_400x400.png",
+      "sizes": "400x400",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/le1ffh0hi1kxv30m17q3_400x400.png",
+      "sizes": "400x400",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -202,23 +202,30 @@ async function getMetrics(res) {
   const sheets = google.sheets({ version: "v4", auth: makeAuth() });
   const result = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.SPREADSHEET_ID,
-    range: "'Pedidos'!A:K",
+    range: "'Pedidos'!A:O",
   });
   const rows = result.data.values || [];
+  // Layout Pedidos: A:ID B:Fecha pedido C:Cliente D:Cant E:Monto Pedido
+  //   F:Cargo Envio G:Descuento H:Total Venta I:Forma pago J:Fecha Pago
+  //   K:Monto Pago L:Saldo M:Estado Pago N:Envio O:Estado Envio
   const pedidos = rows.slice(1)
-    .filter(r => r[0]?.trim() && /^WS\d/.test(r[1] || ""))
+    .filter(r => r[0]?.trim() && /^WS\d/.test(r[2] || ""))
     .map(r => ({
-      id:          r[0] || "",
-      cliente:     r[1] || "",
-      cant:        parseNum(r[2]),
-      monto:       parseNum(r[3]),
-      formaPago:   r[4] || "",
-      fechaPago:   r[5] || "",
-      montoPago:   parseNum(r[6]),
-      saldo:       parseNum(r[7]),
-      estadoPago:  r[8] || "",
-      envio:       r[9] || "",
-      estadoEnvio: r[10] || "",
+      id:          r[0]  || "",
+      fecha:       r[1]  || "",
+      cliente:     r[2]  || "",
+      cant:        parseNum(r[3]),
+      monto:       parseNum(r[4]),
+      cargoEnvio:  parseNum(r[5]),
+      descuento:   parseNum(r[6]),
+      totalVenta:  parseNum(r[7]),
+      formaPago:   r[8]  || "",
+      fechaPago:   r[9]  || "",
+      montoPago:   parseNum(r[10]),
+      saldo:       parseNum(r[11]),
+      estadoPago:  r[12] || "",
+      envio:       r[13] || "",
+      estadoEnvio: r[14] || "",
     }));
   const pendientes   = pedidos.filter(p => p.saldo > 0);
   const totalSaldo   = pendientes.reduce((s, p) => s + p.saldo, 0);
