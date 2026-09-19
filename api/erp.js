@@ -273,8 +273,8 @@ async function getDashboard(res) {
     .sort((a, b) => b.qty - a.qty).slice(0, 8)
     .map(p => ({ nombre: p.nombre, qty: p.qty, ventas: Math.round(p.ventas) }));
 
-  // Cobros pendientes desde Pedidos (L = Saldo idx 11)
-  let totalPendiente = 0;
+  // Cobros pendientes (L = Saldo idx 11) y entregas pendientes (O = Estado Envio idx 14)
+  let totalPendiente = 0, entregasPendientes = 0;
   const pendientes = [];
   for (const r of (pedRes.data.values || [])) {
     const id = String(r[0] || "").trim();
@@ -285,6 +285,8 @@ async function getDashboard(res) {
       totalPendiente += saldo;
       pendientes.push({ id, cliente, saldo: Math.round(saldo) });
     }
+    const estadoEnvio = String(r[14] || "").trim();
+    if (!/entreg/i.test(estadoEnvio)) entregasPendientes++;
   }
   pendientes.sort((a, b) => b.saldo - a.saldo);
 
@@ -298,6 +300,7 @@ async function getDashboard(res) {
     prendasAnio,
     totalPendiente: Math.round(totalPendiente),
     pendientesCount: pendientes.length,
+    entregasPendientes,
     pendientes: pendientes.slice(0, 30),
     serie,
     topProductos,

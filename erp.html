@@ -63,10 +63,11 @@
   nav{position:fixed;bottom:0;left:0;right:0;z-index:30;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
     padding-bottom:env(safe-area-inset-bottom);background:#fff;border-top:1px solid var(--line);
     display:grid;grid-template-columns:repeat(5,1fr);box-shadow:0 -2px 14px rgba(15,23,46,.06)}
-  nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:10.5px;font-weight:600;padding-top:8px}
-  nav button .ic{font-size:20px;line-height:1}
-  nav button.active{color:var(--azul-900)}
-  nav button.active .ic{transform:translateY(-1px)}
+  nav button{position:relative;background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:10.5px;font-weight:600;padding-top:8px;transition:color .15s}
+  nav button .ic{font-size:20px;line-height:1;transition:transform .15s}
+  nav button.active{color:var(--azul-900);font-weight:800}
+  nav button.active::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:30px;height:3px;border-radius:0 0 4px 4px;background:var(--dorado)}
+  nav button.active .ic{transform:translateY(-2px) scale(1.12)}
 
   /* CARDS */
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
@@ -146,6 +147,9 @@
   .sheet h3{margin:0 0 3px;font-size:19px}
   .sheet .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
   .grabber{width:40px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 14px}
+  .sheet-topbar{position:sticky;top:0;height:0;z-index:5}
+  .sheet-close{position:absolute;top:-6px;right:-4px;width:36px;height:36px;border:none;border-radius:50%;background:#eef1f6;color:var(--azul-900);font-size:17px;font-weight:700;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 4px rgba(15,23,46,.12)}
+  .sheet-close:active{background:#e2e6ee}
 
   .toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 20px);transform:translateX(-50%) translateY(20px);
     background:var(--azul-900);color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;z-index:80;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90%;text-align:center}
@@ -313,13 +317,18 @@ async function viewInicio(v,force){
         <div class="kpi gold"><div class="lbl">Ganancia mes</div><div class="val">${fmt(d.gananciaMes)}</div><div class="sub">Año: ${fmt(d.gananciaAnio)}</div></div>
       </div>
       <div class="kpi-grid" style="margin-top:12px">
-        <div class="kpi"><div class="lbl">Prendas del mes</div><div class="val">${(d.prendasMes||0).toLocaleString("es-AR")}</div><div class="sub">Año: ${(d.prendasAnio||0).toLocaleString("es-AR")} u.</div></div>
         <div class="kpi" onclick="window._pedFilter='debe';go('pedidos')">
           <div class="lbl">Cobros pendientes</div>
           <div class="val" style="color:${d.totalPendiente>0?'var(--red)':'var(--green)'}">${fmt(d.totalPendiente)}</div>
           <div class="sub">${d.pendientesCount} sin saldar · ver →</div>
         </div>
+        <div class="kpi" onclick="window._pedFilter='entregar';go('pedidos')">
+          <div class="lbl">A entregar</div>
+          <div class="val" style="color:${d.entregasPendientes>0?'var(--amber)':'var(--green)'}">${(d.entregasPendientes||0).toLocaleString("es-AR")}</div>
+          <div class="sub">pedido${d.entregasPendientes!==1?'s':''} sin entregar · ver →</div>
+        </div>
       </div>
+      <div class="kpi" style="margin-top:12px"><div class="lbl">Prendas vendidas del mes</div><div class="val">${(d.prendasMes||0).toLocaleString("es-AR")}</div><div class="sub">Año: ${(d.prendasAnio||0).toLocaleString("es-AR")} unidades</div></div>
 
       <div class="section-h">Ventas por mes (últimos 12)</div>
       <div class="card">
@@ -400,13 +409,13 @@ async function viewVender(v,force){
           <button class="btn ghost" id="v-cliente-btn" onclick="openCliente()">Elegir o crear cliente</button>
         </div>
       </div>
-      <div class="section-h" style="margin-top:4px">Agregar prendas</div>
+      <div class="section-h" style="margin-top:4px">Pedido</div>
+      <div class="card" id="v-cart"></div>
+      <div id="v-checkout"></div>
+      <div class="section-h">Agregar prendas</div>
       <div id="v-filters" class="filters"></div>
       <div class="search"><span class="mag">🔎</span><input id="v-q" placeholder="Buscar prenda…"></div>
-      <div id="v-results"></div>
-      <div class="section-h">Pedido</div>
-      <div class="card" id="v-cart"></div>
-      <div id="v-checkout"></div>`;
+      <div id="v-results"></div>`;
     renderCliente();
     renderFilters();
     const inp=$("#v-q");
@@ -512,12 +521,12 @@ function updateCartBar(){
   const bar=$("#cart-bar"); if(!bar) return;
   const n=cart.reduce((s,i)=>s+i.qty,0);
   if(TAB==="vender" && n>0){
-    $("#cart-bar-txt").textContent=`${n} prenda${n!==1?'s':''} · Ver pedido ↓`;
+    $("#cart-bar-txt").textContent=`${n} prenda${n!==1?'s':''} · Ver pedido ↑`;
     $("#cart-bar-total").textContent=fmt(cartTotal());
     bar.classList.add("show");
   } else bar.classList.remove("show");
 }
-function scrollToCheckout(){ ($("#v-checkout")||$("#v-cart"))?.scrollIntoView({behavior:"smooth",block:"start"}); }
+function scrollToCheckout(){ ($("#v-cart")||$("#v-checkout"))?.scrollIntoView({behavior:"smooth",block:"start"}); window.scrollTo({top:0,behavior:"smooth"}); }
 function drawCheckout(){
   const el=$("#v-checkout"); if(!el) return;
   if(!cart.length){ el.innerHTML=""; return; }
@@ -773,7 +782,7 @@ async function viewOrdenes(v,force){
 }
 
 // ─────────────────────────────────────────────────────────────── SHEET
-function openSheet(html){ $("#sheet").innerHTML=html; $("#sheet-bg").classList.add("open"); sheetOpen=true; updateBack(); }
+function openSheet(html){ $("#sheet").innerHTML='<div class="sheet-topbar"><button class="sheet-close" onclick="closeSheet()" aria-label="Cerrar">✕</button></div>'+html; $("#sheet-bg").classList.add("open"); sheetOpen=true; updateBack(); }
 function closeSheet(){ $("#sheet-bg").classList.remove("open"); sheetOpen=false; updateBack(); }
 
 // ─────────────────────────────────────────────────────────────── INIT
