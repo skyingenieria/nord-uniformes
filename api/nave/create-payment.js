@@ -18,6 +18,14 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: "Faltan datos requeridos" });
     }
 
+    // Nave exige un email de comprador. Si el cliente no tiene uno válido
+    // cargado (venta armada desde la app), se usa un email de respaldo del
+    // negocio para que el link igual se genere.
+    const emailValido = typeof email === "string" && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
+    const buyerEmail = emailValido
+      ? email.trim()
+      : (process.env.NAVE_FALLBACK_EMAIL || process.env.SMTP_USER || "norduniformes@gmail.com");
+
     const token = await getAccessToken();
     const baseUrl = process.env.NAVE_ENV === "prod"
       ? "https://api.ranty.io/api/payment_request/ecommerce"
@@ -46,8 +54,8 @@ module.exports = async (req, res) => {
         },
       ],
       buyer: {
-        name: nombreCliente,
-        user_email: email,
+        name: nombreCliente || "Cliente",
+        user_email: buyerEmail,
         phone: telefono ? `+54${telefono.replace(/\D/g, "")}` : undefined,
       },
       additional_info: {

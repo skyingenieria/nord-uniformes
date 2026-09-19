@@ -457,7 +457,7 @@ async function registrarPedido(){
         })});
         const nd=await nr.json();
         if(nr.ok && nd.checkout_url) naveUrl=nd.checkout_url;
-        else throw new Error((nd.error||"No se pudo generar el link")+(nd.details?" — revisá el email del cliente":""));
+        else throw new Error(nd.error||"No se pudo generar el link");
       }catch(ne){ toast("Pedido guardado, pero el link falló: "+ne.message, true); }
     }
     const resumen=buildResumen(r.idPedido,total,naveUrl);
