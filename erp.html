@@ -178,9 +178,12 @@
 <!-- APP -->
 <div id="app">
   <header>
-    <div>
-      <div class="h-sub" id="h-sub">NORD Uniformes</div>
-      <div class="h-title" id="h-title">Inicio</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="icon-btn" id="back-btn" onclick="goBack()" title="Volver" style="display:none;font-size:22px">‹</button>
+      <div>
+        <div class="h-sub" id="h-sub">NORD Uniformes</div>
+        <div class="h-title" id="h-title">Inicio</div>
+      </div>
     </div>
     <div class="h-actions">
       <button class="icon-btn" onclick="refresh()" title="Actualizar">⟳</button>
@@ -213,6 +216,8 @@
 // ─────────────────────────────────────────────────────────────── ESTADO
 let TOKEN = localStorage.getItem("nord_erp_token") || "";
 let TAB = "inicio";
+let navStack = [];      // pila de pantallas para "volver atrás"
+let sheetOpen = false;  // hay un panel (modal) abierto
 const DATA = { stock:null, stockFlat:null, clientes:null, pedidos:null, dashboard:null, ordenes:null };
 let cart = [];
 let venta = { cliente:null, descuento:0, envio:0, pago:"Transf. Banc." };
@@ -250,18 +255,26 @@ async function login(){
   btn.disabled=false; btn.textContent="Ingresar";
 }
 function logout(){ TOKEN=""; localStorage.removeItem("nord_erp_token"); $("#app").style.display="none"; $("#login").style.display="flex"; }
-function showApp(){ $("#login").style.display="none"; $("#app").style.display="block"; go("inicio"); }
+function showApp(){ $("#login").style.display="none"; $("#app").style.display="block"; navStack=[]; sheetOpen=false; TAB="inicio"; history.replaceState({tab:"inicio"},""); go("inicio",{push:false}); }
 
 // ─────────────────────────────────────────────────────────────── NAV
 const TITLES = {inicio:"Inicio", stock:"Stock", vender:"Vender", pedidos:"Pedidos", ordenes:"Órdenes"};
-function go(tab){
+function go(tab,opts){
+  opts=opts||{};
+  if(opts.push!==false && TAB!==tab){ navStack.push(TAB); history.pushState({tab},""); }
   TAB=tab;
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
   $("#h-title").textContent = TITLES[tab];
   window.scrollTo(0,0);
   render();
   updateCartBar();
+  updateBack();
 }
+function goBack(){
+  if(sheetOpen){ closeSheet(); return; }
+  if(navStack.length) history.back();   // dispara popstate → navega a la anterior
+}
+function updateBack(){ const b=$("#back-btn"); if(b) b.style.display=(sheetOpen||navStack.length>0)?"grid":"none"; }
 function refresh(){ DATA[mapData(TAB)] = null; render(true); toast("Actualizado"); }
 function mapData(tab){ return tab==="inicio"?"dashboard": tab==="vender"?"stock": tab; }
 
@@ -756,10 +769,15 @@ async function viewOrdenes(v,force){
 }
 
 // ─────────────────────────────────────────────────────────────── SHEET
-function openSheet(html){ $("#sheet").innerHTML=html; $("#sheet-bg").classList.add("open"); }
-function closeSheet(){ $("#sheet-bg").classList.remove("open"); }
+function openSheet(html){ $("#sheet").innerHTML=html; $("#sheet-bg").classList.add("open"); sheetOpen=true; updateBack(); }
+function closeSheet(){ $("#sheet-bg").classList.remove("open"); sheetOpen=false; updateBack(); }
 
 // ─────────────────────────────────────────────────────────────── INIT
+// Botón físico de atrás del celu / gesto de retroceso
+window.addEventListener("popstate",()=>{
+  if(sheetOpen){ closeSheet(); history.pushState({tab:TAB},""); return; }  // cierra el panel, no sale
+  if(navStack.length){ go(navStack.pop(), {push:false}); }                 // vuelve a la pantalla anterior
+});
 if(TOKEN) showApp(); else { $("#login").style.display="flex"; }
 $("#pwd").addEventListener("keydown",e=>{ if(e.key==="Enter")login(); });
 if("serviceWorker" in navigator){ navigator.serviceWorker.register("/sw-erp.js",{scope:"/erp"}).catch(()=>{}); }
