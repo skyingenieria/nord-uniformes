@@ -1,11 +1,14 @@
 // Service Worker de la NORD ERP (PWA de Flor).
 // App-shell cache para que abra sin conexion; la API siempre va a la red.
-const CACHE = "nord-erp-v1";
+const CACHE = "nord-erp-v2";
 const SHELL = [
   "/erp",
   "/erp.html",
   "/manifest.webmanifest",
-  "/le1ffh0hi1kxv30m17q3_400x400.png",
+  "/nord-icon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (e) => {
