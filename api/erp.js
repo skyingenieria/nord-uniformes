@@ -294,6 +294,45 @@ async function getDashboard(res) {
   });
 }
 
+// ── GET ordenes — detalle de prendas por pedido (hoja 'Ordenes') ─────────────
+async function getOrdenes(res) {
+  const sheets = sheetsClient();
+  const result = await sheets.spreadsheets.values.get({
+    spreadsheetId: process.env.SPREADSHEET_ID,
+    range: "'Ordenes'!A2:N20000",
+    valueRenderOption: "UNFORMATTED_VALUE",
+  });
+  const rows = result.data.values || [];
+  // A:Fecha B:Pedido C:Colegio D:Cliente E:FormaPago F:Prenda G:Talle H:Cant
+  // I:SKU J:CostoUnit K:PrecioUnit L:CostoTotal M:PrecioTotal N:Ganancia
+  const grouped = {};
+  const order = [];
+  for (const r of rows) {
+    const id      = String(r[1] || "").trim();
+    const cliente = String(r[3] || "").trim();
+    if (!id || !/^WS\d/.test(cliente)) continue;
+    if (!grouped[id]) {
+      grouped[id] = { id, fecha: String(r[0] || "").trim(), cliente,
+        formaPago: String(r[4] || "").trim(), items: [], total: 0, ganancia: 0 };
+      order.push(id);
+    }
+    const precio      = Math.round(Number(r[10]) || 0);
+    const precioTotal = Math.round(Number(r[12]) || 0);
+    const ganancia    = Math.round(Number(r[13]) || 0);
+    grouped[id].items.push({
+      nombre: String(r[5] || "").trim(),
+      talle:  String(r[6] ?? "").trim(),
+      qty:    Number(r[7]) || 1,
+      precio, precioTotal, ganancia,
+    });
+    grouped[id].total    += precioTotal;
+    grouped[id].ganancia += ganancia;
+  }
+  const ordenes = order.map(id => grouped[id]).reverse();
+  res.setHeader("Cache-Control", "no-store");
+  res.json(ordenes);
+}
+
 // ── GET validate-code (publico, portado de /api/validate-code) ───────────────
 async function validateCode(req, res) {
   const code = (req.query.code || "").trim().toUpperCase();
@@ -448,6 +487,7 @@ module.exports = async (req, res) => {
       if (action === "stock")     return await getStock(res, (req.query.colegio || "").trim() || null);
       if (action === "clientes")  return await getClientes(res);
       if (action === "pedidos")   return await getPedidos(res);
+      if (action === "ordenes")   return await getOrdenes(res);
       if (action === "dashboard") return await getDashboard(res);
       return res.status(400).json({ error: "Accion GET desconocida" });
     }

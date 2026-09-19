@@ -179,8 +179,8 @@
     <button data-tab="inicio"   class="active" onclick="go('inicio')"><span class="ic">🏠</span>Inicio</button>
     <button data-tab="stock"    onclick="go('stock')"><span class="ic">📦</span>Stock</button>
     <button data-tab="vender"   onclick="go('vender')"><span class="ic">🛒</span>Vender</button>
-    <button data-tab="cobros"   onclick="go('cobros')"><span class="ic">💵</span>Cobros</button>
-    <button data-tab="entregas" onclick="go('entregas')"><span class="ic">🚚</span>Entregas</button>
+    <button data-tab="pedidos"  onclick="go('pedidos')"><span class="ic">🧾</span>Pedidos</button>
+    <button data-tab="ordenes"  onclick="go('ordenes')"><span class="ic">📋</span>Órdenes</button>
   </nav>
 </div>
 
@@ -193,7 +193,7 @@
 // ─────────────────────────────────────────────────────────────── ESTADO
 let TOKEN = localStorage.getItem("nord_erp_token") || "";
 let TAB = "inicio";
-const DATA = { stock:null, stockFlat:null, clientes:null, pedidos:null, dashboard:null };
+const DATA = { stock:null, stockFlat:null, clientes:null, pedidos:null, dashboard:null, ordenes:null };
 let cart = [];
 let venta = { cliente:null, descuento:0, envio:0, pago:"Transf. Banc." };
 
@@ -233,7 +233,7 @@ function logout(){ TOKEN=""; localStorage.removeItem("nord_erp_token"); $("#app"
 function showApp(){ $("#login").style.display="none"; $("#app").style.display="block"; go("inicio"); }
 
 // ─────────────────────────────────────────────────────────────── NAV
-const TITLES = {inicio:"Inicio", stock:"Stock", vender:"Vender", cobros:"Cobros", entregas:"Entregas"};
+const TITLES = {inicio:"Inicio", stock:"Stock", vender:"Vender", pedidos:"Pedidos", ordenes:"Órdenes"};
 function go(tab){
   TAB=tab;
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
@@ -249,8 +249,8 @@ async function render(force){
   if(TAB==="inicio")   return viewInicio(v,force);
   if(TAB==="stock")    return viewStock(v,force);
   if(TAB==="vender")   return viewVender(v,force);
-  if(TAB==="cobros")   return viewCobros(v,force);
-  if(TAB==="entregas") return viewEntregas(v,force);
+  if(TAB==="pedidos")  return viewPedidos(v,force);
+  if(TAB==="ordenes")  return viewOrdenes(v,force);
 }
 function loading(v){ v.innerHTML='<div class="spinner"></div>'; }
 function errBox(v,e){ v.innerHTML=`<div class="empty">⚠️ ${esc(e.message)}<br><br><button class="btn ghost sm" onclick="render(true)">Reintentar</button></div>`; }
@@ -277,7 +277,7 @@ async function viewInicio(v,force){
         <div class="kpi hl"><div class="lbl">Ventas del mes</div><div class="val">${fmt(d.ventasMes)}</div><div class="sub">Año: ${fmt(d.ventasAnio)}</div></div>
         <div class="kpi gold"><div class="lbl">Ganancia mes</div><div class="val">${fmt(d.gananciaMes)}</div><div class="sub">Año: ${fmt(d.gananciaAnio)}</div></div>
       </div>
-      <div class="kpi" style="margin-top:12px" onclick="go('cobros')">
+      <div class="kpi" style="margin-top:12px" onclick="window._pedFilter='debe';go('pedidos')">
         <div class="lbl">Cobros pendientes</div>
         <div class="val" style="color:${d.totalPendiente>0?'var(--red)':'var(--green)'}">${fmt(d.totalPendiente)}</div>
         <div class="sub">${d.pendientesCount} pedido${d.pendientesCount!==1?'s':''} sin saldar · tocá para ver →</div>
@@ -347,72 +347,91 @@ async function viewStock(v,force){
 }
 
 // ─────────────────────────────────────────────────────────────── VENDER
-function cartSubtotal(){ return cart.reduce((s,i)=>s+i.precio*i.qty,0); }
+const CARD_SURCHARGE = 1.15; // tarjeta = precio de lista = transferencia x1.15 (igual que la web)
+function isCard(){ return /nave|tarjeta/i.test(venta.pago); }
+function unitPrice(i){ return isCard()? Math.round(i.precio*CARD_SURCHARGE) : i.precio; }
+function cartSubtotal(){ return cart.reduce((s,i)=>s+unitPrice(i)*i.qty,0); }
 function cartTotal(){ return Math.max(0, cartSubtotal() - (venta.descuento||0) + (venta.envio||0)); }
+
 async function viewVender(v,force){
   try{
     if(force||!DATA.stock){ loading(v); DATA.stock = await api("stock"); DATA.stockFlat=flattenStock(DATA.stock); }
     v.innerHTML = `
-      <div class="search"><span class="mag">🔎</span><input id="v-q" placeholder="Agregar prenda al pedido…"></div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="field" style="margin-bottom:0"><label>Cliente</label>
+          <button class="btn ghost" id="v-cliente-btn" onclick="openCliente()">Elegir o crear cliente</button>
+        </div>
+      </div>
+      <div class="section-h" style="margin-top:4px">Agregar prendas</div>
+      <div class="search"><span class="mag">🔎</span><input id="v-q" placeholder="Buscar prenda o talle…"></div>
       <div id="v-results"></div>
       <div class="section-h">Pedido</div>
       <div class="card" id="v-cart"></div>
       <div id="v-checkout"></div>`;
+    renderCliente();
     const inp=$("#v-q");
-    inp.oninput=()=>{
-      const q=inp.value.trim().toLowerCase();
-      const box=$("#v-results");
-      if(!q){ box.innerHTML=""; return; }
-      const res = DATA.stockFlat.filter(r=>(`${r.nombre} ${r.talle}`).toLowerCase().includes(q)).slice(0,30);
-      box.innerHTML = `<div class="card">${res.length?res.map((r,i)=>`
-        <div class="row"><div class="grow"><div class="name">${esc(r.nombre)} · T${esc(r.talle)}</div>
-        <div class="meta">${fmt(r.precio)} · stock ${r.stock}</div></div>
-        <button class="btn gold sm" onclick='addItem(${JSON.stringify(r).replace(/'/g,"&#39;")})'>+ Agregar</button></div>`).join(""):'<div class="empty">Sin resultados</div>'}</div>`;
-    };
+    inp.oninput=()=>drawResults(inp.value.trim().toLowerCase());
+    drawResults("");   // muestra TODAS las prendas desde el arranque
     drawCart();
   }catch(e){ errBox(v,e); }
+}
+function renderCliente(){
+  const b=$("#v-cliente-btn"); if(!b) return;
+  const c=venta.cliente;
+  b.textContent = c ? `✓ ${c.nombre} ${c.apellido||""}`.trim() : "Elegir o crear cliente";
+  b.style.borderColor = c ? "var(--green)" : "var(--line)";
+  b.style.color = c ? "var(--green)" : "var(--azul-900)";
+}
+function drawResults(q){
+  const box=$("#v-results"); if(!box) return;
+  const res=(DATA.stockFlat||[]).filter(r=> !q || (`${r.nombre} ${r.talle}`).toLowerCase().includes(q)).slice(0,80);
+  box.innerHTML = `<div class="card">${res.length?res.map(r=>`
+    <div class="row"><div class="grow"><div class="name">${esc(r.nombre)} · T${esc(r.talle)}</div>
+      <div class="meta">${fmt(r.precio)} · stock ${r.stock}</div></div>
+    <button class="btn gold sm" onclick='addItem(${JSON.stringify(r).replace(/'/g,"&#39;")})'>+</button></div>`).join(""):'<div class="empty">Sin resultados</div>'}</div>`;
 }
 function addItem(r){
   const ex = cart.find(i=>i.sku===r.sku && i.talle===r.talle && i.nombre===r.nombre);
   if(ex) ex.qty++; else cart.push({nombre:r.nombre,talle:r.talle,sku:r.sku,precio:r.precio,qty:1});
-  toast(`${r.nombre} T${r.talle} agregado`); drawCart();
+  toast(`${r.nombre} T${r.talle}`); drawCart();
 }
 function chQty(idx,d){ cart[idx].qty+=d; if(cart[idx].qty<=0)cart.splice(idx,1); drawCart(); }
 function drawCart(){
   const c=$("#v-cart"); if(!c) return;
-  if(!cart.length){ c.innerHTML='<div class="empty">Todavía no agregaste prendas</div>'; $("#v-checkout").innerHTML=""; return; }
+  if(!cart.length){ c.innerHTML='<div class="empty">Todavía no agregaste prendas</div>'; drawCheckout(); return; }
   c.innerHTML = cart.map((i,idx)=>`
     <div class="cart-item">
-      <div class="grow"><div class="name">${esc(i.nombre)} · T${esc(i.talle)}</div><div class="meta">${fmt(i.precio)} c/u · ${fmt(i.precio*i.qty)}</div></div>
+      <div class="grow"><div class="name">${esc(i.nombre)} · T${esc(i.talle)}</div><div class="meta">${fmt(unitPrice(i))} c/u · ${fmt(unitPrice(i)*i.qty)}</div></div>
       <div class="qty"><button onclick="chQty(${idx},-1)">−</button><span>${i.qty}</span><button onclick="chQty(${idx},1)">+</button></div>
     </div>`).join("");
-
-  const cli = venta.cliente;
-  $("#v-checkout").innerHTML = `
+  drawCheckout();
+}
+function drawCheckout(){
+  const el=$("#v-checkout"); if(!el) return;
+  if(!cart.length){ el.innerHTML=""; return; }
+  el.innerHTML = `
     <div class="card" style="margin-top:12px">
-      <div class="field"><label>Cliente</label>
-        <button class="btn ghost" onclick="openCliente()">${cli?esc(cli.nombre+" "+cli.apellido):"Elegir o crear cliente"}</button>
+      <div class="field"><label>Forma de pago</label>
+        <select id="v-pago" onchange="venta.pago=this.value;drawCart()">
+          <option ${venta.pago==="Transf. Banc."?"selected":""}>Transf. Banc.</option>
+          <option ${venta.pago==="Efectivo"?"selected":""}>Efectivo</option>
+          <option value="Tarjeta (Nave)" ${isCard()?"selected":""}>Tarjeta (Nave)</option>
+        </select>
       </div>
       <div class="two">
         <div class="field"><label>Descuento ($)</label><input type="number" inputmode="numeric" id="v-desc" value="${venta.descuento||''}" placeholder="0" oninput="venta.descuento=+this.value||0;drawTotals()"></div>
         <div class="field"><label>Cargo envío ($)</label><input type="number" inputmode="numeric" id="v-env" value="${venta.envio||''}" placeholder="0" oninput="venta.envio=+this.value||0;drawTotals()"></div>
       </div>
-      <div class="field"><label>Forma de pago</label>
-        <select id="v-pago" onchange="venta.pago=this.value">
-          <option ${venta.pago==="Transf. Banc."?"selected":""}>Transf. Banc.</option>
-          <option ${venta.pago==="Efectivo"?"selected":""}>Efectivo</option>
-          <option ${venta.pago==="Tarjeta"?"selected":""}>Tarjeta</option>
-        </select>
-      </div>
+      ${isCard()?'<p style="font-size:12px;color:var(--muted);margin:-4px 0 12px">💳 Precio con recargo de tarjeta. Al registrar se genera el link de pago Nave para enviar al cliente.</p>':''}
       <div id="v-totals"></div>
-      <button class="btn" style="margin-top:14px" id="v-submit" onclick="registrarPedido()">Registrar pedido</button>
+      <button class="btn" style="margin-top:14px" id="v-submit" onclick="registrarPedido()">${isCard()?"Registrar y generar link":"Registrar pedido"}</button>
     </div>`;
   drawTotals();
 }
 function drawTotals(){
   const t=$("#v-totals"); if(!t) return;
   t.innerHTML=`
-    <div class="tot-line"><span>Subtotal</span><span>${fmt(cartSubtotal())}</span></div>
+    <div class="tot-line"><span>Subtotal${isCard()?' (tarjeta)':''}</span><span>${fmt(cartSubtotal())}</span></div>
     ${venta.descuento?`<div class="tot-line disc"><span>Descuento</span><span>−${fmt(venta.descuento)}</span></div>`:""}
     ${venta.envio?`<div class="tot-line"><span>Envío</span><span>${fmt(venta.envio)}</span></div>`:""}
     <div class="tot-line big"><span>Total</span><span>${fmt(cartTotal())}</span></div>`;
@@ -420,36 +439,54 @@ function drawTotals(){
 async function registrarPedido(){
   if(!cart.length) return toast("Agregá prendas primero",true);
   if(!venta.cliente) return toast("Elegí un cliente",true);
-  const btn=$("#v-submit"); btn.disabled=true; btn.textContent="Registrando…";
+  const card=isCard();
+  const btn=$("#v-submit"); btn.disabled=true; btn.textContent=card?"Generando…":"Registrando…";
   try{
+    const total=cartTotal();
     const r = await api("pedido",{method:"POST",body:{
       codigoCliente: venta.cliente.codigo, colegio: venta.cliente.colegio||"WS",
       formaPago: venta.pago, items: cart.map(i=>({nombre:i.nombre,talle:i.talle,qty:i.qty})),
     }});
-    const total=cartTotal(); const resumen=buildResumen(r.idPedido,total);
+    let naveUrl="";
+    if(card){
+      try{
+        const nr=await fetch("/api/nave/create-payment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+          orderId:r.idPedido, total, nombreCliente:(venta.cliente.nombre+" "+(venta.cliente.apellido||"")).trim(),
+          email:venta.cliente.email||"", telefono:venta.cliente.telefono||"",
+          items:cart.map(i=>({nombre:i.nombre,talle:i.talle,qty:i.qty,precio:unitPrice(i)})),
+        })});
+        const nd=await nr.json();
+        if(nr.ok && nd.checkout_url) naveUrl=nd.checkout_url;
+        else throw new Error((nd.error||"No se pudo generar el link")+(nd.details?" — revisá el email del cliente":""));
+      }catch(ne){ toast("Pedido guardado, pero el link falló: "+ne.message, true); }
+    }
+    const resumen=buildResumen(r.idPedido,total,naveUrl);
     $("#view").innerHTML=`
       <div class="card" style="text-align:center;padding:28px 20px">
         <div style="font-size:44px">✅</div>
         <h2 style="margin:8px 0 2px">Pedido ${esc(r.idPedido)}</h2>
-        <p style="color:var(--muted);margin:0 0 4px">${esc(venta.cliente.nombre+" "+venta.cliente.apellido)}</p>
+        <p style="color:var(--muted);margin:0 0 4px">${esc((venta.cliente.nombre+" "+(venta.cliente.apellido||"")).trim())}</p>
         <div style="font-size:26px;font-weight:800;margin:10px 0">${fmt(total)}</div>
-        <button class="btn gold" onclick='waResumen(${JSON.stringify(resumen)})'>Copiar resumen para WhatsApp</button>
+        ${naveUrl?`<div class="field" style="text-align:left;margin-top:8px"><label>Link de pago (Nave)</label><input id="nave-url" readonly value="${esc(naveUrl)}" onclick="this.select()"></div>
+          <button class="btn" onclick='copyText(${JSON.stringify(naveUrl)},"Link copiado")'>Copiar link de pago</button>`:''}
+        <button class="btn gold" style="margin-top:10px" onclick='waResumen(${JSON.stringify(resumen)})'>Enviar por WhatsApp</button>
         <button class="btn ghost" style="margin-top:10px" onclick="nuevoPedido()">Nuevo pedido</button>
       </div>`;
     cart=[]; venta={cliente:null,descuento:0,envio:0,pago:"Transf. Banc."};
-    DATA.pedidos=null; DATA.dashboard=null; DATA.stock=null;
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Registrar pedido"; }
+    DATA.pedidos=null; DATA.dashboard=null; DATA.stock=null; DATA.ordenes=null;
+  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent=card?"Registrar y generar link":"Registrar pedido"; }
 }
-function buildResumen(id,total){
-  const items = cart.map(i=>`• ${i.nombre} T${i.talle} x${i.qty} — ${fmt(i.precio*i.qty)}`).join("\n");
-  let s=`*Pedido #${id}* — NORD Uniformes\nCliente: ${venta.cliente.nombre} ${venta.cliente.apellido}\n\n${items}\n`;
+function buildResumen(id,total,naveUrl){
+  const items = cart.map(i=>`• ${i.nombre} T${i.talle} x${i.qty} — ${fmt(unitPrice(i)*i.qty)}`).join("\n");
+  let s=`*Pedido #${id}* — NORD Uniformes\nCliente: ${venta.cliente.nombre} ${venta.cliente.apellido||""}\n\n${items}\n`;
   if(venta.descuento) s+=`Descuento: −${fmt(venta.descuento)}\n`;
   if(venta.envio) s+=`Envío: ${fmt(venta.envio)}\n`;
   s+=`\n*Total: ${fmt(total)}*\nForma de pago: ${venta.pago}`;
+  if(naveUrl) s+=`\n\n💳 Pagá con tarjeta acá: ${naveUrl}`;
   return s;
 }
-function waResumen(txt){ navigator.clipboard?.writeText(txt).then(()=>toast("Resumen copiado")).catch(()=>{});
-  window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank"); }
+function copyText(txt,msg){ navigator.clipboard?.writeText(txt).then(()=>toast(msg||"Copiado")).catch(()=>{}); }
+function waResumen(txt){ copyText(txt,"Resumen copiado"); window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank"); }
 function nuevoPedido(){ go("vender"); }
 
 // Cliente picker
@@ -487,7 +524,7 @@ async function cliSeg(mode){
     inp.oninput=draw; draw();
   }catch(e){ body.innerHTML=`<div class="empty">${esc(e.message)}</div>`; }
 }
-function pickCliente(c){ venta.cliente=c; closeSheet(); drawCart(); }
+function pickCliente(c){ venta.cliente=c; closeSheet(); if(TAB==="vender"){ renderCliente(); drawCheckout(); } }
 async function crearCliente(){
   const nombre=$("#c-nom").value.trim(), apellido=$("#c-ape").value.trim(), email=$("#c-mail").value.trim(), telefono=$("#c-tel").value.trim();
   if(!nombre||!email) return toast("Nombre y email son obligatorios",true);
@@ -500,44 +537,60 @@ async function crearCliente(){
   }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Crear cliente"; }
 }
 
-// ─────────────────────────────────────────────────────────────── COBROS
-async function viewCobros(v,force){
+// ─────────────────────────────────────────────────────────────── PEDIDOS
+const isEnt = e => /entreg/i.test(e||"");
+async function viewPedidos(v,force){
   try{
     if(force||!DATA.pedidos){ loading(v); DATA.pedidos = await api("pedidos"); }
-    window._cobFilter = window._cobFilter||"pend";
-    const draw=()=>{
-      const f=window._cobFilter;
-      let list=DATA.pedidos;
-      if(f==="pend") list=list.filter(p=>p.saldo>0.5);
-      else if(f==="pag") list=list.filter(p=>p.saldo<=0.5);
-      $("#cob-list").innerHTML = list.length?list.map(p=>`
-        <div class="card" style="margin-bottom:10px;cursor:pointer" onclick='openPago(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
-          <div class="row" style="padding:0">
-            <div class="grow"><div class="name">${esc(p.id)} · ${esc(p.cliente)}</div>
-              <div class="meta">Total ${fmt(p.totalVenta||p.monto)} · pagado ${fmt(p.montoPago)}</div></div>
-            <span class="chip ${p.saldo>0.5?'r':'g'}">${p.saldo>0.5?"Debe "+fmt(p.saldo):"Pagado"}</span>
-          </div></div>`).join(""):'<div class="empty">No hay pedidos acá</div>';
-    };
+    window._pedFilter = window._pedFilter||"todos";
+    const f=window._pedFilter;
+    let list=DATA.pedidos;
+    if(f==="debe") list=list.filter(p=>p.saldo>0.5);
+    else if(f==="entregar") list=list.filter(p=>!isEnt(p.estadoEnvio));
     v.innerHTML=`
       <div class="seg">
-        <button class="${window._cobFilter==='pend'?'on':''}" onclick="window._cobFilter='pend';render()">Pendientes</button>
-        <button class="${window._cobFilter==='pag'?'on':''}" onclick="window._cobFilter='pag';render()">Pagados</button>
-        <button class="${window._cobFilter==='all'?'on':''}" onclick="window._cobFilter='all';render()">Todos</button>
-      </div><div id="cob-list"></div>`;
-    draw();
+        <button class="${f==='todos'?'on':''}" onclick="window._pedFilter='todos';render()">Todos</button>
+        <button class="${f==='debe'?'on':''}" onclick="window._pedFilter='debe';render()">Deben</button>
+        <button class="${f==='entregar'?'on':''}" onclick="window._pedFilter='entregar';render()">A entregar</button>
+      </div>
+      ${list.length?list.map(p=>`
+        <div class="card" style="margin-bottom:10px;cursor:pointer" onclick='openPedido(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
+          <div class="row" style="padding:0 0 8px"><div class="grow">
+            <div class="name">${esc(p.id)} · ${esc(p.cliente)}</div>
+            <div class="meta">${esc(p.fecha||"")} · ${p.cant} prenda${p.cant!==1?'s':''} · Total ${fmt(p.totalVenta||p.monto)}</div>
+          </div><span style="color:var(--dorado);font-size:20px">›</span></div>
+          <div style="display:flex;gap:8px">
+            <span class="chip ${p.saldo>0.5?'r':'g'}">${p.saldo>0.5?"Debe "+fmt(p.saldo):"Pagado"}</span>
+            <span class="chip ${isEnt(p.estadoEnvio)?'g':'a'}">${esc(p.estadoEnvio||"Sin entregar")}</span>
+          </div>
+        </div>`).join(""):'<div class="empty">No hay pedidos acá</div>'}`;
   }catch(e){ errBox(v,e); }
 }
-function openPago(p){
-  openSheet(`<div class="grabber"></div><h3>Registrar pago</h3><p class="sub">${esc(p.id)} · ${esc(p.cliente)}</p>
+function openPedido(p){
+  const opts=["Pendiente","En Preparación","Preparado","Entregado"];
+  if(p.estadoEnvio && !opts.includes(p.estadoEnvio)) opts.unshift(p.estadoEnvio);
+  const envs=["Retiro Habitat","Envío a domicilio"];
+  if(p.envio && !envs.includes(p.envio)) envs.unshift(p.envio);
+  const pj=JSON.stringify({id:p.id}).replace(/'/g,"&#39;");
+  openSheet(`<div class="grabber"></div><h3>${esc(p.id)}</h3><p class="sub">${esc(p.cliente)}${p.fecha?" · "+esc(p.fecha):""}</p>
     <div class="tot-line"><span>Total venta</span><span>${fmt(p.totalVenta||p.monto)}</span></div>
     <div class="tot-line"><span>Pagado</span><span>${fmt(p.montoPago)}</span></div>
     <div class="tot-line big"><span>Saldo</span><span style="color:${p.saldo>0.5?'var(--red)':'var(--green)'}">${fmt(p.saldo)}</span></div>
-    <div class="field" style="margin-top:16px"><label>Monto que recibís ($)</label><input type="number" inputmode="numeric" id="pg-monto" value="${Math.max(0,Math.round(p.saldo))||''}"></div>
+
+    <div class="section-h" style="margin:20px 2px 8px">💵 Registrar pago</div>
+    <div class="field"><label>Monto que recibís ($)</label><input type="number" inputmode="numeric" id="pg-monto" value="${Math.max(0,Math.round(p.saldo))||''}"></div>
     <div class="two">
       <div class="field"><label>Fecha</label><input id="pg-fecha" value="${todayAR()}"></div>
-      <div class="field"><label>Forma de pago</label><select id="pg-forma"><option>Transf. Banc.</option><option>Efectivo</option><option>Tarjeta</option></select></div>
+      <div class="field"><label>Forma de pago</label><select id="pg-forma"><option>Transf. Banc.</option><option>Efectivo</option><option>Tarjeta (Nave)</option></select></div>
     </div>
-    <button class="btn" id="pg-save" onclick='savePago(${JSON.stringify({id:p.id}).replace(/'/g,"&#39;")})'>Registrar pago</button>`);
+    <button class="btn" id="pg-save" onclick='savePago(${pj})'>Registrar pago</button>
+
+    <div class="section-h" style="margin:24px 2px 8px">🚚 Registrar entrega</div>
+    <div class="two">
+      <div class="field"><label>Estado</label><select id="en-est">${opts.map(o=>`<option ${p.estadoEnvio===o?"selected":""}>${o}</option>`).join("")}</select></div>
+      <div class="field"><label>Método</label><select id="en-env">${envs.map(o=>`<option ${p.envio===o?"selected":""}>${o}</option>`).join("")}</select></div>
+    </div>
+    <button class="btn ghost" id="en-save" onclick='saveEntrega(${pj})'>Guardar entrega</button>`);
 }
 async function savePago(p){
   const monto=+$("#pg-monto").value; if(!monto||monto<=0) return toast("Ingresá el monto",true);
@@ -547,47 +600,41 @@ async function savePago(p){
     closeSheet(); toast("Pago registrado"); DATA.pedidos=null; DATA.dashboard=null; render(true);
   }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Registrar pago"; }
 }
-
-// ─────────────────────────────────────────────────────────────── ENTREGAS
-async function viewEntregas(v,force){
-  try{
-    if(force||!DATA.pedidos){ loading(v); DATA.pedidos = await api("pedidos"); }
-    window._entFilter = window._entFilter||"pend";
-    const isEnt = e => /entreg/i.test(e||"");
-    let list = DATA.pedidos;
-    if(window._entFilter==="pend") list=list.filter(p=>!isEnt(p.estadoEnvio));
-    else if(window._entFilter==="ent") list=list.filter(p=>isEnt(p.estadoEnvio));
-    v.innerHTML=`
-      <div class="seg">
-        <button class="${window._entFilter==='pend'?'on':''}" onclick="window._entFilter='pend';render()">A entregar</button>
-        <button class="${window._entFilter==='ent'?'on':''}" onclick="window._entFilter='ent';render()">Entregados</button>
-        <button class="${window._entFilter==='all'?'on':''}" onclick="window._entFilter='all';render()">Todos</button>
-      </div>
-      ${list.length?list.map(p=>`
-        <div class="card" style="margin-bottom:10px;cursor:pointer" onclick='openEntrega(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
-          <div class="row" style="padding:0">
-            <div class="grow"><div class="name">${esc(p.id)} · ${esc(p.cliente)}</div>
-              <div class="meta">${esc(p.envio||"—")}${p.saldo>0.5?' · <span style="color:var(--red)">debe '+fmt(p.saldo)+'</span>':''}</div></div>
-            <span class="chip ${isEnt(p.estadoEnvio)?'g':'a'}">${esc(p.estadoEnvio||"Pendiente")}</span>
-          </div></div>`).join(""):'<div class="empty">No hay pedidos acá</div>'}`;
-  }catch(e){ errBox(v,e); }
-}
-function openEntrega(p){
-  const opts=["Pendiente","En Preparación","Preparado","Entregado"];
-  if(p.estadoEnvio && !opts.includes(p.estadoEnvio)) opts.unshift(p.estadoEnvio);
-  const envs=["Retiro Habitat","Envío a domicilio"];
-  if(p.envio && !envs.includes(p.envio)) envs.unshift(p.envio);
-  openSheet(`<div class="grabber"></div><h3>Entrega</h3><p class="sub">${esc(p.id)} · ${esc(p.cliente)}</p>
-    <div class="field"><label>Estado de entrega</label><select id="en-est">${opts.map(o=>`<option ${p.estadoEnvio===o?"selected":""}>${o}</option>`).join("")}</select></div>
-    <div class="field"><label>Método</label><select id="en-env">${envs.map(o=>`<option ${p.envio===o?"selected":""}>${o}</option>`).join("")}</select></div>
-    <button class="btn" id="en-save" onclick='saveEntrega(${JSON.stringify({id:p.id}).replace(/'/g,"&#39;")})'>Guardar</button>`);
-}
 async function saveEntrega(p){
   const btn=$("#en-save"); btn.disabled=true; btn.textContent="Guardando…";
   try{
     await api("entrega",{method:"POST",body:{idPedido:p.id, estadoEnvio:$("#en-est").value, envio:$("#en-env").value}});
     closeSheet(); toast("Entrega actualizada"); DATA.pedidos=null; render(true);
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Guardar"; }
+  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Guardar entrega"; }
+}
+
+// ─────────────────────────────────────────────────────────────── ÓRDENES (detalle)
+async function viewOrdenes(v,force){
+  try{
+    if(force||!DATA.ordenes){ loading(v); DATA.ordenes = await api("ordenes"); }
+    window._ordQ = window._ordQ||"";
+    v.innerHTML=`
+      <div class="search"><span class="mag">🔎</span><input id="ord-q" placeholder="Buscar pedido, cliente o prenda…" value="${esc(window._ordQ)}"></div>
+      <div id="ord-list"></div>`;
+    const inp=$("#ord-q");
+    const draw=()=>{
+      const q=inp.value.trim().toLowerCase(); window._ordQ=inp.value;
+      const list=DATA.ordenes.filter(o=> !q || (`${o.id} ${o.cliente} ${o.items.map(i=>i.nombre).join(" ")}`).toLowerCase().includes(q));
+      $("#ord-list").innerHTML = list.length?list.map(o=>`
+        <div class="card" style="margin-bottom:10px">
+          <div class="row" style="padding:0 0 8px">
+            <div class="grow"><div class="name">${esc(o.id)} · ${esc(o.cliente)}</div>
+              <div class="meta">${esc(o.fecha||"")} · ${esc(o.formaPago||"")}</div></div>
+            <span class="chip n">${fmt(o.total)}</span>
+          </div>
+          ${o.items.map(i=>`<div class="row" style="padding:7px 0">
+            <div class="grow"><div class="name" style="font-size:13.5px">${esc(i.nombre)} · T${esc(i.talle)}</div>
+              <div class="meta">×${i.qty} · ${fmt(i.precio)} c/u${i.ganancia?` · ganancia ${fmt(i.ganancia)}`:''}</div></div>
+            <span style="font-weight:700">${fmt(i.precioTotal)}</span></div>`).join("")}
+        </div>`).join(""):'<div class="empty">Sin resultados</div>';
+    };
+    inp.oninput=draw; draw();
+  }catch(e){ errBox(v,e); }
 }
 
 // ─────────────────────────────────────────────────────────────── SHEET
