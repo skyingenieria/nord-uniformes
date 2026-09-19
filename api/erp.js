@@ -16,6 +16,7 @@
 
 const { google } = require("googleapis");
 const crypto = require("crypto");
+const arca = require("./arca/_client");
 
 // ── Auth ──────────────────────────────────────────────────────────────────
 function makeAuth() {
@@ -182,10 +183,13 @@ async function getClientes(res) {
 // ── GET pedidos ──────────────────────────────────────────────────────────────
 async function getPedidos(res) {
   const sheets = sheetsClient();
-  const result = await sheets.spreadsheets.values.get({
-    spreadsheetId: process.env.SPREADSHEET_ID,
-    range: "'Pedidos'!A:O",
-  });
+  const [result, facturas] = await Promise.all([
+    sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SPREADSHEET_ID,
+      range: "'Pedidos'!A:O",
+    }),
+    getFacturasMap(sheets),
+  ]);
   const rows = result.data.values || [];
   // A:ID B:Fecha C:Cliente D:Cant E:Monto F:CargoEnvio G:Descuento H:TotalVenta
   // I:FormaPago J:FechaPago K:MontoPago L:Saldo M:EstadoPago N:Envio O:EstadoEnvio
@@ -208,7 +212,8 @@ async function getPedidos(res) {
       envio:       (r[13] || "").trim(),
       estadoEnvio: (r[14] || "").trim(),
     }))
-    .filter(p => p.id && /^WS\d/.test(p.cliente));
+    .filter(p => p.id && /^WS\d/.test(p.cliente))
+    .map(p => ({ ...p, factura: facturas[p.id] || null }));
   res.setHeader("Cache-Control", "no-store");
   res.json(pedidos.reverse());
 }
@@ -479,6 +484,94 @@ async function postEntrega(req, res) {
   res.json({ success: true, ...r });
 }
 
+// ── Facturación ARCA (Factura C) ─────────────────────────────────────────────
+// Registro en una pestaña "Facturas" (aditiva, no toca las hojas existentes).
+async function getFacturasMap(sheets) {
+  try {
+    const r = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SPREADSHEET_ID,
+      range: "'Facturas'!A2:I5000",
+    });
+    const map = {};
+    for (const row of (r.data.values || [])) {
+      const id = String(row[0] || "").trim();
+      if (!id) continue;
+      map[id] = {
+        importe: parseNum(row[2]), tipoReceptor: (row[3] || "").trim(),
+        nro: (row[4] || "").trim(), cae: (row[5] || "").trim(),
+        caeVto: (row[6] || "").trim(), fecha: (row[7] || "").trim(),
+        ambiente: (row[8] || "").trim(),
+      };
+    }
+    return map;
+  } catch (e) {
+    return {}; // la pestaña todavía no existe
+  }
+}
+
+async function ensureFacturasSheet(sheets) {
+  const sid = process.env.SPREADSHEET_ID;
+  const meta = await sheets.spreadsheets.get({ spreadsheetId: sid, fields: "sheets.properties.title" });
+  const existe = (meta.data.sheets || []).some(s => s.properties.title === "Facturas");
+  if (existe) return;
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: sid,
+    requestBody: { requests: [{ addSheet: { properties: { title: "Facturas" } } }] },
+  });
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: sid, range: "'Facturas'!A1:I1", valueInputOption: "RAW",
+    requestBody: { values: [["ID Pedido", "Cliente", "Importe", "Tipo receptor", "Nro Comprobante", "CAE", "Vto CAE", "Fecha", "Ambiente"]] },
+  });
+}
+
+// POST facturar — emite Factura C para un pedido y la registra.
+// Body: { idPedido, cliente, importe, docTipo?, docNro? }
+async function postFacturar(req, res) {
+  const { idPedido, cliente = "", importe, docTipo = 99, docNro = "" } = req.body || {};
+  if (!idPedido) return res.status(400).json({ error: "Falta idPedido" });
+  const imp = Number(importe);
+  if (!imp || imp <= 0) return res.status(400).json({ error: "Importe inválido" });
+
+  const faltan = arca.faltanCredenciales();
+  if (faltan.length) return res.status(400).json({ error: "Faltan credenciales de ARCA en Vercel: " + faltan.join(", ") });
+
+  const sheets = sheetsClient();
+
+  // No duplicar: si el pedido ya tiene factura, la devuelve.
+  const yaMap = await getFacturasMap(sheets);
+  if (yaMap[idPedido] && yaMap[idPedido].cae) {
+    return res.json({ ok: true, yaFacturado: true, factura: yaMap[idPedido] });
+  }
+
+  let factura;
+  try {
+    factura = await arca.emitirFacturaC({ docTipo: parseInt(docTipo, 10), docNro, importe: imp, concepto: 1 });
+  } catch (e) {
+    return res.status(502).json({ ok: false, error: e.message });
+  }
+
+  // Registrar (best-effort: la factura ya se emitió en ARCA).
+  let registrado = true;
+  try {
+    await ensureFacturasSheet(sheets);
+    const dt = parseInt(docTipo, 10);
+    const tipoReceptor = dt === 99 ? "Consumidor Final" : (dt === 80 ? "CUIT" : "DNI");
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: process.env.SPREADSHEET_ID, range: "'Facturas'!A:I",
+      valueInputOption: "USER_ENTERED", insertDataOption: "INSERT_ROWS",
+      requestBody: { values: [[
+        idPedido, cliente, factura.importe, tipoReceptor,
+        `${factura.ptoVta}-${factura.cbteNro}`, factura.cae, factura.caeVto, factura.fecha, factura.env,
+      ]] },
+    });
+  } catch (e) {
+    registrado = false;
+    console.error("Factura emitida pero no registrada:", e.message);
+  }
+
+  res.json({ ok: true, factura: { ...factura, nro: `${factura.ptoVta}-${factura.cbteNro}` }, registrado });
+}
+
 // ── Router ───────────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -506,9 +599,10 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "POST") {
-      if (action === "pedido")  return await postPedido(req, res);
-      if (action === "pago")    return await postPago(req, res);
-      if (action === "entrega") return await postEntrega(req, res);
+      if (action === "pedido")   return await postPedido(req, res);
+      if (action === "pago")     return await postPago(req, res);
+      if (action === "entrega")  return await postEntrega(req, res);
+      if (action === "facturar") return await postFacturar(req, res);
       return res.status(400).json({ error: "Accion POST desconocida" });
     }
 

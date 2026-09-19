@@ -223,7 +223,7 @@ let TOKEN = localStorage.getItem("nord_erp_token") || "";
 let TAB = "inicio";
 let navStack = [];      // pila de pantallas para "volver atrás"
 let sheetOpen = false;  // hay un panel (modal) abierto
-const DATA = { stock:null, stockFlat:null, clientes:null, pedidos:null, dashboard:null, ordenes:null };
+const DATA = { stock:null, stockFlat:null, clientes:null, pedidos:null, dashboard:null, ordenes:null, arca:null };
 let cart = [];
 let venta = { cliente:null, descuento:0, envio:0, pago:"Transf. Banc." };
 
@@ -706,6 +706,7 @@ async function viewPedidos(v,force){
           <div style="display:flex;gap:8px">
             <span class="chip ${p.saldo>0.5?'r':'g'}">${p.saldo>0.5?"Debe "+fmt(p.saldo):"Pagado"}</span>
             <span class="chip ${isEnt(p.estadoEnvio)?'g':'a'}">${esc(p.estadoEnvio||"Sin entregar")}</span>
+            ${p.factura&&p.factura.cae?'<span class="chip n">🧾 Facturado</span>':''}
           </div>
         </div>`).join(""):'<div class="empty">No hay pedidos acá</div>'}`;
   }catch(e){ errBox(v,e); }
@@ -734,7 +735,62 @@ function openPedido(p){
       <div class="field"><label>Estado</label><select id="en-est">${opts.map(o=>`<option ${p.estadoEnvio===o?"selected":""}>${o}</option>`).join("")}</select></div>
       <div class="field"><label>Método</label><select id="en-env">${envs.map(o=>`<option ${p.envio===o?"selected":""}>${o}</option>`).join("")}</select></div>
     </div>
-    <button class="btn ghost" id="en-save" onclick='saveEntrega(${pj})'>Guardar entrega</button>`);
+    <button class="btn ghost" id="en-save" onclick='saveEntrega(${pj})'>Guardar entrega</button>
+
+    <div class="section-h" style="margin:24px 2px 8px">🧾 Factura</div>
+    ${p.factura && p.factura.cae ? `
+      <div class="tot-line"><span>Comprobante C</span><span>N° ${esc(p.factura.nro)}</span></div>
+      <div class="tot-line"><span>CAE</span><span style="font-size:12px">${esc(p.factura.cae)}</span></div>
+      <div class="tot-line"><span>Vto CAE</span><span>${esc(fmtFecha(p.factura.caeVto))}</span></div>
+      <div style="color:var(--green);font-weight:700;font-size:13px;margin-top:8px">✅ Ya facturado (${esc(p.factura.tipoReceptor||"")})</div>`
+    : `<button class="btn ghost" onclick='openFacturar(${JSON.stringify({id:p.id,cliente:p.cliente,importe:Math.round(p.totalVenta||p.monto||0)}).replace(/'/g,"&#39;")})'>Emitir factura C</button>`}`);
+}
+function fmtFecha(yyyymmdd){
+  const s=String(yyyymmdd||""); if(s.length!==8) return s||"—";
+  return `${s.slice(6,8)}/${s.slice(4,6)}/${s.slice(0,4)}`;
+}
+async function openFacturar(p){
+  if(!DATA.arca){ try{ const r=await fetch("/api/arca",{headers:{Authorization:"Bearer "+TOKEN}}); DATA.arca=await r.json(); }catch(e){ DATA.arca={}; } }
+  const a=DATA.arca||{};
+  const sinCred = a.credenciales===false;
+  const prod = a.entorno==="produccion";
+  const ambiente = sinCred
+    ? `<div style="color:var(--red)">⚠ Faltan credenciales de ARCA en Vercel${a.faltan&&a.faltan.length?": "+esc(a.faltan.join(", ")):""}</div>`
+    : `<div style="color:${prod?'var(--red)':'var(--amber)'};font-weight:700">Ambiente: ${prod?'PRODUCCIÓN — factura REAL':'Homologación (prueba)'}</div>`;
+  const arg=JSON.stringify(p).replace(/'/g,"&#39;");
+  openSheet(`<div class="grabber"></div><h3>Facturar ${esc(p.id)}</h3><p class="sub">${esc(p.cliente)} · Factura C</p>
+    <div class="tot-line big"><span>Importe</span><span>${fmt(p.importe)}</span></div>
+    <div style="font-size:12.5px;margin:12px 0;line-height:1.5">${ambiente}</div>
+    <div class="field"><label>Receptor</label>
+      <select id="fc-rec" onchange="document.getElementById('fc-doc-wrap').style.display=this.value==='99'?'none':'block'">
+        <option value="99">Consumidor Final</option>
+        <option value="80">Responsable con CUIT</option>
+        <option value="96">DNI</option>
+      </select></div>
+    <div class="field" id="fc-doc-wrap" style="display:none"><label>CUIT / DNI (sin guiones)</label><input id="fc-doc" inputmode="numeric" placeholder="Ej: 20304050607"></div>
+    <button class="btn" id="fc-go" ${sinCred?'disabled':''} onclick='doFacturar(${arg})'>Emitir factura C</button>
+    <p style="font-size:11.5px;color:var(--muted);margin-top:10px">La factura se emite en ARCA (AFIP) y no se puede deshacer.</p>`);
+}
+async function doFacturar(p){
+  const docTipo=$("#fc-rec").value;
+  const docNro=docTipo==="99"?"":($("#fc-doc").value||"").trim();
+  if(docTipo!=="99" && !docNro.replace(/\D/g,"")) return toast("Ingresá el CUIT/DNI",true);
+  const btn=$("#fc-go"); btn.disabled=true; btn.textContent="Emitiendo en ARCA…";
+  try{
+    const r=await api("facturar",{method:"POST",body:{idPedido:p.id, cliente:p.cliente, importe:p.importe, docTipo, docNro}});
+    const f=r.factura||{};
+    DATA.pedidos=null;
+    const txt=`Factura C N° ${f.nro||''}\nCAE: ${f.cae||''}\nVto CAE: ${fmtFecha(f.caeVto)}\nImporte: ${fmt(f.importe)}`;
+    openSheet(`<div class="grabber"></div><h3>${r.yaFacturado?'Ya estaba facturado':'✅ Factura emitida'}</h3><p class="sub">${esc(p.id)} · ${esc(p.cliente)}</p>
+      <div class="tot-line"><span>Comprobante C</span><span>N° ${esc(f.nro||'')}</span></div>
+      <div class="tot-line"><span>CAE</span><span style="font-size:12px">${esc(f.cae||'')}</span></div>
+      <div class="tot-line"><span>Vto CAE</span><span>${esc(fmtFecha(f.caeVto))}</span></div>
+      <div class="tot-line big"><span>Importe</span><span>${fmt(f.importe)}</span></div>
+      ${r.registrado===false?'<p style="color:var(--amber);font-size:12px;margin-top:8px">⚠ Se emitió en ARCA pero no se pudo registrar en la planilla.</p>':''}
+      <button class="btn" style="margin-top:8px" onclick='copyText(${JSON.stringify(txt)},"Datos copiados")'>Copiar datos</button>
+      <button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Cerrar</button>`);
+    toast(r.yaFacturado?"Ya estaba facturado":"Factura emitida");
+  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Emitir factura C"; }
 }
 async function savePago(p){
   const monto=+$("#pg-monto").value; if(!monto||monto<=0) return toast("Ingresá el monto",true);
