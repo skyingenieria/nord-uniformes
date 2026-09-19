@@ -312,10 +312,13 @@ async function viewInicio(v,force){
         <div class="kpi hl"><div class="lbl">Ventas del mes</div><div class="val">${fmt(d.ventasMes)}</div><div class="sub">Año: ${fmt(d.ventasAnio)}</div></div>
         <div class="kpi gold"><div class="lbl">Ganancia mes</div><div class="val">${fmt(d.gananciaMes)}</div><div class="sub">Año: ${fmt(d.gananciaAnio)}</div></div>
       </div>
-      <div class="kpi" style="margin-top:12px" onclick="window._pedFilter='debe';go('pedidos')">
-        <div class="lbl">Cobros pendientes</div>
-        <div class="val" style="color:${d.totalPendiente>0?'var(--red)':'var(--green)'}">${fmt(d.totalPendiente)}</div>
-        <div class="sub">${d.pendientesCount} pedido${d.pendientesCount!==1?'s':''} sin saldar · tocá para ver →</div>
+      <div class="kpi-grid" style="margin-top:12px">
+        <div class="kpi"><div class="lbl">Prendas del mes</div><div class="val">${(d.prendasMes||0).toLocaleString("es-AR")}</div><div class="sub">Año: ${(d.prendasAnio||0).toLocaleString("es-AR")} u.</div></div>
+        <div class="kpi" onclick="window._pedFilter='debe';go('pedidos')">
+          <div class="lbl">Cobros pendientes</div>
+          <div class="val" style="color:${d.totalPendiente>0?'var(--red)':'var(--green)'}">${fmt(d.totalPendiente)}</div>
+          <div class="sub">${d.pendientesCount} sin saldar · ver →</div>
+        </div>
       </div>
 
       <div class="section-h">Ventas por mes (últimos 12)</div>
@@ -340,7 +343,7 @@ async function viewInicio(v,force){
     // estilo barras + interacción
     document.querySelectorAll("#bars .bar").forEach(b=>{
       b.style.flex="1"; b.style.background="var(--azul-900)"; b.style.borderRadius="4px 4px 0 0"; b.style.minHeight="2px"; b.style.opacity=".9";
-      b.onclick=()=>{ const s=d.serie[+b.dataset.i]; $("#chart-cap").innerHTML=`<b>${esc(s.label)}</b> · Ventas ${fmt(s.ventas)} · Ganancia ${fmt(s.ganancia)}`;
+      b.onclick=()=>{ const s=d.serie[+b.dataset.i]; $("#chart-cap").innerHTML=`<b>${esc(s.label)}</b> · Ventas ${fmt(s.ventas)} · Ganancia ${fmt(s.ganancia)} · ${s.unidades||0} prendas`;
         document.querySelectorAll("#bars .bar").forEach(x=>x.style.opacity=".35"); b.style.opacity="1"; };
     });
   }catch(e){ errBox(v,e); }

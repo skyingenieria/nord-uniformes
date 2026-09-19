@@ -227,9 +227,10 @@ async function getDashboard(res) {
   const month = now.getMonth() + 1;
 
   const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-  const porMes = {};       // "YYYY-MM" -> {ventas, ganancia}
+  const porMes = {};       // "YYYY-MM" -> {ventas, ganancia, unidades}
   const productos = {};    // prenda -> {qty, ventas}
   let ventasMes = 0, gananciaMes = 0, ventasAnio = 0, gananciaAnio = 0;
+  let prendasMes = 0, prendasAnio = 0;
 
   for (const r of (ordRes.data.values || [])) {
     const cliente = String(r[3] || "").trim();
@@ -243,13 +244,14 @@ async function getDashboard(res) {
 
     if (anio && mes) {
       const k = `${anio}-${String(mes).padStart(2, "0")}`;
-      if (!porMes[k]) porMes[k] = { ventas: 0, ganancia: 0 };
+      if (!porMes[k]) porMes[k] = { ventas: 0, ganancia: 0, unidades: 0 };
       porMes[k].ventas   += precioTot;
       porMes[k].ganancia += ganancia;
+      porMes[k].unidades += cant;
     }
     if (anio === year) {
-      ventasAnio += precioTot; gananciaAnio += ganancia;
-      if (mes === month) { ventasMes += precioTot; gananciaMes += ganancia; }
+      ventasAnio += precioTot; gananciaAnio += ganancia; prendasAnio += cant;
+      if (mes === month) { ventasMes += precioTot; gananciaMes += ganancia; prendasMes += cant; }
     }
     if (prenda) {
       if (!productos[prenda]) productos[prenda] = { nombre: prenda, qty: 0, ventas: 0 };
@@ -263,8 +265,8 @@ async function getDashboard(res) {
   for (let i = 11; i >= 0; i--) {
     const d = new Date(year, month - 1 - i, 1);
     const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const v = porMes[k] || { ventas: 0, ganancia: 0 };
-    serie.push({ label: `${MESES[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`, ventas: Math.round(v.ventas), ganancia: Math.round(v.ganancia) });
+    const v = porMes[k] || { ventas: 0, ganancia: 0, unidades: 0 };
+    serie.push({ label: `${MESES[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`, ventas: Math.round(v.ventas), ganancia: Math.round(v.ganancia), unidades: v.unidades || 0 });
   }
 
   const topProductos = Object.values(productos)
@@ -292,6 +294,8 @@ async function getDashboard(res) {
     gananciaMes: Math.round(gananciaMes),
     ventasAnio: Math.round(ventasAnio),
     gananciaAnio: Math.round(gananciaAnio),
+    prendasMes,
+    prendasAnio,
     totalPendiente: Math.round(totalPendiente),
     pendientesCount: pendientes.length,
     pendientes: pendientes.slice(0, 30),
