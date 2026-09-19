@@ -104,6 +104,15 @@
   .talle.ok .s{color:var(--green)} .talle.low .s{color:var(--amber)} .talle.no{opacity:.5} .talle.no .s{color:var(--red)}
   .talle.add{cursor:pointer} .talle.add:active{border-color:var(--dorado);background:var(--crema)}
 
+  .thumb{width:46px;height:46px;border-radius:10px;object-fit:cover;background:#eef1f6;flex:0 0 auto}
+  .thumb.ph{display:grid;place-items:center;font-size:22px}
+  #cart-bar{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 8px);z-index:25;
+    display:none;align-items:center;justify-content:space-between;gap:12px;margin:0 12px;padding:13px 18px;border-radius:14px;
+    background:var(--azul-900);color:#fff;box-shadow:0 6px 20px rgba(15,23,46,.3);font-weight:700;font-size:14px;cursor:pointer;max-width:616px}
+  #cart-bar.show{display:flex}
+  #cart-bar .cb-total{font-size:17px;font-weight:800}
+  .sheet-foto{width:100%;max-height:170px;object-fit:cover;border-radius:14px;margin-bottom:12px}
+
   .empty{text-align:center;color:var(--muted);padding:36px 16px;font-size:14px}
   .spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--azul-900);border-radius:50%;animation:spin .7s linear infinite;margin:36px auto}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -175,6 +184,11 @@
 
   <div id="view"><div class="spinner"></div></div>
 
+  <div id="cart-bar" onclick="scrollToCheckout()">
+    <span id="cart-bar-txt">Ver pedido</span>
+    <span class="cb-total" id="cart-bar-total">$0</span>
+  </div>
+
   <nav>
     <button data-tab="inicio"   class="active" onclick="go('inicio')"><span class="ic">🏠</span>Inicio</button>
     <button data-tab="stock"    onclick="go('stock')"><span class="ic">📦</span>Stock</button>
@@ -240,6 +254,7 @@ function go(tab){
   $("#h-title").textContent = TITLES[tab];
   window.scrollTo(0,0);
   render();
+  updateCartBar();
 }
 function refresh(){ DATA[mapData(TAB)] = null; render(true); toast("Actualizado"); }
 function mapData(tab){ return tab==="inicio"?"dashboard": tab==="vender"?"stock": tab; }
@@ -370,8 +385,8 @@ async function viewVender(v,force){
       <div id="v-checkout"></div>`;
     renderCliente();
     const inp=$("#v-q");
-    inp.oninput=()=>drawResults(inp.value.trim().toLowerCase());
-    drawResults("");   // muestra TODAS las prendas desde el arranque
+    inp.oninput=()=>{ window._venderQ=inp.value.trim().toLowerCase(); drawResults(window._venderQ); };
+    drawResults(window._venderQ="");   // muestra TODAS las prendas desde el arranque
     drawCart();
   }catch(e){ errBox(v,e); }
 }
@@ -382,30 +397,78 @@ function renderCliente(){
   b.style.borderColor = c ? "var(--green)" : "var(--line)";
   b.style.color = c ? "var(--green)" : "var(--azul-900)";
 }
+// Lista a nivel PRENDA (una fila por prenda). Al tocar se elige el talle.
 function drawResults(q){
   const box=$("#v-results"); if(!box) return;
-  const res=(DATA.stockFlat||[]).filter(r=> !q || (`${r.nombre} ${r.talle}`).toLowerCase().includes(q)).slice(0,80);
-  box.innerHTML = `<div class="card">${res.length?res.map(r=>`
-    <div class="row"><div class="grow"><div class="name">${esc(r.nombre)} · T${esc(r.talle)}</div>
-      <div class="meta">${fmt(r.precio)} · stock ${r.stock}</div></div>
-    <button class="btn gold sm" onclick='addItem(${JSON.stringify(r).replace(/'/g,"&#39;")})'>+</button></div>`).join(""):'<div class="empty">Sin resultados</div>'}</div>`;
+  const res=(DATA.stock||[]).filter(p=> !q || p.nombre.toLowerCase().includes(q));
+  box.innerHTML = res.length? res.map(p=>{
+    const tot=p.talles.reduce((s,t)=>s+t.stock,0);
+    const precios=p.talles.map(t=>t.precio).filter(x=>x>0);
+    const precio=precios.length?Math.min(...precios):0;
+    const enPedido=cart.filter(i=>i.nombre===p.nombre).reduce((s,i)=>s+i.qty,0);
+    return `<div class="card" style="margin-bottom:10px;cursor:pointer" onclick='openTalle(${JSON.stringify(p.nombre)})'>
+      <div class="row" style="padding:0">
+        ${p.foto?`<img class="thumb" src="${esc(p.foto)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'thumb ph',textContent:'👕'}))">`:'<div class="thumb ph">👕</div>'}
+        <div class="grow"><div class="name">${esc(p.nombre)}</div><div class="meta">desde ${fmt(precio)} · ${tot} u. en stock</div></div>
+        ${enPedido?`<span class="chip g">${enPedido} en pedido</span>`:'<span style="color:var(--dorado);font-size:24px;line-height:1">＋</span>'}
+      </div>
+    </div>`;
+  }).join("") : '<div class="empty">Sin resultados</div>';
 }
-function addItem(r){
-  const ex = cart.find(i=>i.sku===r.sku && i.talle===r.talle && i.nombre===r.nombre);
-  if(ex) ex.qty++; else cart.push({nombre:r.nombre,talle:r.talle,sku:r.sku,precio:r.precio,qty:1});
-  toast(`${r.nombre} T${r.talle}`); drawCart();
+function openTalle(nombre){
+  const p=(DATA.stock||[]).find(x=>x.nombre===nombre); if(!p) return;
+  openSheet(`<div class="grabber"></div>
+    ${p.foto?`<img class="sheet-foto" src="${esc(p.foto)}" onerror="this.style.display='none'">`:''}
+    <h3>${esc(p.nombre)}</h3><p class="sub">Elegí el talle y la cantidad</p>
+    <div id="talle-rows">${talleRows(p)}</div>
+    <button class="btn" style="margin-top:6px" onclick="closeSheet()">Listo</button>`);
+}
+function talleRows(p){
+  return p.talles.map(t=>{
+    const q=cartQtyFor(t.sku,t.talle,p.nombre);
+    const arg=JSON.stringify({sku:t.sku,talle:t.talle,nombre:p.nombre,precio:t.precio}).replace(/'/g,"&#39;");
+    return `<div class="row">
+      <div class="grow"><div class="name">Talle ${esc(t.talle)}</div>
+        <div class="meta">${fmt(t.precio)} · stock ${t.stock}${t.stock<=0?' · <span style="color:var(--red)">sin stock</span>':''}</div></div>
+      <div class="qty"><button onclick='setQty(${arg},-1)'>−</button><span>${q}</span><button onclick='setQty(${arg},1)'>+</button></div>
+    </div>`;
+  }).join("");
+}
+function cartQtyFor(sku,talle,nombre){ const i=cart.find(x=>x.sku===sku&&x.talle===talle&&x.nombre===nombre); return i?i.qty:0; }
+function setQty(r,delta){
+  let i=cart.find(x=>x.sku===r.sku&&x.talle===r.talle&&x.nombre===r.nombre);
+  if(!i && delta>0){ i={nombre:r.nombre,talle:r.talle,sku:r.sku,precio:r.precio,qty:0}; cart.push(i); }
+  if(i){ i.qty+=delta; if(i.qty<=0) cart=cart.filter(x=>x!==i); }
+  const cont=$("#talle-rows"); if(cont){ const p=(DATA.stock||[]).find(x=>x.nombre===r.nombre); if(p) cont.innerHTML=talleRows(p); }
+  drawResults(window._venderQ||""); drawCart();
 }
 function chQty(idx,d){ cart[idx].qty+=d; if(cart[idx].qty<=0)cart.splice(idx,1); drawCart(); }
+function clearCart(){ cart=[]; drawCart(); drawResults(window._venderQ||""); }
 function drawCart(){
   const c=$("#v-cart"); if(!c) return;
-  if(!cart.length){ c.innerHTML='<div class="empty">Todavía no agregaste prendas</div>'; drawCheckout(); return; }
-  c.innerHTML = cart.map((i,idx)=>`
+  if(!cart.length){ c.innerHTML='<div class="empty">Todavía no agregaste prendas</div>'; drawCheckout(); updateCartBar(); return; }
+  const n=cart.reduce((s,i)=>s+i.qty,0);
+  c.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:12px;color:var(--muted);font-weight:700">${n} prenda${n!==1?'s':''}</span>
+      <button class="btn ghost sm" onclick="clearCart()">Vaciar</button></div>` +
+    cart.map((i,idx)=>`
     <div class="cart-item">
       <div class="grow"><div class="name">${esc(i.nombre)} · T${esc(i.talle)}</div><div class="meta">${fmt(unitPrice(i))} c/u · ${fmt(unitPrice(i)*i.qty)}</div></div>
       <div class="qty"><button onclick="chQty(${idx},-1)">−</button><span>${i.qty}</span><button onclick="chQty(${idx},1)">+</button></div>
     </div>`).join("");
   drawCheckout();
+  updateCartBar();
 }
+function updateCartBar(){
+  const bar=$("#cart-bar"); if(!bar) return;
+  const n=cart.reduce((s,i)=>s+i.qty,0);
+  if(TAB==="vender" && n>0){
+    $("#cart-bar-txt").textContent=`${n} prenda${n!==1?'s':''} · Ver pedido ↓`;
+    $("#cart-bar-total").textContent=fmt(cartTotal());
+    bar.classList.add("show");
+  } else bar.classList.remove("show");
+}
+function scrollToCheckout(){ ($("#v-checkout")||$("#v-cart"))?.scrollIntoView({behavior:"smooth",block:"start"}); }
 function drawCheckout(){
   const el=$("#v-checkout"); if(!el) return;
   if(!cart.length){ el.innerHTML=""; return; }
@@ -435,6 +498,7 @@ function drawTotals(){
     ${venta.descuento?`<div class="tot-line disc"><span>Descuento</span><span>−${fmt(venta.descuento)}</span></div>`:""}
     ${venta.envio?`<div class="tot-line"><span>Envío</span><span>${fmt(venta.envio)}</span></div>`:""}
     <div class="tot-line big"><span>Total</span><span>${fmt(cartTotal())}</span></div>`;
+  updateCartBar();
 }
 async function registrarPedido(){
   if(!cart.length) return toast("Agregá prendas primero",true);
@@ -474,6 +538,7 @@ async function registrarPedido(){
       </div>`;
     cart=[]; venta={cliente:null,descuento:0,envio:0,pago:"Transf. Banc."};
     DATA.pedidos=null; DATA.dashboard=null; DATA.stock=null; DATA.ordenes=null;
+    updateCartBar();
   }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent=card?"Registrar y generar link":"Registrar pedido"; }
 }
 function buildResumen(id,total,naveUrl){
