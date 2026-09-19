@@ -104,13 +104,17 @@ async function getStock(res, colegioFilter) {
   const isHeader = (colegio, nombre, sku) =>
     colegio === "Colegio" || nombre === "Prenda" || sku === "SKU";
 
-  // Foto por prenda desde Listado de Prendas (H=7)
-  const fotoMap = {};
+  // Meta por prenda desde Listado de Prendas: foto (H=7), genero (F=5),
+  // categorias (E=4, separadas por coma).
+  const metaMap = {};
   for (const r of (catRes.data.values || [])) {
     const nombre = String(r[1] || "").trim();
-    const foto = String(r[7] || "").trim();
-    if (nombre === "Prenda") continue;
-    if (nombre && foto && !fotoMap[nombre]) fotoMap[nombre] = foto;
+    if (!nombre || nombre === "Prenda") continue;
+    if (!metaMap[nombre]) metaMap[nombre] = { foto: "", genero: "", cats: new Set() };
+    const m = metaMap[nombre];
+    const foto = String(r[7] || "").trim(); if (foto && !m.foto) m.foto = foto;
+    const gen  = String(r[5] || "").trim(); if (gen && !m.genero) m.genero = gen;
+    String(r[4] || "").split(",").map(c => c.trim()).filter(Boolean).forEach(c => m.cats.add(c));
   }
 
   const productsMap = {};
@@ -129,7 +133,9 @@ async function getStock(res, colegioFilter) {
     const costo  = costoMap[sku]  || Math.round(Number(r[8]) || 0); // Costo Unit
     const key = `${colegio}||${nombre}`;
     if (!productsMap[key]) {
-      productsMap[key] = { colegio, nombre, foto: fotoMap[nombre] || "", talles: [] };
+      const meta = metaMap[nombre] || { foto: "", genero: "", cats: new Set() };
+      productsMap[key] = { colegio, nombre, foto: meta.foto || "",
+        genero: meta.genero || "", categorias: [...meta.cats], talles: [] };
     }
     productsMap[key].talles.push({ talle, sku, stock, precio, costo });
   }

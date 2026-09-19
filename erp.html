@@ -112,6 +112,12 @@
   #cart-bar.show{display:flex}
   #cart-bar .cb-total{font-size:17px;font-weight:800}
   .sheet-foto{width:100%;max-height:170px;object-fit:cover;border-radius:14px;margin-bottom:12px}
+  .filters{margin-bottom:10px}
+  .chips-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:5px;-webkit-overflow-scrolling:touch}
+  .chips-row::-webkit-scrollbar{display:none}
+  .chips-row{scrollbar-width:none}
+  .fchip{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;color:var(--azul-600);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;white-space:nowrap}
+  .fchip.on{background:var(--azul-900);color:#fff;border-color:var(--azul-900)}
 
   .empty{text-align:center;color:var(--muted);padding:36px 16px;font-size:14px}
   .spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--azul-900);border-radius:50%;animation:spin .7s linear infinite;margin:36px auto}
@@ -378,18 +384,34 @@ async function viewVender(v,force){
         </div>
       </div>
       <div class="section-h" style="margin-top:4px">Agregar prendas</div>
-      <div class="search"><span class="mag">🔎</span><input id="v-q" placeholder="Buscar prenda o talle…"></div>
+      <div id="v-filters" class="filters"></div>
+      <div class="search"><span class="mag">🔎</span><input id="v-q" placeholder="Buscar prenda…"></div>
       <div id="v-results"></div>
       <div class="section-h">Pedido</div>
       <div class="card" id="v-cart"></div>
       <div id="v-checkout"></div>`;
     renderCliente();
+    renderFilters();
     const inp=$("#v-q");
     inp.oninput=()=>{ window._venderQ=inp.value.trim().toLowerCase(); drawResults(window._venderQ); };
     drawResults(window._venderQ="");   // muestra TODAS las prendas desde el arranque
     drawCart();
   }catch(e){ errBox(v,e); }
 }
+function renderFilters(){
+  const box=$("#v-filters"); if(!box) return;
+  const cats=[...new Set((DATA.stock||[]).flatMap(p=>p.categorias||[]))].sort();
+  const gens=[...new Set((DATA.stock||[]).map(p=>p.genero).filter(Boolean))].sort();
+  const chip=(kind,val,label)=>{
+    const cur=kind==="cat"?(window._venderCat||""):(window._venderGen||"");
+    return `<button class="fchip${cur===val?' on':''}" onclick='setFilter("${kind}",${JSON.stringify(val)})'>${esc(label)}</button>`;
+  };
+  let html="";
+  if(cats.length>1) html+=`<div class="chips-row">${chip("cat","","Todas")}${cats.map(c=>chip("cat",c,c)).join("")}</div>`;
+  if(gens.length>1) html+=`<div class="chips-row"${cats.length>1?' style="margin-top:8px"':''}>${chip("gen","","Todos")}${gens.map(g=>chip("gen",g,g)).join("")}</div>`;
+  box.innerHTML=html;
+}
+function setFilter(kind,val){ if(kind==="cat")window._venderCat=val; else window._venderGen=val; renderFilters(); drawResults(window._venderQ||""); }
 function renderCliente(){
   const b=$("#v-cliente-btn"); if(!b) return;
   const c=venta.cliente;
@@ -400,7 +422,11 @@ function renderCliente(){
 // Lista a nivel PRENDA (una fila por prenda). Al tocar se elige el talle.
 function drawResults(q){
   const box=$("#v-results"); if(!box) return;
-  const res=(DATA.stock||[]).filter(p=> !q || p.nombre.toLowerCase().includes(q));
+  const cat=window._venderCat||"", gen=window._venderGen||"";
+  const res=(DATA.stock||[]).filter(p=>
+    (!q || p.nombre.toLowerCase().includes(q)) &&
+    (!cat || (p.categorias||[]).includes(cat)) &&
+    (!gen || p.genero===gen));
   box.innerHTML = res.length? res.map(p=>{
     const tot=p.talles.reduce((s,t)=>s+t.stock,0);
     const precios=p.talles.map(t=>t.precio).filter(x=>x>0);
@@ -426,10 +452,11 @@ function openTalle(nombre){
 function talleRows(p){
   return p.talles.map(t=>{
     const q=cartQtyFor(t.sku,t.talle,p.nombre);
-    const arg=JSON.stringify({sku:t.sku,talle:t.talle,nombre:p.nombre,precio:t.precio}).replace(/'/g,"&#39;");
+    const arg=JSON.stringify({sku:t.sku,talle:t.talle,nombre:p.nombre,precio:t.precio,stock:t.stock}).replace(/'/g,"&#39;");
+    const over = q>t.stock;
     return `<div class="row">
       <div class="grow"><div class="name">Talle ${esc(t.talle)}</div>
-        <div class="meta">${fmt(t.precio)} · stock ${t.stock}${t.stock<=0?' · <span style="color:var(--red)">sin stock</span>':''}</div></div>
+        <div class="meta">${fmt(t.precio)} · stock ${t.stock}${t.stock<=0?' · <span style="color:var(--red)">sin stock</span>':''}${over?` · <span style="color:var(--amber)">pedís ${q}</span>`:''}</div></div>
       <div class="qty"><button onclick='setQty(${arg},-1)'>−</button><span>${q}</span><button onclick='setQty(${arg},1)'>+</button></div>
     </div>`;
   }).join("");
@@ -437,8 +464,13 @@ function talleRows(p){
 function cartQtyFor(sku,talle,nombre){ const i=cart.find(x=>x.sku===sku&&x.talle===talle&&x.nombre===nombre); return i?i.qty:0; }
 function setQty(r,delta){
   let i=cart.find(x=>x.sku===r.sku&&x.talle===r.talle&&x.nombre===r.nombre);
-  if(!i && delta>0){ i={nombre:r.nombre,talle:r.talle,sku:r.sku,precio:r.precio,qty:0}; cart.push(i); }
-  if(i){ i.qty+=delta; if(i.qty<=0) cart=cart.filter(x=>x!==i); }
+  if(!i && delta>0){ i={nombre:r.nombre,talle:r.talle,sku:r.sku,precio:r.precio,qty:0,stock:r.stock}; cart.push(i); }
+  if(i){
+    if(i.stock==null) i.stock=r.stock;
+    i.qty+=delta;
+    if(i.qty<=0) cart=cart.filter(x=>x!==i);
+    else if(delta>0 && r.stock>=0 && i.qty>r.stock) toast(`⚠ Sólo hay ${r.stock} en stock — el resto queda a pedido`, true);
+  }
   const cont=$("#talle-rows"); if(cont){ const p=(DATA.stock||[]).find(x=>x.nombre===r.nombre); if(p) cont.innerHTML=talleRows(p); }
   drawResults(window._venderQ||""); drawCart();
 }
@@ -453,7 +485,7 @@ function drawCart(){
       <button class="btn ghost sm" onclick="clearCart()">Vaciar</button></div>` +
     cart.map((i,idx)=>`
     <div class="cart-item">
-      <div class="grow"><div class="name">${esc(i.nombre)} · T${esc(i.talle)}</div><div class="meta">${fmt(unitPrice(i))} c/u · ${fmt(unitPrice(i)*i.qty)}</div></div>
+      <div class="grow"><div class="name">${esc(i.nombre)} · T${esc(i.talle)}</div><div class="meta">${fmt(unitPrice(i))} c/u · ${fmt(unitPrice(i)*i.qty)}${(i.stock!=null && i.qty>i.stock)?` · <span style="color:var(--amber)">⚠ supera stock (${i.stock})</span>`:''}</div></div>
       <div class="qty"><button onclick="chQty(${idx},-1)">−</button><span>${i.qty}</span><button onclick="chQty(${idx},1)">+</button></div>
     </div>`).join("");
   drawCheckout();
@@ -525,6 +557,8 @@ async function registrarPedido(){
       }catch(ne){ toast("Pedido guardado, pero el link falló: "+ne.message, true); }
     }
     const resumen=buildResumen(r.idPedido,total,naveUrl);
+    const waTel=venta.cliente.telefono||"";
+    const waLabel=waTel?"Enviar al WhatsApp del cliente":"Enviar por WhatsApp";
     $("#view").innerHTML=`
       <div class="card" style="text-align:center;padding:28px 20px">
         <div style="font-size:44px">✅</div>
@@ -533,7 +567,7 @@ async function registrarPedido(){
         <div style="font-size:26px;font-weight:800;margin:10px 0">${fmt(total)}</div>
         ${naveUrl?`<div class="field" style="text-align:left;margin-top:8px"><label>Link de pago (Nave)</label><input id="nave-url" readonly value="${esc(naveUrl)}" onclick="this.select()"></div>
           <button class="btn" onclick='copyText(${JSON.stringify(naveUrl)},"Link copiado")'>Copiar link de pago</button>`:''}
-        <button class="btn gold" style="margin-top:10px" onclick='waResumen(${JSON.stringify(resumen)})'>Enviar por WhatsApp</button>
+        <button class="btn gold" style="margin-top:10px" onclick='waResumen(${JSON.stringify(resumen)},${JSON.stringify(waTel)})'>${waLabel}</button>
         <button class="btn ghost" style="margin-top:10px" onclick="nuevoPedido()">Nuevo pedido</button>
       </div>`;
     cart=[]; venta={cliente:null,descuento:0,envio:0,pago:"Transf. Banc."};
@@ -551,7 +585,16 @@ function buildResumen(id,total,naveUrl){
   return s;
 }
 function copyText(txt,msg){ navigator.clipboard?.writeText(txt).then(()=>toast(msg||"Copiado")).catch(()=>{}); }
-function waResumen(txt){ copyText(txt,"Resumen copiado"); window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank"); }
+function waNumber(tel){
+  const d=String(tel||"").replace(/\D/g,"");
+  if(!d) return "";
+  return d.startsWith("54") ? d : "549"+d.replace(/^0/,"");
+}
+function waResumen(txt,tel){
+  copyText(txt,"Resumen copiado");
+  const num=waNumber(tel);
+  window.open(`https://wa.me/${num}?text=`+encodeURIComponent(txt),"_blank");
+}
 function nuevoPedido(){ go("vender"); }
 
 // Cliente picker
@@ -576,7 +619,11 @@ async function cliSeg(mode){
   body.innerHTML='<div class="spinner"></div>';
   try{
     if(!DATA.clientes) DATA.clientes = await api("clientes");
-    body.innerHTML=`<div class="search"><span class="mag">🔎</span><input id="cli-q" placeholder="Nombre, apellido o email…"></div><div id="cli-list"></div>`;
+    const recents=getRecents();
+    const recHtml = recents.length
+      ? `<div class="section-h" style="margin:0 2px 8px">Recientes</div>
+         <div class="chips-row" style="margin-bottom:14px">${recents.map(c=>`<button class="fchip" onclick='pickCliente(${JSON.stringify(c).replace(/'/g,"&#39;")})'>${esc(c.nombre)} ${esc(c.apellido||"")}</button>`).join("")}</div>` : "";
+    body.innerHTML=`${recHtml}<div class="search"><span class="mag">🔎</span><input id="cli-q" placeholder="Nombre, apellido o email…"></div><div id="cli-list"></div>`;
     const inp=$("#cli-q");
     const draw=()=>{
       const q=inp.value.trim().toLowerCase();
@@ -589,7 +636,13 @@ async function cliSeg(mode){
     inp.oninput=draw; draw();
   }catch(e){ body.innerHTML=`<div class="empty">${esc(e.message)}</div>`; }
 }
-function pickCliente(c){ venta.cliente=c; closeSheet(); if(TAB==="vender"){ renderCliente(); drawCheckout(); } }
+function getRecents(){ try{ return JSON.parse(localStorage.getItem("nord_erp_recientes")||"[]"); }catch(e){ return []; } }
+function pushRecent(c){ try{
+  const a=getRecents().filter(x=>x.codigo!==c.codigo);
+  a.unshift({nombre:c.nombre,apellido:c.apellido||"",codigo:c.codigo,colegio:c.colegio||"WS",email:c.email||"",telefono:c.telefono||""});
+  localStorage.setItem("nord_erp_recientes",JSON.stringify(a.slice(0,6)));
+}catch(e){} }
+function pickCliente(c){ venta.cliente=c; pushRecent(c); closeSheet(); if(TAB==="vender"){ renderCliente(); drawCheckout(); } }
 async function crearCliente(){
   const nombre=$("#c-nom").value.trim(), apellido=$("#c-ape").value.trim(), email=$("#c-mail").value.trim(), telefono=$("#c-tel").value.trim();
   if(!nombre||!email) return toast("Nombre y email son obligatorios",true);
@@ -597,7 +650,7 @@ async function crearCliente(){
   try{
     const r=await fetch("/api/cliente/check-or-create",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre,apellido,email,telefono})});
     const d=await r.json(); if(!d.codigo) throw new Error(d.error||"Error creando cliente");
-    DATA.clientes=null; pickCliente({nombre:d.nombre,apellido:d.apellido,codigo:d.codigo,colegio:d.colegio||"WS",email:d.email});
+    DATA.clientes=null; pickCliente({nombre:d.nombre,apellido:d.apellido,codigo:d.codigo,colegio:d.colegio||"WS",email:d.email,telefono:d.telefono||telefono});
     toast(d.esNuevo?"Cliente creado":"Cliente ya existía");
   }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Crear cliente"; }
 }
