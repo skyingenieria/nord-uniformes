@@ -12,6 +12,37 @@
 
 const crypto = require("crypto");
 const forge  = require("node-forge");
+const https  = require("https");
+
+// Los servidores de ARCA (AFIP) negocian con una clave Diffie-Hellman de 1024 bits
+// que OpenSSL 3 rechaza por defecto ("dh key too small"). Bajamos el nivel de
+// seguridad TLS SOLO para estas llamadas (se sigue verificando el certificado del
+// servidor). Sin esto, fetch() falla con "fetch failed" al conectar al WSFE.
+const AFIP_AGENT = new https.Agent({ ciphers: "DEFAULT@SECLEVEL=1", minVersion: "TLSv1.2" });
+
+// POST SOAP a un endpoint de ARCA usando el agente con SECLEVEL bajo.
+function afipPost(urlStr, headers, body) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(urlStr);
+    const req = https.request({
+      hostname: u.hostname,
+      port: u.port || 443,
+      path: u.pathname + u.search,
+      method: "POST",
+      headers: { ...headers, "Content-Length": Buffer.byteLength(body) },
+      agent: AFIP_AGENT,
+    }, (res) => {
+      let data = "";
+      res.setEncoding("utf8");
+      res.on("data", (c) => (data += c));
+      res.on("end", () => resolve(data));
+    });
+    req.on("error", reject);
+    req.setTimeout(25000, () => req.destroy(new Error("Timeout conectando con ARCA")));
+    req.write(body);
+    req.end();
+  });
+}
 
 const URLS = {
   homologacion: {
@@ -104,12 +135,8 @@ async function getTA() {
 <soapenv:Body><wsaa:loginCms><wsaa:in0>${cms}</wsaa:in0></wsaa:loginCms></soapenv:Body>
 </soapenv:Envelope>`;
 
-  const r = await fetch(c.urls.wsaa, {
-    method: "POST",
-    headers: { "Content-Type": "text/xml; charset=utf-8", "SOAPAction": "" },
-    body: soap,
-  });
-  const xml = await r.text();
+  const xml = await afipPost(c.urls.wsaa,
+    { "Content-Type": "text/xml; charset=utf-8", "SOAPAction": "" }, soap);
   const ret = xml.match(/<loginCmsReturn>([\s\S]*?)<\/loginCmsReturn>/);
   if (!ret) {
     const fault = (xml.match(/<faultstring>([\s\S]*?)<\/faultstring>/) || [])[1] || xml.slice(0, 500);
@@ -132,15 +159,10 @@ async function wsfeCall(action, innerXml) {
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ar="http://ar.gov.afip.dif.FEV1/">
 <soap:Body>${innerXml}</soap:Body>
 </soap:Envelope>`;
-  const r = await fetch(c.urls.wsfe, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/xml; charset=utf-8",
-      "SOAPAction": `http://ar.gov.afip.dif.FEV1/${action}`,
-    },
-    body: soap,
-  });
-  const xml = await r.text();
+  const xml = await afipPost(c.urls.wsfe, {
+    "Content-Type": "text/xml; charset=utf-8",
+    "SOAPAction": `http://ar.gov.afip.dif.FEV1/${action}`,
+  }, soap);
   const fault = (xml.match(/<faultstring>([\s\S]*?)<\/faultstring>/) || [])[1];
   if (fault) throw new Error("WSFE: " + fault);
   return xml;
