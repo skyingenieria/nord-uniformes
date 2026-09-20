@@ -167,6 +167,49 @@
   .chart-cap{font-size:12.5px;color:var(--muted);text-align:center;margin-top:8px;min-height:18px}
   .legend{display:flex;gap:16px;justify-content:center;margin-top:6px;font-size:12px;color:var(--muted)}
   .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+  /* BAR LISTS (métricas / web) */
+  .bars{display:flex;flex-direction:column;gap:9px}
+  .bar-item{display:flex;align-items:center;gap:10px;font-size:12.5px}
+  .bar-item .bl{min-width:118px;max-width:118px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar-track{flex:1;height:9px;background:#eef1f6;border-radius:999px;overflow:hidden}
+  .bar-fill{height:100%;background:linear-gradient(90deg,#34466A,#0F172E);border-radius:999px}
+  .bar-fill.gold{background:linear-gradient(90deg,#d8bd88,#C8A96E)}
+  .bar-item .bv{min-width:74px;text-align:right;color:var(--muted);font-weight:700}
+  .daily{display:flex;align-items:flex-end;gap:2px;height:84px;margin-top:4px}
+  .daily .db{flex:1;background:var(--dorado);border-radius:3px 3px 0 0;min-height:2px;opacity:.9}
+  .arca-chip{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:3px 0}
+  .arca-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+
+  /* ===================== DESKTOP (≥900px) ===================== */
+  .desk-only{display:none}
+  .only-desk-note{display:none}
+  @media (min-width:900px){
+    :root{--sidebar:236px}
+    #app{padding-bottom:0;padding-left:var(--sidebar)}
+    header{padding:16px 28px}
+    /* la barra inferior se transforma en sidebar vertical */
+    nav{top:0;bottom:0;left:0;right:auto;height:100vh;width:var(--sidebar);
+        grid-template-columns:1fr;grid-auto-rows:min-content;align-content:start;gap:3px;
+        border-top:none;border-right:1px solid var(--line);padding:16px 12px;box-shadow:none;overflow-y:auto}
+    nav::before{content:"NORD ERP";display:block;font-weight:800;font-size:15px;color:var(--azul-900);padding:6px 12px 16px;letter-spacing:.03em}
+    .desk-only{display:flex}
+    nav button{flex-direction:row;justify-content:flex-start;gap:12px;font-size:13.5px;font-weight:700;
+        text-transform:none;letter-spacing:0;padding:11px 14px;border-radius:11px;color:var(--muted)}
+    nav button .ic{font-size:18px;transition:none}
+    nav button.active{background:var(--crema);color:var(--azul-900);font-weight:800}
+    nav button.active::before{display:none}
+    nav button.active .ic{transform:none}
+    #view{max-width:1160px;padding:26px 30px 44px}
+    .view-title{font-size:26px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+    .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    #cart-bar{left:var(--sidebar);max-width:none;margin:0 30px}
+    .only-desk-note{display:block}
+    .kpi .val{font-size:24px}
+  }
+  @media (min-width:1280px){ #view{max-width:1240px} }
 </style>
 </head>
 <body>
@@ -212,6 +255,10 @@
     <button data-tab="vender"   onclick="go('vender')"><span class="ic">🛒</span>Vender</button>
     <button data-tab="pedidos"  onclick="go('pedidos')"><span class="ic">🧾</span>Pedidos</button>
     <button data-tab="ordenes"  onclick="go('ordenes')"><span class="ic">📋</span>Órdenes</button>
+    <button data-tab="clientes"    class="desk-only" onclick="go('clientes')"><span class="ic">👥</span>Clientes</button>
+    <button data-tab="metricas"    class="desk-only" onclick="go('metricas')"><span class="ic">📈</span>Métricas</button>
+    <button data-tab="facturacion" class="desk-only" onclick="go('facturacion')"><span class="ic">🧾</span>Facturación</button>
+    <button data-tab="web"         class="desk-only" onclick="go('web')"><span class="ic">🌐</span>Web</button>
   </nav>
 </div>
 
@@ -226,7 +273,7 @@ let TOKEN = localStorage.getItem("nord_erp_token") || "";
 let TAB = "inicio";
 let navStack = [];      // pila de pantallas para "volver atrás"
 let sheetOpen = false;  // hay un panel (modal) abierto
-const DATA = { stock:null, stockFlat:null, clientes:null, pedidos:null, dashboard:null, ordenes:null, arca:null };
+const DATA = { stock:null, stockFlat:null, clientes:null, pedidos:null, dashboard:null, ordenes:null, arca:null, clientesFull:null, webOrders:null };
 let cart = [];
 let venta = { cliente:null, descuento:0, envio:0, pago:"Transf. Banc." };
 
@@ -266,7 +313,8 @@ function logout(){ TOKEN=""; localStorage.removeItem("nord_erp_token"); $("#app"
 function showApp(){ $("#login").style.display="none"; $("#app").style.display="block"; navStack=[]; sheetOpen=false; TAB="inicio"; history.replaceState({tab:"inicio"},""); go("inicio",{push:false}); }
 
 // ─────────────────────────────────────────────────────────────── NAV
-const TITLES = {inicio:"Inicio", stock:"Stock", vender:"Vender", pedidos:"Pedidos", ordenes:"Órdenes"};
+const TITLES = {inicio:"Inicio", stock:"Stock", vender:"Vender", pedidos:"Pedidos", ordenes:"Órdenes",
+  clientes:"Clientes", metricas:"Métricas", facturacion:"Facturación", web:"Web"};
 function go(tab,opts){
   opts=opts||{};
   if(opts.push!==false && TAB!==tab){ navStack.push(TAB); history.pushState({tab},""); }
@@ -284,7 +332,16 @@ function goBack(){
 }
 function updateBack(){ const b=$("#back-btn"); if(b) b.style.display=(sheetOpen||navStack.length>0)?"grid":"none"; }
 function refresh(){ DATA[mapData(TAB)] = null; render(true); toast("Actualizado"); }
-function mapData(tab){ return tab==="inicio"?"dashboard": tab==="vender"?"stock": tab; }
+function mapData(tab){ return tab==="inicio"?"dashboard": tab==="vender"?"stock": tab==="clientes"?"clientesFull": tab==="web"?"webOrders": tab==="metricas"?"dashboard": tab==="facturacion"?"pedidos": tab; }
+
+// ─── API panel admin (mismo token; web orders, métricas, clientes, GA4) ───
+async function apiAdmin(qs){
+  const res=await fetch("/api/admin/orders"+(qs?("?"+qs):""),{headers:{Authorization:"Bearer "+TOKEN}});
+  if(res.status===401){ logout(); throw new Error("Sesión expirada"); }
+  const d=await res.json().catch(()=>({})); if(!res.ok) throw new Error(d.error||("Error "+res.status)); return d;
+}
+async function apiArca(){ const res=await fetch("/api/arca",{headers:{Authorization:"Bearer "+TOKEN}});
+  return res.json().catch(()=>({ok:false,error:"Sin respuesta"})); }
 
 async function render(force){
   const v = $("#view");
@@ -293,6 +350,10 @@ async function render(force){
   if(TAB==="vender")   return viewVender(v,force);
   if(TAB==="pedidos")  return viewPedidos(v,force);
   if(TAB==="ordenes")  return viewOrdenes(v,force);
+  if(TAB==="clientes")    return viewClientes(v,force);
+  if(TAB==="metricas")    return viewMetricas(v,force);
+  if(TAB==="facturacion") return viewFacturacion(v,force);
+  if(TAB==="web")         return viewWeb(v,force);
 }
 function loading(v){ v.innerHTML='<div class="spinner"></div>'; }
 function errBox(v,e){ v.innerHTML=`<div class="empty">⚠️ ${esc(e.message)}<br><br><button class="btn ghost sm" onclick="render(true)">Reintentar</button></div>`; }
@@ -918,6 +979,207 @@ async function viewOrdenes(v,force){
     };
     inp.oninput=draw; draw();
   }catch(e){ errBox(v,e); }
+}
+
+// ═══════════════════════════ SECCIONES DE ESCRITORIO ═══════════════════════
+// (visibles en el sidebar de desktop; en el celu la app queda igual que antes)
+function barRow(label, pct, value, gold){
+  return `<div class="bar-item"><div class="bl" title="${esc(label)}">${esc(label)}</div>
+    <div class="bar-track"><div class="bar-fill${gold?' gold':''}" style="width:${Math.max(1,Math.min(100,pct)).toFixed(1)}%"></div></div>
+    <div class="bv">${esc(value)}</div></div>`;
+}
+const MNAMES=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
+// ─── CLIENTES ───
+async function viewClientes(v,force){
+  try{
+    if(force||!DATA.clientesFull){ loading(v); DATA.clientesFull=await apiAdmin("type=clientes"); }
+    v.innerHTML=`
+      <div class="view-title">Clientes <span style="font-size:15px;color:var(--muted);font-weight:600">· ${(DATA.clientesFull||[]).length}</span></div>
+      <div class="search"><span class="mag">🔎</span><input id="cli-q" placeholder="Buscar por nombre, email, teléfono o código…" value="${esc(window._cliQ||"")}"></div>
+      <div class="card" id="cli-list"></div>`;
+    const inp=$("#cli-q"); inp.oninput=()=>{ window._cliQ=inp.value; drawClientes(); }; drawClientes();
+  }catch(e){ errBox(v,e); }
+}
+function drawClientes(){
+  const el=$("#cli-list"); if(!el) return;
+  const q=(window._cliQ||"").toLowerCase().trim();
+  const list=(DATA.clientesFull||[]).filter(c=> !q || [c.nombre,c.apellido,c.email,c.telefono,c.codigo].some(x=>String(x||"").toLowerCase().includes(q)));
+  el.innerHTML = list.length ? list.map(c=>`<div class="row"><div class="grow">
+      <div class="name">${esc(c.nombre)} ${esc(c.apellido||"")}</div>
+      <div class="meta">${esc(c.email||"—")}${c.telefono?" · "+esc(c.telefono):""}</div></div>
+      <span class="chip n">${esc(c.codigo||c.nro||"")}</span></div>`).join("") : '<div class="empty">Sin clientes</div>';
+}
+
+// ─── MÉTRICAS ───
+async function viewMetricas(v,force){
+  try{
+    loading(v);
+    const [dash, orders, met] = await Promise.all([
+      (force||!DATA.dashboard)? api("dashboard") : Promise.resolve(DATA.dashboard),
+      (force||!DATA.webOrders)? apiAdmin("") : Promise.resolve(DATA.webOrders),
+      apiAdmin("type=metrics").catch(()=>({})),
+    ]);
+    DATA.dashboard=dash; DATA.webOrders=orders;
+    const act=(orders||[]).filter(o=>o.estado!=="cancelada");
+
+    // ventas por mes (ERP) — últimos 8
+    const serie=(dash.serie||[]).slice(-8);
+    const maxV=Math.max(1,...serie.map(s=>s.ventas));
+    const mesesBars=serie.map(s=>barRow(s.label.split(" ")[0], s.ventas/maxV*100, fmt(s.ventas))).join("")||'<div class="empty">Sin datos</div>';
+
+    // top prendas (ERP)
+    const topP=(dash.topProductos||[]).slice(0,7);
+    const maxP=Math.max(1,...topP.map(p=>p.qty));
+    const topBars=topP.map(p=>barRow(p.nombre, p.qty/maxP*100, p.qty+" u.")).join("")||'<div class="empty">Sin datos</div>';
+
+    // métodos de pago (web)
+    const pg={}; act.forEach(o=>{ const k=o.pago==="transferencia"?"Transferencia":o.pago==="nave"?"Nave":(o.pago||"—"); pg[k]=(pg[k]||0)+1; });
+    const pgE=Object.entries(pg).sort((a,b)=>b[1]-a[1]); const maxPg=Math.max(1,...pgE.map(([,n])=>n));
+    const pagoBars=pgE.map(([k,n])=>barRow(k, n/maxPg*100, n+" órd.", true)).join("")||'<div class="empty">Sin datos</div>';
+
+    // prendas más vendidas (web)
+    const wc={}; act.forEach(o=>(o.items||[]).forEach(i=>{ wc[i.nombre]=(wc[i.nombre]||0)+(i.qty||1); }));
+    const wTop=Object.entries(wc).sort((a,b)=>b[1]-a[1]).slice(0,7); const maxW=Math.max(1,...wTop.map(([,n])=>n));
+    const webBars=wTop.map(([n,q])=>barRow(n, q/maxW*100, q+" u.")).join("")||'<div class="empty">Sin datos</div>';
+
+    const pend=(met.pendientes||[]);
+    const pendHtml=pend.length? pend.map(p=>`<div class="row"><div class="grow"><div class="name">${esc(p.id)} · ${esc(p.cliente)}</div></div><span class="chip r">${fmt(p.saldo)}</span></div>`).join("") : '<div class="empty" style="padding:18px">✓ Sin cobros pendientes</div>';
+
+    v.innerHTML=`
+      <div class="view-title">Métricas</div>
+      <div class="kpi-grid grid4">
+        <div class="kpi hl"><div class="lbl">Ventas mes</div><div class="val">${fmt(dash.ventasMes)}</div><div class="sub">Año: ${fmt(dash.ventasAnio)}</div></div>
+        <div class="kpi gold"><div class="lbl">Ganancia mes</div><div class="val">${fmt(dash.gananciaMes)}</div><div class="sub">Año: ${fmt(dash.gananciaAnio)}</div></div>
+        <div class="kpi"><div class="lbl">Cobros pendientes</div><div class="val" style="color:${(met.totalSaldo||dash.totalPendiente)>0?'var(--red)':'var(--green)'}">${fmt(met.totalSaldo!=null?met.totalSaldo:dash.totalPendiente)}</div><div class="sub">${dash.pendientesCount||pend.length} sin saldar</div></div>
+        <div class="kpi"><div class="lbl">Cobrado (total)</div><div class="val" style="color:var(--green)">${fmt(met.totalCobrado||0)}</div><div class="sub">${act.length} órdenes web</div></div>
+      </div>
+      <div class="grid2" style="margin-top:16px">
+        <div><div class="section-h">Ventas por mes (ERP)</div><div class="card"><div class="bars">${mesesBars}</div></div></div>
+        <div><div class="section-h">Top prendas (ERP)</div><div class="card"><div class="bars">${topBars}</div></div></div>
+        <div><div class="section-h">Prendas más vendidas (web)</div><div class="card"><div class="bars">${webBars}</div></div></div>
+        <div><div class="section-h">Métodos de pago (web)</div><div class="card"><div class="bars">${pagoBars}</div></div></div>
+      </div>
+      <div class="section-h">Cobros pendientes</div>
+      <div class="card">${pendHtml}</div>`;
+  }catch(e){ errBox(v,e); }
+}
+
+// ─── FACTURACIÓN ───
+async function viewFacturacion(v,force){
+  try{
+    loading(v);
+    const [arca, peds] = await Promise.all([
+      apiArca().catch(e=>({ok:false,error:e.message})),
+      (force||!DATA.pedidos)? api("pedidos") : Promise.resolve(DATA.pedidos),
+    ]);
+    DATA.pedidos=peds;
+    const dot=(ok)=>`<span class="arca-dot" style="background:${ok?'var(--green)':'var(--red)'}"></span>`;
+    let arcaHtml;
+    if(arca && arca.ok!==false){
+      arcaHtml=`
+        <div class="tot-line"><span>Entorno</span><span><b>${esc(arca.entorno||"—")}</b> · Pto venta ${esc(arca.ptoVta||"—")}</span></div>
+        <div class="tot-line"><span>CUIT</span><span>${esc(arca.cuit||"—")}</span></div>
+        <div style="margin-top:10px">
+          <div class="arca-chip">${dot(arca.credenciales)} Credenciales ${arca.credenciales?'cargadas':'faltan'}</div>
+          <div class="arca-chip">${dot(!!arca.conectividad)} Conectividad WSFE</div>
+          <div class="arca-chip">${dot(arca.certificadoOk)} Certificado / login WSAA</div>
+        </div>
+        ${arca.detalle?`<div class="meta" style="margin-top:8px">${esc(arca.detalle)}</div>`:''}`;
+    } else {
+      arcaHtml=`<div class="arca-chip">${dot(false)} ${esc((arca&&arca.error)||"No se pudo verificar ARCA")}</div>`;
+    }
+    const facturadas=(peds||[]).filter(p=>p.factura&&p.factura.cae);
+    const facHtml=facturadas.length? facturadas.map(p=>{
+      const fj=JSON.stringify(p.factura).replace(/'/g,"&#39;");
+      const pj=JSON.stringify({id:p.id,cliente:p.cliente,factura:p.factura}).replace(/'/g,"&#39;");
+      return `<div class="row"><div class="grow">
+        <div class="name">${esc(p.id)} · ${esc(p.cliente)}</div>
+        <div class="meta">N° ${esc(p.factura.nro||"")} · CAE ${esc(p.factura.cae)}</div></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn ghost sm" onclick='abrirComprobante(${fj},${JSON.stringify(p.cliente)},${JSON.stringify(p.id)},${JSON.stringify(p.factura.tipoReceptor||"")})'>Ver</button>
+          <button class="btn ghost sm" onclick='guardarDriveFactura(${pj}, this)'>Drive</button>
+        </div></div>`;
+    }).join("") : '<div class="empty">Todavía no emitiste facturas</div>';
+
+    v.innerHTML=`
+      <div class="view-title">Facturación</div>
+      <div class="grid2">
+        <div><div class="section-h">Estado ARCA (AFIP)</div>
+          <div class="card">${arcaHtml}
+            <button class="btn ghost sm" style="margin-top:12px" onclick="render(true)">Reverificar</button></div></div>
+        <div><div class="section-h">Facturas emitidas · ${facturadas.length}</div>
+          <div class="card">${facHtml}</div></div>
+      </div>`;
+  }catch(e){ errBox(v,e); }
+}
+async function guardarDriveFactura(p, btn){
+  const orig=btn.textContent; btn.disabled=true; btn.textContent="Subiendo…";
+  const gr=await guardarFacturaDrive(p.factura,{cliente:p.cliente,id:p.id});
+  btn.disabled=false; btn.textContent=orig;
+  toast(gr.ok?(gr.yaExistia?"Ya estaba en Drive":"PDF guardado en Drive"):gr.error, !gr.ok);
+}
+
+// ─── WEB (órdenes de la tienda + tráfico GA4) ───
+async function viewWeb(v,force){
+  try{
+    if(force||!DATA.webOrders){ loading(v); DATA.webOrders=await apiAdmin(""); }
+    const orders=DATA.webOrders||[];
+    const act=orders.filter(o=>o.estado!=="cancelada");
+    const rev=act.reduce((s,o)=>s+(Number(o.total)||0),0);
+    const ticket=act.length?rev/act.length:0;
+    window._webQ=window._webQ||"";
+    v.innerHTML=`
+      <div class="view-title">Web</div>
+      <div class="kpi-grid grid4">
+        <div class="kpi hl"><div class="lbl">Órdenes web</div><div class="val">${orders.length.toLocaleString("es-AR")}</div><div class="sub">${act.length} activas</div></div>
+        <div class="kpi gold"><div class="lbl">Facturación web</div><div class="val">${fmt(rev)}</div></div>
+        <div class="kpi"><div class="lbl">Ticket promedio</div><div class="val">${fmt(ticket)}</div></div>
+        <div class="kpi"><div class="lbl">Tráfico</div><div class="val" style="font-size:16px"><button class="btn ghost sm" onclick="loadGA4()">Ver tráfico (GA4)</button></div></div>
+      </div>
+      <div id="ga4-box" style="margin-top:16px"></div>
+      <div class="section-h">Órdenes de la tienda</div>
+      <div class="search"><span class="mag">🔎</span><input id="web-q" placeholder="Buscar por cliente o ID…" value="${esc(window._webQ)}"></div>
+      <div class="card" id="web-list"></div>`;
+    const inp=$("#web-q"); inp.oninput=()=>{ window._webQ=inp.value; drawWeb(); }; drawWeb();
+  }catch(e){ errBox(v,e); }
+}
+function drawWeb(){
+  const el=$("#web-list"); if(!el) return;
+  const q=(window._webQ||"").toLowerCase().trim();
+  const list=(DATA.webOrders||[]).filter(o=> !q || `${o.id} ${o.cliente}`.toLowerCase().includes(q));
+  el.innerHTML=list.length? list.slice(0,120).map(o=>`<div class="row"><div class="grow">
+      <div class="name">${esc(o.id||"")} · ${esc(o.cliente||"—")}</div>
+      <div class="meta">${esc(o.fecha||"")}${o.pago?" · "+esc(o.pago):""}${o.estado?" · "+esc(o.estado):""}</div></div>
+      <span class="chip n">${fmt(o.total)}</span></div>`).join("") : '<div class="empty">Sin órdenes</div>';
+}
+async function loadGA4(){
+  const box=$("#ga4-box"); if(!box) return;
+  box.innerHTML='<div class="card"><div class="spinner" style="margin:14px auto"></div></div>';
+  try{
+    const d=await apiAdmin("type=ga4");
+    const ov=d.overview||{};
+    const daily=d.daily||[]; const maxS=Math.max(1,...daily.map(x=>x.sessions));
+    const dbars=daily.map(x=>`<div class="db" style="height:${Math.max(2,x.sessions/maxS*100).toFixed(1)}%" title="${x.date?x.date.slice(6,8)+'/'+x.date.slice(4,6):''}: ${x.sessions} ses."></div>`).join("");
+    const pages=d.topPages||[]; const maxPv=Math.max(1,...pages.map(p=>p.pageviews));
+    const pageBars=pages.slice(0,7).map(p=>barRow(p.path,p.pageviews/maxPv*100,(p.pageviews||0).toLocaleString("es-AR"))).join("")||'<div class="empty">Sin datos</div>';
+    const chs=d.channels||[]; const maxCh=Math.max(1,...chs.map(c=>c.sessions));
+    const chBars=chs.map(c=>barRow(c.channel,c.sessions/maxCh*100,(c.sessions||0).toLocaleString("es-AR"),true)).join("")||'<div class="empty">Sin datos</div>';
+    box.innerHTML=`
+      <div class="kpi-grid grid4">
+        <div class="kpi"><div class="lbl">Sesiones</div><div class="val">${(ov.sessions||0).toLocaleString("es-AR")}</div></div>
+        <div class="kpi"><div class="lbl">Usuarios</div><div class="val">${(ov.users||0).toLocaleString("es-AR")}</div></div>
+        <div class="kpi"><div class="lbl">Vistas</div><div class="val">${(ov.pageviews||0).toLocaleString("es-AR")}</div></div>
+        <div class="kpi"><div class="lbl">Rebote</div><div class="val">${((ov.bounceRate||0)*100).toFixed(1)}%</div></div>
+      </div>
+      <div class="grid2" style="margin-top:14px">
+        <div><div class="section-h">Sesiones por día</div><div class="card"><div class="daily">${dbars}</div></div></div>
+        <div><div class="section-h">Canales de origen</div><div class="card"><div class="bars">${chBars}</div></div></div>
+      </div>
+      <div class="section-h">Páginas más vistas</div><div class="card"><div class="bars">${pageBars}</div></div>`;
+  }catch(e){
+    box.innerHTML=`<div class="card"><div class="meta">No se pudo cargar el tráfico (GA4): ${esc(e.message)}.<br>Verificá que el service account tenga acceso al property de Analytics.</div></div>`;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────── SHEET
