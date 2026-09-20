@@ -1,8 +1,10 @@
 /* Renderizador compartido del comprobante (Factura C) para /comprobante y la app.
    Expone window.NORD_FACTURA con build(data), drawQR(el,url), parseQr(url), filename(data). */
 (function (global) {
-  const RAZON = "NORD UNIFORMES";
+  const FANTASIA = "NORD Uniformes";
+  const RAZON = "Cordeviola Florencia";
   const COND  = "Responsable Monotributo";
+  const DOMICILIO = "Av. Santa Fe 3354, Piso 5 A — CABA";
 
   const fmt = n => "$ " + (Math.round((Number(n) || 0) * 100) / 100)
     .toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -63,9 +65,10 @@
       ${esPrueba ? `<div class="fac-prueba">COMPROBANTE DE PRUEBA — SIN VALIDEZ FISCAL (homologación)</div>` : ""}
       <div class="fac-top">
         <div class="fac-emisor">
-          <h1>${esc(RAZON)}</h1>
-          <div class="fac-muted">${esc(COND)}</div>
+          <h1>${esc(FANTASIA)}</h1>
+          <div class="fac-muted">${esc(RAZON)} · ${esc(COND)}</div>
           <div style="margin-top:8px">CUIT: <b>${cuitFmt(data.cuit)}</b></div>
+          <div class="fac-muted">${esc(DOMICILIO)}</div>
           <div class="fac-muted">Punto de Venta: ${pad(data.ptoVta, 5)}</div>
         </div>
         <div class="fac-letra"><div class="fac-big">C</div><div class="fac-cod">COD. ${data.tipoCmp || 11}</div></div>
