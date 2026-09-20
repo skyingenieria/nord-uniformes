@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Comprobante — NORD Uniformes</title>
+<link rel="icon" href="/nord-icon.svg">
+<style>
+  :root{ --ink:#0F172E; --line:#c9cdd6; --muted:#555; }
+  *{box-sizing:border-box}
+  body{margin:0;background:#e9ebef;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:13px;line-height:1.4}
+  .bar{position:sticky;top:0;background:#0F172E;color:#fff;display:flex;gap:10px;justify-content:center;padding:10px;z-index:5}
+  .bar button{border:none;border-radius:8px;padding:11px 18px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
+  .bar .print{background:#C8A96E;color:#0F172E}
+  .bar .close{background:rgba(255,255,255,.14);color:#fff}
+  .hoja{background:#fff;max-width:800px;margin:16px auto;padding:26px 30px;box-shadow:0 3px 16px rgba(0,0,0,.15)}
+  .prueba{background:#fbeaea;border:1px solid #d64545;color:#a12a2a;text-align:center;font-weight:800;padding:8px;border-radius:6px;margin-bottom:16px;letter-spacing:.03em}
+  .top{display:grid;grid-template-columns:1fr 70px 1fr;border:1.5px solid var(--ink);border-radius:4px}
+  .top>div{padding:14px 16px}
+  .emisor h1{font-size:22px;margin:0 0 2px;letter-spacing:.02em}
+  .letra{border-left:1.5px solid var(--ink);border-right:1.5px solid var(--ink);text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .letra .big{font-size:40px;font-weight:800;line-height:1}
+  .letra .cod{font-size:9px;color:var(--muted)}
+  .doc h2{font-size:19px;margin:0 0 8px;text-align:right}
+  .doc .r{display:flex;justify-content:space-between;font-size:12px;margin:2px 0}
+  .doc .r b{font-weight:700}
+  .muted{color:var(--muted)}
+  .sec{border:1px solid var(--line);border-radius:4px;padding:10px 14px;margin-top:14px}
+  .sec .r{display:flex;gap:8px;margin:2px 0}
+  .sec .r span:first-child{color:var(--muted);min-width:130px}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12px}
+  th{background:#f0f1f4;text-align:left;padding:8px 10px;border-bottom:1.5px solid var(--ink);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  th.num,td.num{text-align:right}
+  td{padding:8px 10px;border-bottom:1px solid var(--line)}
+  .totrow{display:flex;justify-content:flex-end;margin-top:14px}
+  .totbox{min-width:240px}
+  .totbox .r{display:flex;justify-content:space-between;padding:4px 0}
+  .totbox .big{font-size:18px;font-weight:800;border-top:1.5px solid var(--ink);padding-top:8px;margin-top:4px}
+  .foot{display:flex;gap:18px;align-items:flex-start;margin-top:22px;border-top:1px dashed var(--line);padding-top:16px}
+  .foot .qr{width:132px;flex:0 0 auto}
+  .foot .qr svg{width:100%;height:auto;display:block}
+  .foot .cae .r{display:flex;justify-content:space-between;gap:20px;margin:3px 0}
+  .foot .cae b{font-weight:800}
+  .auth{font-weight:700;margin-top:6px}
+  #err{max-width:800px;margin:40px auto;text-align:center;color:#a12a2a}
+  @media print{
+    body{background:#fff}
+    .bar{display:none}
+    .hoja{box-shadow:none;margin:0;max-width:none;padding:0}
+    @page{size:A4;margin:14mm}
+  }
+</style>
+</head>
+<body>
+<div class="bar">
+  <button class="print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+  <button class="close" onclick="window.close()">Cerrar</button>
+</div>
+<div id="cont"></div>
+<div id="err" style="display:none">No se pudo cargar el comprobante.</div>
+
+<script src="/qrcode.js"></script>
+<script>
+const RAZON = "NORD UNIFORMES";
+const COND  = "Responsable Monotributo";
+const fmt = n => "$ " + (Math.round((Number(n)||0)*100)/100).toLocaleString("es-AR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = (v,n) => String(v||0).padStart(n,"0");
+const fechaISOtoAR = s => { const m=String(s||"").match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1]}`:(s||"—"); };
+const fechaYMDtoAR = s => { s=String(s||""); return s.length===8?`${s.slice(6,8)}/${s.slice(4,6)}/${s.slice(0,4)}`:(s||"—"); };
+const cuitFmt = c => { const s=String(c||"").replace(/\D/g,""); return s.length===11?`${s.slice(0,2)}-${s.slice(2,10)}-${s.slice(10)}`:s; };
+
+function receptorLabel(tipo,nro){
+  tipo=Number(tipo);
+  if(tipo===99||!nro) return "Consumidor Final";
+  if(tipo===80) return "CUIT " + cuitFmt(nro);
+  if(tipo===96) return "DNI " + String(nro);
+  return String(nro);
+}
+
+try{
+  const raw = decodeURIComponent(escape(atob(location.hash.slice(1))));
+  const d = JSON.parse(raw);                 // { qr, caeVto, cliente, id, ambiente, tipoReceptor, items }
+  const p = new URL(d.qr).searchParams.get("p");
+  const f = JSON.parse(atob(p));             // payload fiscal AFIP
+
+  const esPrueba = /homolog/i.test(d.ambiente||"");
+  const comp = pad(f.ptoVta,5) + "-" + pad(f.nroCmp,8);
+
+  // Detalle: items del pedido si vinieron, si no una línea genérica.
+  let filas = "";
+  if (Array.isArray(d.items) && d.items.length){
+    filas = d.items.map(i=>`<tr>
+      <td>${esc(i.n)}${i.t?` — Talle ${esc(i.t)}`:""}</td>
+      <td class="num">${i.q}</td>
+      <td class="num">${fmt(i.p)}</td>
+      <td class="num">${fmt((Number(i.p)||0)*(Number(i.q)||0))}</td></tr>`).join("");
+  } else {
+    filas = `<tr><td>Venta de indumentaria${d.id?` — Pedido ${esc(d.id)}`:""}</td>
+      <td class="num">1</td><td class="num">${fmt(f.importe)}</td><td class="num">${fmt(f.importe)}</td></tr>`;
+  }
+
+  document.getElementById("cont").innerHTML = `
+    <div class="hoja">
+      ${esPrueba?`<div class="prueba">COMPROBANTE DE PRUEBA — SIN VALIDEZ FISCAL (homologación)</div>`:""}
+      <div class="top">
+        <div class="emisor">
+          <h1>${esc(RAZON)}</h1>
+          <div class="muted">${esc(COND)}</div>
+          <div style="margin-top:8px">CUIT: <b>${cuitFmt(f.cuit)}</b></div>
+          <div class="muted">Punto de Venta: ${pad(f.ptoVta,5)}</div>
+        </div>
+        <div class="letra"><div class="big">C</div><div class="cod">COD. ${f.tipoCmp||11}</div></div>
+        <div class="doc">
+          <h2>FACTURA</h2>
+          <div class="r"><span class="muted">Comprobante N°</span><b>${comp}</b></div>
+          <div class="r"><span class="muted">Fecha de emisión</span><b>${fechaISOtoAR(f.fecha)}</b></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="r"><span>Cliente</span><b>${esc(d.cliente||"—")}</b></div>
+        <div class="r"><span>Condición / Documento</span><span>${esc(receptorLabel(f.tipoDocRec,f.nroDocRec))}</span></div>
+        <div class="r"><span>Condición de venta</span><span>Contado</span></div>
+      </div>
+
+      <table>
+        <thead><tr><th>Descripción</th><th class="num">Cant.</th><th class="num">P. unit.</th><th class="num">Subtotal</th></tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+
+      <div class="totrow"><div class="totbox">
+        <div class="r big"><span>Total</span><span>${fmt(f.importe)}</span></div>
+      </div></div>
+
+      <div class="foot">
+        <div class="qr" id="qr"></div>
+        <div class="cae">
+          <div class="auth">Comprobante Autorizado</div>
+          <div class="r"><span class="muted">CAE N°</span><b>${esc(f.codAut)}</b></div>
+          <div class="r"><span class="muted">Fecha Vto. CAE</span><b>${fechaYMDtoAR(d.caeVto)}</b></div>
+          <div class="muted" style="margin-top:8px;font-size:11px">Verificá este comprobante en afip.gob.ar</div>
+        </div>
+      </div>
+    </div>`;
+
+  const q = qrcode(0,"M"); q.addData(d.qr); q.make();
+  document.getElementById("qr").innerHTML = q.createSvgTag({cellSize:4,margin:0,scalable:true});
+}catch(e){
+  document.getElementById("err").style.display="block";
+  document.getElementById("err").textContent = "No se pudo cargar el comprobante: " + e.message;
+}
+</script>
+</body>
+</html>

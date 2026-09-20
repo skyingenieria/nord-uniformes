@@ -486,11 +486,34 @@ async function postEntrega(req, res) {
 
 // ── Facturación ARCA (Factura C) ─────────────────────────────────────────────
 // Registro en una pestaña "Facturas" (aditiva, no toca las hojas existentes).
+
+// URL del QR oficial de AFIP/ARCA (payload base64 con los datos del comprobante).
+function afipQrUrl(f, docTipo, docNro) {
+  const fe = String(f.fecha || "");
+  const payload = {
+    ver: 1,
+    fecha: fe.length === 8 ? `${fe.slice(0, 4)}-${fe.slice(4, 6)}-${fe.slice(6, 8)}` : fe,
+    cuit: Number(f.cuit) || 0,
+    ptoVta: Number(f.ptoVta) || 0,
+    tipoCmp: Number(f.cbteTipo) || 11,
+    nroCmp: Number(f.cbteNro) || 0,
+    importe: Number(f.importe) || 0,
+    moneda: "PES",
+    ctz: 1,
+    tipoDocRec: parseInt(docTipo, 10) || 99,
+    nroDocRec: Number(String(docNro || "0").replace(/\D/g, "")) || 0,
+    tipoCodAut: "E",
+    codAut: Number(f.cae) || 0,
+  };
+  const b64 = Buffer.from(JSON.stringify(payload)).toString("base64");
+  return "https://www.afip.gob.ar/fe/qr/?p=" + b64;
+}
+
 async function getFacturasMap(sheets) {
   try {
     const r = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "'Facturas'!A2:I5000",
+      range: "'Facturas'!A2:J5000",
     });
     const map = {};
     for (const row of (r.data.values || [])) {
@@ -500,7 +523,7 @@ async function getFacturasMap(sheets) {
         importe: parseNum(row[2]), tipoReceptor: (row[3] || "").trim(),
         nro: (row[4] || "").trim(), cae: (row[5] || "").trim(),
         caeVto: (row[6] || "").trim(), fecha: (row[7] || "").trim(),
-        ambiente: (row[8] || "").trim(),
+        ambiente: (row[8] || "").trim(), qr: (row[9] || "").trim(),
       };
     }
     return map;
@@ -519,8 +542,8 @@ async function ensureFacturasSheet(sheets) {
     requestBody: { requests: [{ addSheet: { properties: { title: "Facturas" } } }] },
   });
   await sheets.spreadsheets.values.update({
-    spreadsheetId: sid, range: "'Facturas'!A1:I1", valueInputOption: "RAW",
-    requestBody: { values: [["ID Pedido", "Cliente", "Importe", "Tipo receptor", "Nro Comprobante", "CAE", "Vto CAE", "Fecha", "Ambiente"]] },
+    spreadsheetId: sid, range: "'Facturas'!A1:J1", valueInputOption: "RAW",
+    requestBody: { values: [["ID Pedido", "Cliente", "Importe", "Tipo receptor", "Nro Comprobante", "CAE", "Vto CAE", "Fecha", "Ambiente", "QR AFIP"]] },
   });
 }
 
@@ -550,6 +573,8 @@ async function postFacturar(req, res) {
     return res.status(502).json({ ok: false, error: e.message });
   }
 
+  const qr = afipQrUrl(factura, docTipo, docNro);
+
   // Registrar (best-effort: la factura ya se emitió en ARCA).
   let registrado = true;
   try {
@@ -557,11 +582,11 @@ async function postFacturar(req, res) {
     const dt = parseInt(docTipo, 10);
     const tipoReceptor = dt === 99 ? "Consumidor Final" : (dt === 80 ? "CUIT" : "DNI");
     await sheets.spreadsheets.values.append({
-      spreadsheetId: process.env.SPREADSHEET_ID, range: "'Facturas'!A:I",
+      spreadsheetId: process.env.SPREADSHEET_ID, range: "'Facturas'!A:J",
       valueInputOption: "USER_ENTERED", insertDataOption: "INSERT_ROWS",
       requestBody: { values: [[
         idPedido, cliente, factura.importe, tipoReceptor,
-        `${factura.ptoVta}-${factura.cbteNro}`, factura.cae, factura.caeVto, factura.fecha, factura.env,
+        `${factura.ptoVta}-${factura.cbteNro}`, factura.cae, factura.caeVto, factura.fecha, factura.env, qr,
       ]] },
     });
   } catch (e) {
@@ -569,7 +594,7 @@ async function postFacturar(req, res) {
     console.error("Factura emitida pero no registrada:", e.message);
   }
 
-  res.json({ ok: true, factura: { ...factura, nro: `${factura.ptoVta}-${factura.cbteNro}` }, registrado });
+  res.json({ ok: true, factura: { ...factura, nro: `${factura.ptoVta}-${factura.cbteNro}`, qr }, registrado });
 }
 
 // ── Router ───────────────────────────────────────────────────────────────────

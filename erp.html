@@ -742,12 +742,21 @@ function openPedido(p){
       <div class="tot-line"><span>Comprobante C</span><span>N° ${esc(p.factura.nro)}</span></div>
       <div class="tot-line"><span>CAE</span><span style="font-size:12px">${esc(p.factura.cae)}</span></div>
       <div class="tot-line"><span>Vto CAE</span><span>${esc(fmtFecha(p.factura.caeVto))}</span></div>
-      <div style="color:var(--green);font-weight:700;font-size:13px;margin-top:8px">✅ Ya facturado (${esc(p.factura.tipoReceptor||"")})</div>`
+      <div style="color:var(--green);font-weight:700;font-size:13px;margin:8px 0 12px">✅ Ya facturado (${esc(p.factura.tipoReceptor||"")})</div>
+      <button class="btn" onclick='abrirComprobante(${JSON.stringify(p.factura).replace(/'/g,"&#39;")},${JSON.stringify(p.cliente)},${JSON.stringify(p.id)},${JSON.stringify(p.factura.tipoReceptor||"")})'>🖨️ Ver / Imprimir comprobante</button>`
     : `<button class="btn ghost" onclick='openFacturar(${JSON.stringify({id:p.id,cliente:p.cliente,importe:Math.round(p.totalVenta||p.monto||0)}).replace(/'/g,"&#39;")})'>Emitir factura C</button>`}`);
 }
 function fmtFecha(yyyymmdd){
   const s=String(yyyymmdd||""); if(s.length!==8) return s||"—";
   return `${s.slice(6,8)}/${s.slice(4,6)}/${s.slice(0,4)}`;
+}
+function abrirComprobante(f, cliente, id, tipoReceptor){
+  if(!f || !f.qr) return toast("Esta factura no tiene comprobante para imprimir",true);
+  const ord=(DATA.ordenes||[]).find(o=>o.id===id);
+  const items=ord?ord.items.map(i=>({n:i.nombre,t:i.talle,q:i.qty,p:i.precio})):null;
+  const data={qr:f.qr, caeVto:f.caeVto, cliente, id, ambiente:(f.env||f.ambiente||""), tipoReceptor:tipoReceptor||"", items};
+  const b64=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  window.open("/comprobante#"+b64,"_blank");
 }
 async function openFacturar(p){
   if(!DATA.arca){ try{ const r=await fetch("/api/arca",{headers:{Authorization:"Bearer "+TOKEN}}); DATA.arca=await r.json(); }catch(e){ DATA.arca={}; } }
@@ -780,6 +789,7 @@ async function doFacturar(p){
     const r=await api("facturar",{method:"POST",body:{idPedido:p.id, cliente:p.cliente, importe:p.importe, docTipo, docNro}});
     const f=r.factura||{};
     DATA.pedidos=null;
+    const tr = docTipo==="99"?"Consumidor Final":(docTipo==="80"?"CUIT":"DNI");
     const txt=`Factura C N° ${f.nro||''}\nCAE: ${f.cae||''}\nVto CAE: ${fmtFecha(f.caeVto)}\nImporte: ${fmt(f.importe)}`;
     openSheet(`<div class="grabber"></div><h3>${r.yaFacturado?'Ya estaba facturado':'✅ Factura emitida'}</h3><p class="sub">${esc(p.id)} · ${esc(p.cliente)}</p>
       <div class="tot-line"><span>Comprobante C</span><span>N° ${esc(f.nro||'')}</span></div>
@@ -787,7 +797,8 @@ async function doFacturar(p){
       <div class="tot-line"><span>Vto CAE</span><span>${esc(fmtFecha(f.caeVto))}</span></div>
       <div class="tot-line big"><span>Importe</span><span>${fmt(f.importe)}</span></div>
       ${r.registrado===false?'<p style="color:var(--amber);font-size:12px;margin-top:8px">⚠ Se emitió en ARCA pero no se pudo registrar en la planilla.</p>':''}
-      <button class="btn" style="margin-top:8px" onclick='copyText(${JSON.stringify(txt)},"Datos copiados")'>Copiar datos</button>
+      ${f.qr?`<button class="btn" style="margin-top:8px" onclick='abrirComprobante(${JSON.stringify(f).replace(/'/g,"&#39;")},${JSON.stringify(p.cliente)},${JSON.stringify(p.id)},${JSON.stringify(tr)})'>🖨️ Ver / Imprimir comprobante</button>`:''}
+      <button class="btn ghost" style="margin-top:10px" onclick='copyText(${JSON.stringify(txt)},"Datos copiados")'>Copiar datos</button>
       <button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Cerrar</button>`);
     toast(r.yaFacturado?"Ya estaba facturado":"Factura emitida");
   }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Emitir factura C"; }
