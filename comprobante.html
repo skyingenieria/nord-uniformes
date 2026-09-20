@@ -13,9 +13,18 @@
   .bar button{border:none;border-radius:8px;padding:11px 18px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
   .bar .print{background:#C8A96E;color:#0F172E}
   .bar .close{background:rgba(255,255,255,.14);color:#fff}
-  .wrap{max-width:800px;margin:16px auto;box-shadow:0 3px 16px rgba(0,0,0,.15)}
-  #err{max-width:800px;margin:40px auto;text-align:center;color:#a12a2a}
-  @media print{ body{background:#fff} .bar{display:none} .wrap{box-shadow:none;margin:0;max-width:none} @page{size:A4;margin:14mm} }
+  /* Escenario que recorta el sobrante cuando la hoja se achica para entrar en pantalla. */
+  .stage{overflow:hidden;padding:16px 0}
+  /* La hoja se dibuja siempre a un ancho fijo (A4 ~96dpi) y luego se escala vía JS. */
+  .wrap{width:794px;margin:0;box-shadow:0 3px 16px rgba(0,0,0,.15);transform-origin:top left;will-change:transform}
+  #err{max-width:794px;margin:40px auto;text-align:center;color:#a12a2a;padding:0 16px}
+  @media print{
+    body{background:#fff}
+    .bar{display:none}
+    .stage{overflow:visible!important;padding:0!important;height:auto!important}
+    .wrap{transform:none!important;width:auto!important;margin:0!important;box-shadow:none!important}
+    @page{size:A4;margin:14mm}
+  }
 </style>
 </head>
 <body>
@@ -23,12 +32,29 @@
   <button class="print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
   <button class="close" onclick="window.close()">Cerrar</button>
 </div>
-<div class="fac"><div class="wrap" id="cont"></div></div>
+<div class="stage" id="stage">
+  <div class="fac"><div class="wrap" id="cont"></div></div>
+</div>
 <div id="err" style="display:none">No se pudo cargar el comprobante.</div>
 
 <script src="/qrcode.js"></script>
 <script src="/factura.js"></script>
 <script>
+// Escala la hoja para que entre en el ancho de la pantalla sin deformarse.
+function fitFactura(){
+  const stage = document.getElementById("stage");
+  const wrap  = document.getElementById("cont");
+  if(!stage || !wrap) return;
+  wrap.style.transform = "none";              // medir a tamaño real
+  const dw = wrap.offsetWidth || 794;         // ancho de diseño
+  const dh = wrap.offsetHeight;               // alto natural
+  const avail = stage.clientWidth;
+  const scale = Math.min(1, avail / dw);       // nunca agrandar, solo achicar
+  const tx = Math.max(0, (avail - dw * scale) / 2); // centrar en desktop
+  wrap.style.transform = `translateX(${tx}px) scale(${scale})`;
+  stage.style.height = Math.ceil(dh * scale) + "px";
+}
+
 try{
   const d = JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1)))));  // { qr, caeVto, cliente, id, ambiente, tipoReceptor, items }
   const f = NORD_FACTURA.parseQr(d.qr);   // payload fiscal AFIP
@@ -43,6 +69,12 @@ try{
   cont.innerHTML = built.html;
   NORD_FACTURA.drawQR(cont, d.qr);
   document.title = built.filename.replace(/\.pdf$/,"");
+  fitFactura();
+  // Reajustar cuando termina de renderizar el QR / al rotar / redimensionar.
+  requestAnimationFrame(fitFactura);
+  window.addEventListener("load", fitFactura);
+  window.addEventListener("resize", fitFactura);
+  window.addEventListener("orientationchange", () => setTimeout(fitFactura, 150));
 }catch(e){
   document.getElementById("err").style.display="block";
   document.getElementById("err").textContent = "No se pudo cargar el comprobante: " + e.message;
