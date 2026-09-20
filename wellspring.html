@@ -1954,14 +1954,14 @@
     }
   }
 
-  function addToCart(productId, nombre, talle, precio) {
+  function addToCart(productId, nombre, talle, precio, precioLista) {
     const cart = getCart();
     const key = `${productId}_${talle}`;
     const existing = cart.find(i => i.key === key);
     if (existing) {
       existing.qty++;
     } else {
-      cart.push({ key, productId, nombre, talle, precio, qty: 1 });
+      cart.push({ key, productId, nombre, talle, precio, precioLista: precioLista || 0, qty: 1 });
     }
     saveCart(cart);
     updateCartCount();
@@ -1980,9 +1980,15 @@
     return "$" + Number(n).toLocaleString("es-AR");
   }
 
+  // Precio de lista (con tarjeta). Usa el valor real de la hoja (col F);
+  // si falta, cae al viejo cálculo (transferencia + 15%).
+  function listaDe(precio, precioLista) {
+    return (precioLista && precioLista > 0) ? Math.round(precioLista) : Math.round((Number(precio) || 0) * 1.15);
+  }
+
   // Setea el bloque de precios del modal: lista + transferencia + cuotas
-  function setModalPrecio(precio) {
-    const lista = Math.round(precio * 1.15);
+  function setModalPrecio(precio, precioLista) {
+    const lista = listaDe(precio, precioLista);
     const elT = document.getElementById("modal-product-price");
     if (elT) elT.textContent = fmt(Math.round(precio));
     const elL = document.getElementById("modal-precio-lista");
@@ -2028,8 +2034,8 @@
         ? p.precio
         : (p.talles.find(t => t.precio > 0)?.precio || 0);
 
-      // Precio de lista (tarjeta = transferencia + 15%) y cuota (3 sin interés)
-      const precioLista = Math.round(precioMostrar * 1.15);
+      // Precio de lista (con tarjeta, col F de la hoja) y cuota (3 sin interés)
+      const precioLista = listaDe(precioMostrar, p.precioLista);
       const precioCuota = Math.round(precioLista / 3);
 
       const generoRaw = (p.genero || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -2121,7 +2127,7 @@
       return;
     }
 
-    const total = cart.reduce((s, i) => s + Math.round(i.precio * 1.15) * i.qty, 0);
+    const total = cart.reduce((s, i) => s + listaDe(i.precio, i.precioLista) * i.qty, 0);
     itemsEl.innerHTML = cart.map(item => `
       <div class="drawer-item">
         <div class="drawer-item-info">
@@ -2133,7 +2139,7 @@
           <span class="drawer-qty-num">${item.qty}</span>
           <button class="drawer-qty-btn" onclick="drawerQty('${item.key}',1)">+</button>
         </div>
-        <div class="drawer-item-price">${fmt(Math.round(item.precio * 1.15) * item.qty)}</div>
+        <div class="drawer-item-price">${fmt(listaDe(item.precio, item.precioLista) * item.qty)}</div>
         <button class="drawer-remove" onclick="drawerRemove('${item.key}')" title="Eliminar">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -2386,8 +2392,9 @@
           class="modal-talle-btn${t.stock === 0 ? " sin-stock" : ""}"
           data-talle="${t.talle}"
           data-precio="${t.precio}"
+          data-precio-lista="${t.precioLista || 0}"
           data-sin-stock="${t.stock === 0 ? "1" : "0"}"
-          onclick="selectTalleModal(this, '${product.id}', ${t.precio})"
+          onclick="selectTalleModal(this, '${product.id}', ${t.precio}, ${t.precioLista || 0})"
           title="${t.stock === 0 ? "Sin stock" : `${t.stock} disponibles`}"
         >${t.talle}</button>`;
         return t.stock === 0
@@ -2446,7 +2453,7 @@
     });
     const primerTalle = tallesOrdenados.find(t => t.precio > 0);
     if (primerTalle) {
-      setModalPrecio(primerTalle.precio);
+      setModalPrecio(primerTalle.precio, primerTalle.precioLista);
     }
 
     // Resetear selección de talle y banner sin stock
@@ -2482,7 +2489,7 @@
     if (e.key === 'Escape') closeProductModal();
   });
 
-  function selectTalleModal(btn, productId, precio) {
+  function selectTalleModal(btn, productId, precio, precioLista) {
     document.querySelectorAll(".modal-talle-btn").forEach(b => b.classList.remove("selected"));
     btn.classList.add("selected");
 
@@ -2504,7 +2511,7 @@
       addBtn.style.display = "";
       addBtn.disabled = false;
       addBtn.textContent = "AÑADIR AL CARRITO";
-      setModalPrecio(precio);
+      setModalPrecio(precio, precioLista);
     }
   }
 
@@ -2516,6 +2523,7 @@
 
     const talle = selectedTalleBtn.dataset.talle;
     const precio = parseFloat(selectedTalleBtn.dataset.precio);
+    const precioLista = parseFloat(selectedTalleBtn.dataset.precioLista) || 0;
 
     const cart = getCart();
     const key = `${currentModalProduct.id}_${talle}`;
@@ -2530,6 +2538,7 @@
         nombre: currentModalProduct.nombre,
         talle,
         precio,
+        precioLista,
         qty: 1,
       });
     }

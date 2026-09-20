@@ -91,14 +91,16 @@ async function getStock(res, colegioFilter) {
     sheets.spreadsheets.values.get({ spreadsheetId: sid, range: "'Listado de Prendas'!A2:I5000", valueRenderOption: "FORMATTED_VALUE" }),
   ]);
 
-  // Precio Trans (F=5) y Costo (E=4) por SKU desde Lista de precios
-  const precioMap = {}, costoMap = {};
+  // Lista de precios: F(5)=Precio Lista (tarjeta) · G(6)=Precio Trans (transferencia) · E(4)=Costo
+  const precioMap = {}, listaMap = {}, costoMap = {};
   for (const r of (preciosRes.data.values || [])) {
     const sku = String(r[3] || "").trim();
     if (!sku) continue;
-    const p = Math.round(Number(r[5]) || 0);
-    const c = Math.round(Number(r[4]) || 0);
-    if (p) precioMap[sku] = p;
+    const lista = Math.round(Number(r[5]) || 0);
+    const trans = Math.round(Number(r[6]) || 0);
+    const c     = Math.round(Number(r[4]) || 0);
+    if (trans || lista) precioMap[sku] = trans || lista; // base = transferencia
+    if (lista || trans) listaMap[sku]  = lista || trans; // tarjeta / lista
     if (c) costoMap[sku] = c;
   }
   // Filas de encabezado a ignorar (algunas hojas tienen el header en la fila 2)
@@ -130,7 +132,8 @@ async function getStock(res, colegioFilter) {
     if (isHeader(colegio, nombre, sku)) continue;
     if (colegioFilter && colegio !== colegioFilter) continue;
     const stock  = Math.round(Number(r[7]) || 0);         // H = Stock actual
-    const precio = precioMap[sku] || Math.round(Number(r[9]) || 0); // Precio Unit
+    const precio = precioMap[sku] || Math.round(Number(r[9]) || 0); // transferencia (Precio Unit de Stock como fallback)
+    const precioLista = listaMap[sku] || precio;                    // lista / tarjeta
     const costo  = costoMap[sku]  || Math.round(Number(r[8]) || 0); // Costo Unit
     const key = `${colegio}||${nombre}`;
     if (!productsMap[key]) {
@@ -138,7 +141,7 @@ async function getStock(res, colegioFilter) {
       productsMap[key] = { colegio, nombre, foto: meta.foto || "",
         genero: meta.genero || "", categorias: [...meta.cats], talles: [] };
     }
-    productsMap[key].talles.push({ talle, sku, stock, precio, costo });
+    productsMap[key].talles.push({ talle, sku, stock, precio, precioLista, costo });
   }
 
   const SIZE_ORDER = ["XS","S","M","L","XL","XXL","XXXL"];

@@ -54,14 +54,21 @@ async function fetchFromSheets(colegio = "WS") {
     }),
   ]);
 
-  // -- Construir mapa de precios: SKU -> Precio Trans (col F, indice 5) ------
-  const precioMap = {};
+  // -- Mapas de precios desde 'Lista de precios':
+  //    F (indice 5) = Precio Lista (con tarjeta)  |  G (indice 6) = Precio Trans (transferencia)
+  const precioMap = {}; // SKU -> transferencia (precio final que paga por transferencia)
+  const listaMap  = {}; // SKU -> lista / tarjeta
   for (const row of (preciosRes.data.values || [])) {
     const colColegio = String(row[0] || "").trim();
     const sku        = String(row[3] || "").trim();
-    const precio     = Math.round(Number(row[5]) || 0); // F = Precio Trans
-    if (colColegio !== colegio || !sku || !precio) continue;
-    precioMap[sku] = precio;
+    const lista      = Math.round(Number(row[5]) || 0); // F = Precio Lista
+    const trans      = Math.round(Number(row[6]) || 0); // G = Precio Trans
+    if (colColegio !== colegio || !sku) continue;
+    const t = trans || lista;   // si falta transferencia, cae a lista
+    const l = lista || trans;   // si falta lista, cae a transferencia
+    if (!t && !l) continue;
+    precioMap[sku] = t;
+    listaMap[sku]  = l;
   }
 
   // -- Construir mapa de categorias: nombre -> Set de categorias --------------
@@ -98,7 +105,8 @@ async function fetchFromSheets(colegio = "WS") {
     const talle       = String(row[2] ?? "").trim();
     const sku         = String(row[3] || "").trim();
     const stockActual = Math.round(Number(row[7]) || 0); // H = Stock actual
-    const precioUnit  = precioMap[sku] || 0;             // precio desde Lista de precios col F
+    const precioUnit  = precioMap[sku] || 0;             // transferencia (col G)
+    const listaUnit   = listaMap[sku]  || 0;             // lista / tarjeta (col F)
 
     if (colegioCell !== colegio || !nombre || !talle) continue;
 
@@ -118,6 +126,7 @@ async function fetchFromSheets(colegio = "WS") {
         id: nombreFinal.toLowerCase().replace(/\s+/g, "-").replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u").replace(/[^a-z0-9-]/g,""),
         nombre: nombreFinal,
         precio: precioUnit,
+        precioLista: listaUnit,
         imagen_url: fotos[0] || "",
         fotos,
         genero,
@@ -130,10 +139,11 @@ async function fetchFromSheets(colegio = "WS") {
     if (precioUnit > 0) {
       if (productsMap[nombre].precio === 0 || precioUnit < productsMap[nombre].precio) {
         productsMap[nombre].precio = precioUnit;
+        productsMap[nombre].precioLista = listaUnit; // lista del mismo talle mínimo
       }
     }
 
-    productsMap[nombre].talles.push({ talle, stock: stockActual, precio: precioUnit });
+    productsMap[nombre].talles.push({ talle, stock: stockActual, precio: precioUnit, precioLista: listaUnit });
   }
 
   const SIZE_ORDER = ['XS','S','M','L','XL','XXL','XXXL'];

@@ -364,7 +364,7 @@ async function viewInicio(v,force){
 // ─────────────────────────────────────────────────────────────── STOCK
 function flattenStock(products){
   const flat=[];
-  products.forEach(p=>p.talles.forEach(t=>flat.push({nombre:p.nombre,colegio:p.colegio,talle:t.talle,sku:t.sku,stock:t.stock,precio:t.precio,costo:t.costo})));
+  products.forEach(p=>p.talles.forEach(t=>flat.push({nombre:p.nombre,colegio:p.colegio,talle:t.talle,sku:t.sku,stock:t.stock,precio:t.precio,precioLista:t.precioLista,costo:t.costo})));
   return flat;
 }
 function talleClass(s){ return s<=0?"no": s<=3?"low":"ok"; }
@@ -397,9 +397,9 @@ async function viewStock(v,force){
 }
 
 // ─────────────────────────────────────────────────────────────── VENDER
-const CARD_SURCHARGE = 1.15; // tarjeta = precio de lista = transferencia x1.15 (igual que la web)
+const CARD_SURCHARGE = 1.15; // fallback si un talle no tiene precio de lista propio
 function isCard(){ return /nave|tarjeta/i.test(venta.pago); }
-function unitPrice(i){ return isCard()? Math.round(i.precio*CARD_SURCHARGE) : i.precio; }
+function unitPrice(i){ return isCard()? (i.precioLista>0?i.precioLista:Math.round(i.precio*CARD_SURCHARGE)) : i.precio; }
 function cartSubtotal(){ return cart.reduce((s,i)=>s+unitPrice(i)*i.qty,0); }
 function cartTotal(){ return Math.max(0, cartSubtotal() - (venta.descuento||0) + (venta.envio||0)); }
 
@@ -481,7 +481,7 @@ function openTalle(nombre){
 function talleRows(p){
   return p.talles.map(t=>{
     const q=cartQtyFor(t.sku,t.talle,p.nombre);
-    const arg=JSON.stringify({sku:t.sku,talle:t.talle,nombre:p.nombre,precio:t.precio,stock:t.stock}).replace(/'/g,"&#39;");
+    const arg=JSON.stringify({sku:t.sku,talle:t.talle,nombre:p.nombre,precio:t.precio,precioLista:t.precioLista,stock:t.stock}).replace(/'/g,"&#39;");
     const over = q>t.stock;
     return `<div class="row">
       <div class="grow"><div class="name">Talle ${esc(t.talle)}</div>
@@ -493,7 +493,7 @@ function talleRows(p){
 function cartQtyFor(sku,talle,nombre){ const i=cart.find(x=>x.sku===sku&&x.talle===talle&&x.nombre===nombre); return i?i.qty:0; }
 function setQty(r,delta){
   let i=cart.find(x=>x.sku===r.sku&&x.talle===r.talle&&x.nombre===r.nombre);
-  if(!i && delta>0){ i={nombre:r.nombre,talle:r.talle,sku:r.sku,precio:r.precio,qty:0,stock:r.stock}; cart.push(i); }
+  if(!i && delta>0){ i={nombre:r.nombre,talle:r.talle,sku:r.sku,precio:r.precio,precioLista:r.precioLista,qty:0,stock:r.stock}; cart.push(i); }
   if(i){
     if(i.stock==null) i.stock=r.stock;
     i.qty+=delta;

@@ -170,6 +170,8 @@ function getCart() {
 }
 function saveCart(c) { localStorage.setItem("nord_cart", JSON.stringify(c)); }
 function fmt(n) { return "$" + Number(n).toLocaleString("es-AR"); }
+// Precio de lista (con tarjeta): valor real de la hoja (col F); si falta, transferencia + 15%.
+function listaDe(precio, precioLista) { return (precioLista && precioLista > 0) ? Math.round(precioLista) : Math.round((Number(precio) || 0) * 1.15); }
 
 function changeQty(key, d) {
   const cart = getCart();
@@ -212,7 +214,7 @@ function onMetodoPagoChange() {
   }
   // Mostrar/ocultar descuento por transferencia y actualizar total
   const subTransfer = getCart().reduce((s, i) => s + i.precio * i.qty, 0);
-  const subLista    = getCart().reduce((s, i) => s + Math.round(i.precio * 1.15) * i.qty, 0);
+  const subLista    = getCart().reduce((s, i) => s + listaDe(i.precio, i.precioLista) * i.qty, 0);
   const descuentoRow = document.getElementById("descuento-row");
   const descuentoVal = document.getElementById("descuento-val");
   const totalDisplay = document.getElementById("total-display");
@@ -244,7 +246,7 @@ function render() {
   }
 
   const subTransfer = cart.reduce((s, i) => s + i.precio * i.qty, 0);
-  const subLista    = cart.reduce((s, i) => s + Math.round(i.precio * 1.15) * i.qty, 0);
+  const subLista    = cart.reduce((s, i) => s + listaDe(i.precio, i.precioLista) * i.qty, 0);
   const descuento   = subLista - subTransfer;
   const totalItems  = cart.reduce((s, i) => s + i.qty, 0);
 
@@ -259,7 +261,7 @@ function render() {
         <span class="qty-num">${i.qty}</span>
         <button class="qty-btn" onclick="changeQty('${i.key}',1)">+</button>
       </div>
-      <div class="item-price">${fmt(Math.round(i.precio * 1.15) * i.qty)}</div>
+      <div class="item-price">${fmt(listaDe(i.precio, i.precioLista) * i.qty)}</div>
       <button class="item-remove" onclick="removeItem('${i.key}')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -321,7 +323,7 @@ function render() {
 
     <div class="summary-panel">
       <p class="summary-title">Resumen del pedido</p>
-      ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(Math.round(i.precio*1.15)*i.qty)}</span></div>`).join("")}
+      ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(listaDe(i.precio, i.precioLista)*i.qty)}</span></div>`).join("")}
       <div class="sum-row" id="descuento-row" style="color:#2e7d52"><span>Descuento por transferencia</span><span id="descuento-val">-${fmt(descuento)}</span></div>
       <div class="sum-row total"><span>Total</span><span id="total-display">${fmt(subTransfer)}</span></div>
 
@@ -428,7 +430,7 @@ async function irAPagar() {
   const email    = document.getElementById("inp-email").value.trim();
   const cart        = getCart();
   const subTransfer = cart.reduce((s, i) => s + i.precio * i.qty, 0);
-  const subLista    = cart.reduce((s, i) => s + Math.round(i.precio * 1.15) * i.qty, 0);
+  const subLista    = cart.reduce((s, i) => s + listaDe(i.precio, i.precioLista) * i.qty, 0);
   const descuento   = subLista - subTransfer;
   const totalFinal  = metodo === "nave" ? subLista : subTransfer;
 
