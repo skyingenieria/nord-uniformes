@@ -770,7 +770,9 @@ function abrirComprobante(f, cliente, id, tipoReceptor){
 // ── PDF de la factura + guardado en Google Drive ─────────────────────────────
 let _lastPdf=null;
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src;
-  s.onload=res; s.onerror=()=>rej(new Error("No se pudo cargar "+src)); document.head.appendChild(s); }); }
+  let done=false; const fin=(fn,a)=>{ if(done)return; done=true; clearTimeout(t); fn(a); };
+  const t=setTimeout(()=>fin(rej,new Error("Tardó demasiado al cargar "+src+". Revisá tu conexión.")),25000);
+  s.onload=()=>fin(res); s.onerror=()=>fin(rej,new Error("No se pudo cargar "+src)); document.head.appendChild(s); }); }
 // Carga perezosa del generador vectorial (jsPDF). No usa html2canvas: se ve
 // idéntico en cualquier dispositivo y nunca sale en blanco.
 async function ensurePdfLib(){

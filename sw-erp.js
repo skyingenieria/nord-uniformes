@@ -1,6 +1,6 @@
 // Service Worker de la NORD ERP (PWA de Flor).
 // App-shell cache para que abra sin conexion; la API siempre va a la red.
-const CACHE = "nord-erp-v8";
+const CACHE = "nord-erp-v9";
 const SHELL = [
   "/erp",
   "/erp.html",
@@ -16,7 +16,13 @@ const SHELL = [
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // Resiliente: si algún asset falla (deploy a medias), NO cancela la
+  // actualización — cachea lo que pueda y activa igual la versión nueva.
+  e.waitUntil(
+    caches.open(CACHE).then((c) =>
+      Promise.all(SHELL.map((u) => c.add(u).catch(() => {})))
+    ).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", (e) => {
