@@ -597,6 +597,47 @@ async function postFacturar(req, res) {
   res.json({ ok: true, factura: { ...factura, nro: `${factura.ptoVta}-${factura.cbteNro}`, qr }, registrado });
 }
 
+// ── Guardar PDF de la factura en Google Drive (OAuth de la cuenta del usuario) ─
+const DRIVE_FOLDER = process.env.DRIVE_FACTURAS_FOLDER || "1pz9XMcDXWBeWMdR5JHs7C5H2CQMl4kLe";
+
+function driveClient() {
+  const cid = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const cs  = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  const rt  = process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
+  if (!cid || !cs || !rt) return null;
+  const o = new google.auth.OAuth2(cid, cs);
+  o.setCredentials({ refresh_token: rt });
+  return google.drive({ version: "v3", auth: o });
+}
+
+// POST drive-factura — sube el PDF a la carpeta de Drive. Body: { filename, pdfBase64 }
+async function postDriveFactura(req, res) {
+  const { filename, pdfBase64 } = req.body || {};
+  if (!filename || !pdfBase64) return res.status(400).json({ ok: false, error: "Faltan filename o pdfBase64" });
+
+  const drive = driveClient();
+  if (!drive) return res.status(400).json({ ok: false, error: "Google Drive no configurado (faltan GOOGLE_OAUTH_CLIENT_ID / SECRET / REFRESH_TOKEN en Vercel)" });
+
+  try {
+    // Evitar duplicados: si ya existe un archivo con ese nombre en la carpeta, se devuelve.
+    const q = `name = '${filename.replace(/'/g, "\\'")}' and '${DRIVE_FOLDER}' in parents and trashed = false`;
+    const found = await drive.files.list({ q, fields: "files(id, webViewLink)", pageSize: 1 });
+    if (found.data.files && found.data.files.length) {
+      const ex = found.data.files[0];
+      return res.json({ ok: true, yaExistia: true, fileId: ex.id, link: ex.webViewLink });
+    }
+    const { Readable } = require("stream");
+    const created = await drive.files.create({
+      requestBody: { name: filename, parents: [DRIVE_FOLDER] },
+      media: { mimeType: "application/pdf", body: Readable.from(Buffer.from(pdfBase64, "base64")) },
+      fields: "id, webViewLink",
+    });
+    res.json({ ok: true, fileId: created.data.id, link: created.data.webViewLink });
+  } catch (e) {
+    res.status(502).json({ ok: false, error: e.message });
+  }
+}
+
 // ── Router ───────────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -628,6 +669,7 @@ module.exports = async (req, res) => {
       if (action === "pago")     return await postPago(req, res);
       if (action === "entrega")  return await postEntrega(req, res);
       if (action === "facturar") return await postFacturar(req, res);
+      if (action === "drive-factura") return await postDriveFactura(req, res);
       return res.status(400).json({ error: "Accion POST desconocida" });
     }
 

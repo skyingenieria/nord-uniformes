@@ -9,6 +9,9 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/nord-icon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/factura.css">
+<script src="/qrcode.js" defer></script>
+<script src="/factura.js" defer></script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -743,7 +746,9 @@ function openPedido(p){
       <div class="tot-line"><span>CAE</span><span style="font-size:12px">${esc(p.factura.cae)}</span></div>
       <div class="tot-line"><span>Vto CAE</span><span>${esc(fmtFecha(p.factura.caeVto))}</span></div>
       <div style="color:var(--green);font-weight:700;font-size:13px;margin:8px 0 12px">✅ Ya facturado (${esc(p.factura.tipoReceptor||"")})</div>
-      <button class="btn" onclick='abrirComprobante(${JSON.stringify(p.factura).replace(/'/g,"&#39;")},${JSON.stringify(p.cliente)},${JSON.stringify(p.id)},${JSON.stringify(p.factura.tipoReceptor||"")})'>🖨️ Ver / Imprimir comprobante</button>`
+      <button class="btn" onclick='abrirComprobante(${JSON.stringify(p.factura).replace(/'/g,"&#39;")},${JSON.stringify(p.cliente)},${JSON.stringify(p.id)},${JSON.stringify(p.factura.tipoReceptor||"")})'>🖨️ Ver / Imprimir comprobante</button>
+      ${p.factura.qr?`<button class="btn ghost" id="drive-btn" style="margin-top:10px" onclick='guardarDriveDesdePedido(${JSON.stringify({id:p.id,cliente:p.cliente,factura:p.factura}).replace(/'/g,"&#39;")})'>Guardar PDF en Drive</button>
+      <button class="btn ghost" id="drive-dl" style="display:none;margin-top:10px" onclick="descargarUltimoPDF()">Descargar PDF</button>`:''}`
     : `<button class="btn ghost" onclick='openFacturar(${JSON.stringify({id:p.id,cliente:p.cliente,importe:Math.round(p.totalVenta||p.monto||0)}).replace(/'/g,"&#39;")})'>Emitir factura C</button>`}`);
 }
 function fmtFecha(yyyymmdd){
@@ -757,6 +762,61 @@ function abrirComprobante(f, cliente, id, tipoReceptor){
   const data={qr:f.qr, caeVto:f.caeVto, cliente, id, ambiente:(f.env||f.ambiente||""), tipoReceptor:tipoReceptor||"", items};
   const b64=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   window.open("/comprobante#"+b64,"_blank");
+}
+// ── PDF de la factura + guardado en Google Drive ─────────────────────────────
+let _lastPdf=null, _h2p=false;
+function ensureHtml2pdf(){ return new Promise((res,rej)=>{ if(_h2p||window.html2pdf)return res();
+  const s=document.createElement("script"); s.src="/html2pdf.bundle.min.js";
+  s.onload=()=>{_h2p=true;res();}; s.onerror=()=>rej(new Error("No se pudo cargar el generador de PDF")); document.head.appendChild(s); }); }
+function blobToBase64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(blob); }); }
+function buildFacturaData(f, extra){
+  const ord=(DATA.ordenes||[]).find(o=>o.id===extra.id);
+  const items=ord?ord.items.map(i=>({n:i.nombre,t:i.talle,q:i.qty,p:i.precio})):null;
+  let fi={}; try{ fi=NORD_FACTURA.parseQr(f.qr); }catch(e){}
+  return {
+    cuit: fi.cuit!=null?fi.cuit:f.cuit, ptoVta: fi.ptoVta!=null?fi.ptoVta:f.ptoVta,
+    nroCmp: fi.nroCmp!=null?fi.nroCmp:f.cbteNro, tipoCmp: fi.tipoCmp||f.cbteTipo||11,
+    fechaISO: fi.fecha, fechaYMD: f.fecha, cae: fi.codAut!=null?fi.codAut:f.cae, caeVto: f.caeVto,
+    importe: fi.importe!=null?fi.importe:f.importe,
+    receptorTipo: fi.tipoDocRec!=null?fi.tipoDocRec:extra.docTipo, receptorNro: fi.nroDocRec!=null?fi.nroDocRec:extra.docNro,
+    cliente: extra.cliente, id: extra.id, items, ambiente:(f.env||f.ambiente||""), qrUrl: f.qr,
+  };
+}
+async function generarFacturaPDF(data){
+  await ensureHtml2pdf();
+  const built=NORD_FACTURA.build(data);
+  const wrap=document.createElement("div");
+  wrap.className="fac"; wrap.style.cssText="position:fixed;left:-10000px;top:0;width:800px;background:#fff";
+  wrap.innerHTML=built.html; document.body.appendChild(wrap);
+  NORD_FACTURA.drawQR(wrap, data.qrUrl);
+  let blob;
+  try{
+    blob=await html2pdf().set({margin:8, image:{type:"jpeg",quality:0.95},
+      html2canvas:{scale:2,backgroundColor:"#ffffff"}, jsPDF:{unit:"pt",format:"a4",orientation:"portrait"}})
+      .from(wrap.querySelector(".fac-hoja")).outputPdf("blob");
+  } finally { wrap.remove(); }
+  return { blob, filename: built.filename };
+}
+async function guardarFacturaDrive(f, extra){
+  try{
+    const data=buildFacturaData(f, extra);
+    if(!data.qrUrl) return { ok:false, error:"La factura no tiene QR" };
+    const { blob, filename }=await generarFacturaPDF(data);
+    _lastPdf={ blob, filename };
+    const b64=await blobToBase64(blob);
+    const r=await api("drive-factura",{method:"POST",body:{filename, pdfBase64:b64}});
+    return { ok:true, filename, link:r.link, yaExistia:r.yaExistia };
+  }catch(e){ return { ok:false, error:e.message }; }
+}
+function descargarUltimoPDF(){ if(!_lastPdf)return; const u=URL.createObjectURL(_lastPdf.blob);
+  const a=document.createElement("a"); a.href=u; a.download=_lastPdf.filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),5000); }
+async function guardarDriveDesdePedido(p){
+  const btn=$("#drive-btn"); if(btn){ btn.disabled=true; btn.textContent="Generando y subiendo…"; }
+  const gr=await guardarFacturaDrive(p.factura, {cliente:p.cliente, id:p.id});
+  if(btn){ btn.disabled=false; btn.textContent="Guardar PDF en Drive"; }
+  if(gr.ok){ toast(gr.yaExistia?"Ya estaba en Drive":"PDF guardado en Drive"); if(_lastPdf){const d=$("#drive-dl"); if(d)d.style.display="block";} }
+  else toast(gr.error,true);
 }
 async function openFacturar(p){
   if(!DATA.arca){ try{ const r=await fetch("/api/arca",{headers:{Authorization:"Bearer "+TOKEN}}); DATA.arca=await r.json(); }catch(e){ DATA.arca={}; } }
@@ -797,10 +857,19 @@ async function doFacturar(p){
       <div class="tot-line"><span>Vto CAE</span><span>${esc(fmtFecha(f.caeVto))}</span></div>
       <div class="tot-line big"><span>Importe</span><span>${fmt(f.importe)}</span></div>
       ${r.registrado===false?'<p style="color:var(--amber);font-size:12px;margin-top:8px">⚠ Se emitió en ARCA pero no se pudo registrar en la planilla.</p>':''}
-      ${f.qr?`<button class="btn" style="margin-top:8px" onclick='abrirComprobante(${JSON.stringify(f).replace(/'/g,"&#39;")},${JSON.stringify(p.cliente)},${JSON.stringify(p.id)},${JSON.stringify(tr)})'>🖨️ Ver / Imprimir comprobante</button>`:''}
+      <div id="fc-drive" style="margin-top:12px;font-size:13px;font-weight:700;color:var(--muted)">⏳ Generando PDF y guardando en Drive…</div>
+      <button class="btn ghost" id="fc-dl" style="display:none;margin-top:10px" onclick="descargarUltimoPDF()">Descargar PDF</button>
+      ${f.qr?`<button class="btn" style="margin-top:10px" onclick='abrirComprobante(${JSON.stringify(f).replace(/'/g,"&#39;")},${JSON.stringify(p.cliente)},${JSON.stringify(p.id)},${JSON.stringify(tr)})'>🖨️ Ver / Imprimir comprobante</button>`:''}
       <button class="btn ghost" style="margin-top:10px" onclick='copyText(${JSON.stringify(txt)},"Datos copiados")'>Copiar datos</button>
       <button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Cerrar</button>`);
     toast(r.yaFacturado?"Ya estaba facturado":"Factura emitida");
+    guardarFacturaDrive(f, {docTipo, docNro, cliente:p.cliente, id:p.id}).then(gr=>{
+      const el=$("#fc-drive"); const dl=$("#fc-dl");
+      if(dl && _lastPdf) dl.style.display="block";
+      if(!el) return;
+      if(gr.ok){ el.style.color="var(--green)"; el.innerHTML=(gr.yaExistia?"✅ Ya estaba guardado en Drive":"✅ PDF guardado en Drive")+(gr.filename?`<br><span style="font-weight:400;color:var(--muted);font-size:11.5px">${esc(gr.filename)}</span>`:""); }
+      else { el.style.color="var(--amber)"; el.innerHTML="⚠ No se guardó en Drive: "+esc(gr.error)+'<br><span style="font-weight:400;color:var(--muted);font-size:11.5px">Podés descargar el PDF abajo.</span>'; }
+    });
   }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Emitir factura C"; }
 }
 async function savePago(p){

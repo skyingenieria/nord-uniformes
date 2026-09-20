@@ -1,0 +1,28 @@
+/* Estilos del comprobante (Factura C). Namespaced en .fac para no chocar con la app. */
+.fac{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#0F172E;font-size:13px;line-height:1.4}
+.fac-hoja{background:#fff;padding:26px 30px}
+.fac-prueba{background:#fbeaea;border:1px solid #d64545;color:#a12a2a;text-align:center;font-weight:800;padding:8px;border-radius:6px;margin-bottom:16px;letter-spacing:.03em}
+.fac-top{display:grid;grid-template-columns:1fr 70px 1fr;border:1.5px solid #0F172E;border-radius:4px}
+.fac-top>div{padding:14px 16px}
+.fac-emisor h1{font-size:22px;margin:0 0 2px;letter-spacing:.02em}
+.fac-letra{border-left:1.5px solid #0F172E;border-right:1.5px solid #0F172E;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.fac-big{font-size:40px;font-weight:800;line-height:1}
+.fac-cod{font-size:9px;color:#555}
+.fac-doc h2{font-size:19px;margin:0 0 8px;text-align:right}
+.fac-muted{color:#555}
+.fac-r{display:flex;justify-content:space-between;font-size:12px;margin:2px 0}
+.fac-sec{border:1px solid #c9cdd6;border-radius:4px;padding:10px 14px;margin-top:14px}
+.fac-r2{display:flex;gap:8px;margin:2px 0}
+.fac-r2 span:first-child{color:#555;min-width:130px}
+.fac-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12px}
+.fac-table th{background:#f0f1f4;text-align:left;padding:8px 10px;border-bottom:1.5px solid #0F172E;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.fac-table th.num,.fac-table td.num{text-align:right}
+.fac-table td{padding:8px 10px;border-bottom:1px solid #c9cdd6}
+.fac-totrow{display:flex;justify-content:flex-end;margin-top:14px}
+.fac-totbox{min-width:240px}
+.fac-r3{display:flex;justify-content:space-between;padding:4px 0}
+.fac-r3.big{font-size:18px;font-weight:800;border-top:1.5px solid #0F172E;padding-top:8px;margin-top:4px}
+.fac-foot{display:flex;gap:18px;align-items:flex-start;margin-top:22px;border-top:1px dashed #c9cdd6;padding-top:16px}
+.fac-qr{width:132px;flex:0 0 auto}
+.fac-qr svg{width:100%;height:auto;display:block}
+.fac-auth{font-weight:700;margin-bottom:6px}
