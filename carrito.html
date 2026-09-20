@@ -324,7 +324,7 @@ function render() {
     <div class="summary-panel">
       <p class="summary-title">Resumen del pedido</p>
       ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(listaDe(i.precio, i.precioLista)*i.qty)}</span></div>`).join("")}
-      <div class="sum-row" id="descuento-row" style="color:#2e7d52"><span>Descuento por transferencia</span><span id="descuento-val">-${fmt(descuento)}</span></div>
+      <div class="sum-row" id="descuento-row" style="color:#2e7d52;font-weight:700;background:#eaf6ef;padding:9px 11px;border-radius:8px;margin:4px 0"><span>💸 Descuento por transferencia</span><span id="descuento-val">-${fmt(descuento)}</span></div>
       <div class="sum-row total"><span>Total</span><span id="total-display">${fmt(subTransfer)}</span></div>
 
       <button class="btn-pagar" onclick="irAPagar()">IR A PAGAR</button>
@@ -415,6 +415,7 @@ function render() {
 
       <p class="note">Todos los campos con <span style="color:#c0392b">*</span> son obligatorios.</p>
     </div>`;
+  onMetodoPagoChange(); // sincroniza descuento/total con el método elegido
 }
 
 // ── IR A PAGAR ────────────────────────────────────────────────────────────
