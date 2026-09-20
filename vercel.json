@@ -9,6 +9,8 @@
     { "source": "/carrito-beta", "destination": "/carrito-beta.html" },
     { "source": "/erp",        "destination": "/erp.html" },
     { "source": "/comprobante", "destination": "/comprobante.html" },
+    { "source": "/privacidad", "destination": "/privacidad.html" },
+    { "source": "/terminos",   "destination": "/terminos.html" },
     { "source": "/api/validate-code", "destination": "/api/erp?action=validate-code" }
   ]
 }
