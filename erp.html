@@ -694,11 +694,13 @@ async function viewPedidos(v,force){
     let list=DATA.pedidos;
     if(f==="debe") list=list.filter(p=>p.saldo>0.5);
     else if(f==="entregar") list=list.filter(p=>!isEnt(p.estadoEnvio));
+    else if(f==="facturar") list=list.filter(p=>!(p.factura&&p.factura.cae));
     v.innerHTML=`
       <div class="seg">
         <button class="${f==='todos'?'on':''}" onclick="window._pedFilter='todos';render()">Todos</button>
         <button class="${f==='debe'?'on':''}" onclick="window._pedFilter='debe';render()">Deben</button>
         <button class="${f==='entregar'?'on':''}" onclick="window._pedFilter='entregar';render()">A entregar</button>
+        <button class="${f==='facturar'?'on':''}" onclick="window._pedFilter='facturar';render()">A facturar</button>
       </div>
       ${list.length?list.map(p=>`
         <div class="card" style="margin-bottom:10px;cursor:pointer" onclick='openPedido(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
@@ -706,10 +708,12 @@ async function viewPedidos(v,force){
             <div class="name">${esc(p.id)} · ${esc(p.cliente)}</div>
             <div class="meta">${esc(p.fecha||"")} · ${p.cant} prenda${p.cant!==1?'s':''} · Total ${fmt(p.totalVenta||p.monto)}</div>
           </div><span style="color:var(--dorado);font-size:20px">›</span></div>
-          <div style="display:flex;gap:8px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <span class="chip ${p.saldo>0.5?'r':'g'}">${p.saldo>0.5?"Debe "+fmt(p.saldo):"Pagado"}</span>
             <span class="chip ${isEnt(p.estadoEnvio)?'g':'a'}">${esc(p.estadoEnvio||"Sin entregar")}</span>
-            ${p.factura&&p.factura.cae?'<span class="chip n">🧾 Facturado</span>':''}
+            ${p.factura&&p.factura.cae
+              ? `<span class="chip g" style="cursor:pointer" title="Ver comprobante" onclick='event.stopPropagation();abrirComprobante(${JSON.stringify(p.factura).replace(/'/g,"&#39;")},${JSON.stringify(p.cliente)},${JSON.stringify(p.id)},${JSON.stringify(p.factura.tipoReceptor||"")})'>🧾 Ver factura</span>`
+              : `<span class="chip n">Sin facturar</span>`}
           </div>
         </div>`).join(""):'<div class="empty">No hay pedidos acá</div>'}`;
   }catch(e){ errBox(v,e); }
