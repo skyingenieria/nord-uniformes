@@ -44,14 +44,16 @@ function afipPost(urlStr, headers, body) {
   });
 }
 
+// Endpoints de Web Services de AFIP/ARCA: van con .gov.ar (el .gob.ar es solo el
+// portal web; el certificado TLS de los WS está emitido para .gov.ar).
 const URLS = {
   homologacion: {
-    wsaa: "https://wsaahomo.afip.gob.ar/ws/services/LoginCms",
-    wsfe: "https://wswhomo.afip.gob.ar/wsfev1/service.asmx",
+    wsaa: "https://wsaahomo.afip.gov.ar/ws/services/LoginCms",
+    wsfe: "https://wswhomo.afip.gov.ar/wsfev1/service.asmx",
   },
   produccion: {
-    wsaa: "https://wsaa.afip.gob.ar/ws/services/LoginCms",
-    wsfe: "https://servicios1.afip.gob.ar/wsfev1/service.asmx",
+    wsaa: "https://wsaa.afip.gov.ar/ws/services/LoginCms",
+    wsfe: "https://servicios1.afip.gov.ar/wsfev1/service.asmx",
   },
 };
 
