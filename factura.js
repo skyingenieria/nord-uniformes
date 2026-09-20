@@ -110,5 +110,15 @@
     el.innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
   }
 
-  global.NORD_FACTURA = { build, drawQR, parseQr, filename };
+  // Variante raster (GIF data-URL) para html2canvas, que no rasteriza bien el SVG.
+  function drawQRImage(container, qrUrl) {
+    const el = container.querySelector("#fac-qr");
+    if (!el || !global.qrcode || !qrUrl) return;
+    const q = global.qrcode(0, "M"); q.addData(qrUrl); q.make();
+    el.innerHTML = q.createImgTag(4, 0);
+    const img = el.querySelector("img");
+    if (img) { img.style.cssText = "width:100%;height:auto;display:block;image-rendering:pixelated"; }
+  }
+
+  global.NORD_FACTURA = { build, drawQR, drawQRImage, parseQr, filename };
 })(window);

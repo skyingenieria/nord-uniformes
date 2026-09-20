@@ -1,6 +1,6 @@
 // Service Worker de la NORD ERP (PWA de Flor).
 // App-shell cache para que abra sin conexion; la API siempre va a la red.
-const CACHE = "nord-erp-v6";
+const CACHE = "nord-erp-v7";
 const SHELL = [
   "/erp",
   "/erp.html",

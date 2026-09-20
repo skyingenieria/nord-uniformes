@@ -789,16 +789,26 @@ function buildFacturaData(f, extra){
 async function generarFacturaPDF(data){
   await ensureHtml2pdf();
   const built=NORD_FACTURA.build(data);
+  // Se arma EN pantalla (no offscreen) porque html2canvas en el celu no captura
+  // elementos fuera del viewport. Un overlay blanco lo tapa mientras se genera.
+  const cover=document.createElement("div");
+  cover.style.cssText="position:fixed;inset:0;background:#fff;z-index:100000;display:flex;align-items:center;justify-content:center;font:600 15px system-ui;color:#334";
+  cover.textContent="Generando PDF…";
   const wrap=document.createElement("div");
-  wrap.className="fac"; wrap.style.cssText="position:fixed;left:-10000px;top:0;width:800px;background:#fff";
-  wrap.innerHTML=built.html; document.body.appendChild(wrap);
-  NORD_FACTURA.drawQR(wrap, data.qrUrl);
+  wrap.className="fac"; wrap.style.cssText="position:fixed;left:0;top:0;width:800px;background:#fff;z-index:99999";
+  wrap.innerHTML=built.html; document.body.appendChild(wrap); document.body.appendChild(cover);
+  NORD_FACTURA.drawQRImage(wrap, data.qrUrl);
+  // Esperar a que la imagen del QR esté decodificada antes de rasterizar.
+  const qimg=wrap.querySelector("#fac-qr img");
+  if(qimg){ try{ await (qimg.decode?qimg.decode():Promise.resolve()); }catch(e){} }
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
   let blob;
   try{
     blob=await html2pdf().set({margin:8, image:{type:"jpeg",quality:0.95},
-      html2canvas:{scale:2,backgroundColor:"#ffffff"}, jsPDF:{unit:"pt",format:"a4",orientation:"portrait"}})
+      html2canvas:{scale:2,backgroundColor:"#ffffff",useCORS:true,scrollX:0,scrollY:0,windowWidth:840},
+      jsPDF:{unit:"pt",format:"a4",orientation:"portrait"}})
       .from(wrap.querySelector(".fac-hoja")).outputPdf("blob");
-  } finally { wrap.remove(); }
+  } finally { wrap.remove(); cover.remove(); }
   return { blob, filename: built.filename };
 }
 async function guardarFacturaDrive(f, extra){
