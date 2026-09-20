@@ -1,6 +1,6 @@
 // Service Worker de la NORD ERP (PWA de Flor).
 // App-shell cache para que abra sin conexion; la API siempre va a la red.
-const CACHE = "nord-erp-v7";
+const CACHE = "nord-erp-v8";
 const SHELL = [
   "/erp",
   "/erp.html",
@@ -11,6 +11,8 @@ const SHELL = [
   "/factura.css",
   "/factura.js",
   "/qrcode.js",
+  "/jspdf.umd.min.js",
+  "/factura-pdf.js",
 ];
 
 self.addEventListener("install", (e) => {

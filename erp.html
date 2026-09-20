@@ -768,10 +768,15 @@ function abrirComprobante(f, cliente, id, tipoReceptor){
   window.open("/comprobante#"+b64,"_blank");
 }
 // ── PDF de la factura + guardado en Google Drive ─────────────────────────────
-let _lastPdf=null, _h2p=false;
-function ensureHtml2pdf(){ return new Promise((res,rej)=>{ if(_h2p||window.html2pdf)return res();
-  const s=document.createElement("script"); s.src="/html2pdf.bundle.min.js";
-  s.onload=()=>{_h2p=true;res();}; s.onerror=()=>rej(new Error("No se pudo cargar el generador de PDF")); document.head.appendChild(s); }); }
+let _lastPdf=null;
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src;
+  s.onload=res; s.onerror=()=>rej(new Error("No se pudo cargar "+src)); document.head.appendChild(s); }); }
+// Carga perezosa del generador vectorial (jsPDF). No usa html2canvas: se ve
+// idéntico en cualquier dispositivo y nunca sale en blanco.
+async function ensurePdfLib(){
+  if(!window.jspdf||!window.jspdf.jsPDF){ await loadScript("/jspdf.umd.min.js"); }
+  if(!window.NORD_FACTURA_PDF){ await loadScript("/factura-pdf.js"); }
+}
 function blobToBase64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(blob); }); }
 function buildFacturaData(f, extra){
   const ord=(DATA.ordenes||[]).find(o=>o.id===extra.id);
@@ -787,29 +792,11 @@ function buildFacturaData(f, extra){
   };
 }
 async function generarFacturaPDF(data){
-  await ensureHtml2pdf();
-  const built=NORD_FACTURA.build(data);
-  // Se arma EN pantalla (no offscreen) porque html2canvas en el celu no captura
-  // elementos fuera del viewport. Un overlay blanco lo tapa mientras se genera.
-  const cover=document.createElement("div");
-  cover.style.cssText="position:fixed;inset:0;background:#fff;z-index:100000;display:flex;align-items:center;justify-content:center;font:600 15px system-ui;color:#334";
-  cover.textContent="Generando PDF…";
-  const wrap=document.createElement("div");
-  wrap.className="fac"; wrap.style.cssText="position:fixed;left:0;top:0;width:800px;background:#fff;z-index:99999";
-  wrap.innerHTML=built.html; document.body.appendChild(wrap); document.body.appendChild(cover);
-  NORD_FACTURA.drawQRImage(wrap, data.qrUrl);
-  // Esperar a que la imagen del QR esté decodificada antes de rasterizar.
-  const qimg=wrap.querySelector("#fac-qr img");
-  if(qimg){ try{ await (qimg.decode?qimg.decode():Promise.resolve()); }catch(e){} }
-  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-  let blob;
-  try{
-    blob=await html2pdf().set({margin:8, image:{type:"jpeg",quality:0.95},
-      html2canvas:{scale:2,backgroundColor:"#ffffff",useCORS:true,scrollX:0,scrollY:0,windowWidth:840},
-      jsPDF:{unit:"pt",format:"a4",orientation:"portrait"}})
-      .from(wrap.querySelector(".fac-hoja")).outputPdf("blob");
-  } finally { wrap.remove(); cover.remove(); }
-  return { blob, filename: built.filename };
+  await ensurePdfLib();
+  // Generación 100% vectorial con jsPDF (texto + líneas + QR como imagen).
+  // No usa html2canvas, así que no depende del render en pantalla ni del
+  // dispositivo: nunca sale en blanco.
+  return NORD_FACTURA_PDF.generate(data);
 }
 async function guardarFacturaDrive(f, extra){
   try{
