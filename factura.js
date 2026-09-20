@@ -39,9 +39,9 @@
   function filename(data) {
     const ymd = fechaYMD(data);
     const y = ymd.slice(0, 4) || "0000", mo = ymd.slice(4, 6) || "00";
-    const comp = pad(data.ptoVta, 5) + "-" + pad(data.nroCmp, 8);
+    const nro = String(data.nroCmp || 0).padStart(3, "0").slice(-3); // últimos 3 dígitos, sin punto de venta
     const imp = Math.round(Number(data.importe) || 0);
-    return `NRD-${y}-${mo}-${comp}-${imp}.pdf`;
+    return `NRD-${y}-${mo}-${nro}-${imp}.pdf`;
   }
 
   function build(data) {

@@ -19,8 +19,8 @@
   }
   function filename(d) {
     const ymd = fechaYMD(d), y = ymd.slice(0, 4) || "0000", mo = ymd.slice(4, 6) || "00";
-    const comp = pad(d.ptoVta, 5) + "-" + pad(d.nroCmp, 8);
-    return `NRD-${y}-${mo}-${comp}-${Math.round(Number(d.importe) || 0)}.pdf`;
+    const nro = String(d.nroCmp || 0).padStart(3, "0").slice(-3); // últimos 3 dígitos, sin punto de venta
+    return `NRD-${y}-${mo}-${nro}-${Math.round(Number(d.importe) || 0)}.pdf`;
   }
   function receptor(tipo, nro) {
     tipo = Number(tipo);
