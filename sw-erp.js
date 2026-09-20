@@ -6,7 +6,6 @@ const SHELL = [
   "/erp.html",
   "/manifest.webmanifest",
   "/nord-icon.svg",
-  "/icon-192.png",
   "/icon-512.png",
   "/apple-touch-icon.png",
 ];
