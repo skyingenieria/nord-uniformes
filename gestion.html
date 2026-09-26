@@ -1171,15 +1171,15 @@ async function viewCompras(v,force){
       <div class="view-title">Compras</div>
       <button class="btn gold" style="margin-bottom:14px" onclick="openNuevaCompra()">+ Registrar compra</button>
       <div class="search"><span class="mag">🔎</span><input id="co-q" placeholder="Buscar prenda o proveedor…" value="${esc(window._coQ)}"></div>
-      <div id="co-list"></div>`;
+      <div class="card" id="co-list"></div>`;
     const inp=$("#co-q");
     const draw=()=>{
       const q=inp.value.trim().toLowerCase(); window._coQ=inp.value;
       const list=(DATA.compras||[]).filter(co=>!q||`${co.prenda||co.sku_original||""} ${co.proveedorNombre||""}`.toLowerCase().includes(q));
-      $("#co-list").innerHTML=list.length?list.map(co=>`<div class="card" style="margin-bottom:10px"><div class="row" style="padding:0"><div class="grow">
+      $("#co-list").innerHTML=list.length?list.map(co=>`<div class="row"><div class="grow">
         <div class="name">${esc(co.prenda||co.sku_original||"—")}${co.talleNombre?" · T"+esc(co.talleNombre):""}</div>
         <div class="meta">${esc(co.fecha||"")}${co.proveedorNombre?" · "+esc(co.proveedorNombre):""} · ${esc(co.estado||"")}</div></div>
-        <div style="text-align:right"><div style="font-weight:700">×${co.cantidad}</div><div class="meta">${fmt(co.costo_unitario)} c/u</div></div></div></div>`).join("")
+        <div style="text-align:right"><div style="font-weight:700">×${co.cantidad}</div><div class="meta">${fmt(co.costo_unitario)} c/u</div></div></div>`).join("")
         : '<div class="empty">Sin compras todavía</div>';
     };
     inp.oninput=draw; draw();
