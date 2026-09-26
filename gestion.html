@@ -135,18 +135,22 @@
   .field .hint{font-size:11px;color:var(--muted);margin-top:4px}
   .margin-ok{color:var(--green)} .margin-low{color:var(--amber)} .margin-bad{color:var(--red)}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .oi-row{gap:8px;padding:10px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
-  .oi-row .oi-nombre{font-size:12px;font-weight:700;flex:0 0 auto;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .oi-row select.oi-talle{flex:0 0 auto;width:64px;padding:6px 4px;border:1.5px solid var(--line);border-radius:8px;font-size:12.5px;font-weight:700;background:#fff}
-  .oi-row .qty{flex:0 0 auto;transform:scale(.86);transform-origin:left center}
-  .oi-row .oi-precio{flex:0 0 auto;font-size:11.5px;color:var(--muted);white-space:nowrap}
-  .oi-row .oi-desc-wrap{flex:0 0 auto;display:flex;align-items:center;gap:3px}
+  .oi-row{display:grid;grid-template-columns:minmax(64px,1fr) 54px 74px 78px 58px 68px;align-items:center;
+    column-gap:8px;row-gap:2px;padding:10px 0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .oi-row.has-transf{grid-template-columns:minmax(64px,1fr) 54px 74px 78px 58px 52px 68px}
+  .oi-row .oi-nombre{font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .oi-row select.oi-talle{width:100%;padding:6px 4px;border:1.5px solid var(--line);border-radius:8px;font-size:12.5px;font-weight:700;background:#fff}
+  .oi-row .qty{transform:scale(.86);transform-origin:left center}
+  .oi-row .oi-precio{font-size:11.5px;color:var(--azul-900);white-space:nowrap;text-align:right;line-height:1.3}
+  .oi-row .oi-precio b{font-size:12.5px;font-weight:800}
+  .oi-row .oi-lista{font-size:10px;color:var(--muted);font-weight:600}
+  .oi-row .oi-desc-wrap{display:flex;align-items:center;gap:3px;justify-self:end}
   .oi-row .oi-desc-wrap input{width:38px;padding:6px 5px;border:1.5px solid var(--line);border-radius:8px;font-size:12px;text-align:center}
   .oi-row .oi-desc-wrap span{font-size:11px;color:var(--muted);font-weight:700}
-  .oi-row .oi-subtotal{flex:0 0 auto;margin-left:auto;font-weight:800;font-size:13.5px;padding-left:8px}
-  .oi-row .oi-transf-btn{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;color:var(--azul-900);border-radius:8px;padding:5px 7px;font-size:10.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .oi-row .oi-subtotal{font-weight:800;font-size:13.5px;text-align:right;white-space:nowrap}
+  .oi-row .oi-transf-btn{border:1.5px solid var(--line);background:#fff;color:var(--azul-900);border-radius:8px;padding:5px 6px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap}
   .oi-row .oi-transf-btn:active{background:#eef1f6}
-  .oi-row .oi-ro{flex:0 0 auto;font-size:12.5px;font-weight:700;color:var(--azul-900);background:#f4f1ea;border-radius:8px;padding:6px 9px}
+  .oi-row .oi-ro{font-size:12.5px;font-weight:700;color:var(--azul-900);background:#f4f1ea;border-radius:8px;padding:6px 9px;text-align:center;white-space:nowrap}
   .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff;border-radius:14px;border:1px solid var(--line)}
   table.pr-table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
   table.pr-table th{position:sticky;top:0;background:#fbf9f4;text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;
@@ -232,7 +236,7 @@
       <button class="icon-btn" id="back-btn" onclick="goBack()" title="Volver" style="display:none;font-size:22px">‹</button>
       <div>
         <div class="h-sub" id="h-sub">NORD Uniformes</div>
-        <div class="h-title" id="h-title">Inicio</div>
+        <div class="h-title" id="h-title">Dashboard</div>
       </div>
     </div>
     <div class="h-actions">
@@ -249,7 +253,7 @@
   </div>
 
   <nav>
-    <button data-tab="inicio"     class="active" onclick="go('inicio')"><span class="ic">🏠</span>Inicio</button>
+    <button data-tab="inicio"     class="active" onclick="go('inicio')"><span class="ic">🏠</span>Dashboard</button>
     <button data-tab="stock"      onclick="go('stock')"><span class="ic">📦</span>Stock</button>
     <button data-tab="vender"     onclick="go('vender')"><span class="ic">🛒</span>Vender</button>
     <button data-tab="pedidos"    onclick="go('pedidos')"><span class="ic">🧾</span>Pedidos</button>
@@ -321,7 +325,7 @@ function showApp(){
 }
 
 // ─────────────────────────────────────────────────────────────── NAV
-const TITLES = {inicio:"Inicio", stock:"Stock", vender:"Vender", pedidos:"Pedidos", clientes:"Clientes",
+const TITLES = {inicio:"Dashboard", stock:"Stock", vender:"Vender", pedidos:"Pedidos", clientes:"Clientes",
   proveedores:"Proveedores", compras:"Compras", precios:"Precios y costos", contabilidad:"Contabilidad", configuracion:"Configuración"};
 function go(tab,opts){
   opts=opts||{};
@@ -488,11 +492,18 @@ async function viewInicio(v,force){
     const labels=serie.map((s,i)=> i%2===0?`<span>${esc(s.label.split(" ")[0])}</span>`:`<span></span>`).join("");
     const topProductos=Object.entries(porProd).map(([nombre,p])=>({nombre,...p})).sort((a,b)=>b.qty-a.qty).slice(0,8);
     const margenMes = ventasMes>0 ? (gananciaMes/ventasMes*100) : null;
+    const margenAnio = ventasAnio>0 ? (gananciaAnio/ventasAnio*100) : null;
 
     v.innerHTML = `
+      <div class="section-h" style="margin-top:0">Este mes</div>
       <div class="kpi-grid">
-        <div class="kpi hl"><div class="lbl">Ventas del mes</div><div class="val">${fmt(ventasMes)}</div><div class="sub">Año: ${fmt(ventasAnio)}</div></div>
-        <div class="kpi gold"><div class="lbl">Ganancia del mes</div><div class="val">${fmt(gananciaMes)}</div><div class="sub">Margen ${margenMes!=null?margenMes.toFixed(0)+"%":"—"} · Año ${fmt(gananciaAnio)}</div></div>
+        <div class="kpi hl"><div class="lbl">Ventas del mes</div><div class="val">${fmt(ventasMes)}</div></div>
+        <div class="kpi gold"><div class="lbl">Ganancia del mes</div><div class="val">${fmt(gananciaMes)}</div><div class="sub">Margen ${margenMes!=null?margenMes.toFixed(0)+"%":"—"}</div></div>
+      </div>
+      <div class="section-h">Año calendario ${esc(anioActual)}</div>
+      <div class="kpi-grid">
+        <div class="kpi hl"><div class="lbl">Ventas del año</div><div class="val">${fmt(ventasAnio)}</div></div>
+        <div class="kpi gold"><div class="lbl">Ganancia del año</div><div class="val">${fmt(gananciaAnio)}</div><div class="sub">Margen ${margenAnio!=null?margenAnio.toFixed(0)+"%":"—"}</div></div>
       </div>
       <div class="kpi-grid" style="margin-top:12px">
         <div class="kpi" onclick="window._pedFilter='debe';go('pedidos')">
@@ -710,18 +721,23 @@ async function registrarCompra(talleId){
 }
 
 // ─────────────────────────────────────────────────────────────── VENDER
+// Dos capas de descuento, independientes:
+//  1) Por medio de pago: Transf./Efectivo bajan SOLOS de lista a transferencia
+//     para todos los ítems, sin que haya que tocar nada. Tarjeta se queda en lista.
+//  2) Promo: el % que se carga a mano en cada línea, aparte, sobre lo que haya
+//     quedado después del medio de pago.
 const CARD_SURCHARGE = 1.15;
 function isCard(){ return /nave|tarjeta/i.test(venta.pago); }
-// Default: precio de lista (sin descuento). El % de descuento por ítem es lo
-// que lo baja — típicamente hasta el precio de transferencia, pero puede ser
-// cualquier valor que cargue quien vende.
 function basePrice(i){ return i.precioLista>0 ? i.precioLista : Math.round(i.precio*CARD_SURCHARGE); }
-function unitPrice(i){ const b=basePrice(i); const d=Math.min(100,Math.max(0,i.descPct||0)); return Math.round(b*(1-d/100)); }
-// % de descuento que llega exactamente al precio de transferencia de este ítem.
-function descPctATransferencia(i){ const b=basePrice(i); return b>0 ? Math.max(0,Math.round((1-i.precio/b)*100)) : 0; }
+function priceAfterPaymentMethod(i){ return isCard() ? basePrice(i) : i.precio; }
+function unitPrice(i){ const b=priceAfterPaymentMethod(i); const d=Math.min(100,Math.max(0,i.descPct||0)); return Math.round(b*(1-d/100)); }
+// % de descuento promo que llega exactamente al precio de transferencia de este ítem
+// (ya arrancando desde lo que dejó el medio de pago — es 0% si ya está en transferencia).
+function descPctATransferencia(i){ const b=priceAfterPaymentMethod(i); return b>0 ? Math.max(0,Math.round((1-i.precio/b)*100)) : 0; }
 function cartGrossSubtotal(){ return cart.reduce((s,i)=>s+basePrice(i)*i.qty,0); }
+function cartPaymentDiscountTotal(){ return cart.reduce((s,i)=>s+(basePrice(i)-priceAfterPaymentMethod(i))*i.qty,0); }
+function cartPromoDiscountTotal(){ return cart.reduce((s,i)=>s+(priceAfterPaymentMethod(i)-unitPrice(i))*i.qty,0); }
 function cartSubtotal(){ return cart.reduce((s,i)=>s+unitPrice(i)*i.qty,0); }
-function cartItemDiscountTotal(){ return cartGrossSubtotal()-cartSubtotal(); }
 function cartTotal(){ return Math.max(0, cartSubtotal() - (venta.descuento||0) + (venta.envio||0)); }
 // Inputs de monto ($): sin flechitas de number, con separador de miles en vivo.
 function fmtMiles(n){ n=Math.round(Number(n)||0); return n?n.toLocaleString("es-AR"):""; }
@@ -812,11 +828,12 @@ function chQty(idx,d){
   const subEl=$("#cart-sub-"+idx); if(subEl) subEl.textContent=fmt(unitPrice(i)*i.qty);
   drawTotals(); drawResults(window._venderQ||"");
 }
+function cartPrecioHtml(i){ return `<b>${fmt(unitPrice(i))}</b> c/u<div class="oi-lista">Lista ${fmt(basePrice(i))}</div>`; }
 function setItemDesc(idx,val){
   const n=Math.min(100,Math.max(0,+val||0));
   const i=cart[idx]; if(!i) return;
   i.descPct=n;
-  const precEl=$("#cart-precio-"+idx); if(precEl) precEl.textContent=fmt(unitPrice(i))+" c/u";
+  const precEl=$("#cart-precio-"+idx); if(precEl) precEl.innerHTML=cartPrecioHtml(i);
   const subEl=$("#cart-sub-"+idx); if(subEl) subEl.textContent=fmt(unitPrice(i)*i.qty);
   drawTotals();
 }
@@ -826,7 +843,7 @@ function setItemDescTransf(idx){
   const n=descPctATransferencia(i);
   i.descPct=n;
   const el=$("#cart-desc-"+idx); if(el) el.value=n;
-  const precEl=$("#cart-precio-"+idx); if(precEl) precEl.textContent=fmt(unitPrice(i))+" c/u";
+  const precEl=$("#cart-precio-"+idx); if(precEl) precEl.innerHTML=cartPrecioHtml(i);
   const subEl=$("#cart-sub-"+idx); if(subEl) subEl.textContent=fmt(unitPrice(i)*i.qty);
   drawTotals();
 }
@@ -849,11 +866,11 @@ function cartRowHtml(i,idx){
     ? talles.map(t=>`<option value="${t.talleId}" ${t.talleId===i.talleId?"selected":""}>${esc(t.talle)}</option>`).join("")
     : `<option value="${i.talleId||''}" selected>${esc(i.talle)}</option>`;
   const over=i.stock!=null && i.qty>i.stock;
-  return `<div class="row oi-row" id="cart-row-${idx}">
+  return `<div class="row oi-row has-transf" id="cart-row-${idx}">
     <div class="oi-nombre" title="${esc(i.nombre)}">${esc(i.nombre)}${over?' ⚠':''}</div>
     <select class="oi-talle" onchange="cartChangeTalle(${idx}, this.value)">${talleOpts}</select>
     <div class="qty"><button onclick="chQty(${idx},-1)">−</button><span id="cart-qty-${idx}">${i.qty}</span><button onclick="chQty(${idx},1)">+</button></div>
-    <div class="oi-precio" id="cart-precio-${idx}">${fmt(unitPrice(i))} c/u</div>
+    <div class="oi-precio" id="cart-precio-${idx}">${cartPrecioHtml(i)}</div>
     <div class="oi-desc-wrap"><input type="text" inputmode="numeric" id="cart-desc-${idx}" value="${i.descPct||0}" oninput="setItemDesc(${idx},this.value)"><span>%</span></div>
     <button type="button" class="oi-transf-btn" title="Aplicar precio de transferencia" onclick="setItemDescTransf(${idx})">→Transf.</button>
     <span class="oi-subtotal" id="cart-sub-${idx}">${fmt(unitPrice(i)*i.qty)}</span>
@@ -904,10 +921,11 @@ function drawCheckout(){
 }
 function drawTotals(){
   const t=$("#v-totals"); if(!t) return;
-  const descItems=cartItemDiscountTotal();
+  const descPago=cartPaymentDiscountTotal(), descPromo=cartPromoDiscountTotal();
   t.innerHTML=`
     <div class="tot-line"><span>Subtotal (precio de lista)</span><span>${fmt(cartGrossSubtotal())}</span></div>
-    ${descItems>0.5?`<div class="tot-line disc"><span>Descuento por prenda</span><span>−${fmt(descItems)}</span></div>`:""}
+    ${descPago>0.5?`<div class="tot-line disc"><span>Descuento por medio de pago</span><span>−${fmt(descPago)}</span></div>`:""}
+    ${descPromo>0.5?`<div class="tot-line disc"><span>Descuento promo</span><span>−${fmt(descPromo)}</span></div>`:""}
     ${venta.descuento?`<div class="tot-line disc"><span>Descuento pedido</span><span>−${fmt(venta.descuento)}</span></div>`:""}
     ${venta.envio?`<div class="tot-line"><span>Envío</span><span>${fmt(venta.envio)}</span></div>`:""}
     <div class="tot-line big"><span>Total</span><span>${fmt(cartTotal())}</span></div>`;
@@ -1135,9 +1153,16 @@ function oiTotalsHtml(p){
     <div class="tot-line big"><span>Saldo</span><span style="color:${Number(p.saldo)>0.5?'var(--red)':'var(--green)'}">${fmt(p.saldo)}</span></div>`;
 }
 // Base "sin descuento" de un talle: precio de lista (misma lógica que Vender).
-function oiBaseFor(talleObj){
+function oiListaFor(talleObj){
   if(!talleObj) return 0;
   return talleObj.precioLista>0 ? talleObj.precioLista : Math.round(talleObj.precio*CARD_SURCHARGE);
+}
+function oiIsCard(){ return /nave|tarjeta/i.test(window._pedCurrent?.forma_pago||""); }
+// Precio después del medio de pago (Transf./Efectivo bajan solos a transferencia,
+// Tarjeta se queda en lista) — es la base del % de descuento promo, igual que en Vender.
+function oiBaseFor(talleObj){
+  if(!talleObj) return 0;
+  return oiIsCard() ? oiListaFor(talleObj) : talleObj.precio;
 }
 function oiToggleEdit(){
   window._pedEditMode = !window._pedEditMode;
@@ -1149,6 +1174,7 @@ function oiRowHtml(it,idx){
   const talles=prenda?prenda.talles:[];
   const curTalle=talles.find(t=>t.talleId===it.talle_id);
   const base=oiBaseFor(curTalle) || it.precio_unitario;
+  const lista=oiListaFor(curTalle) || base;
   const descPct = base>0 ? Math.max(0, Math.round((1-it.precio_unitario/base)*100)) : 0;
   const editing=!!window._pedEditMode;
   const talleHtml = editing
@@ -1166,7 +1192,7 @@ function oiRowHtml(it,idx){
     <div class="oi-nombre" title="${esc(it.nombre_prenda)}">${esc(it.nombre_prenda)}</div>
     ${talleHtml}
     ${qtyHtml}
-    <div class="oi-precio" id="oi-precio-${idx}">${fmt(it.precio_unitario)} c/u</div>
+    <div class="oi-precio" id="oi-precio-${idx}"><b>${fmt(it.precio_unitario)}</b> c/u<div class="oi-lista">Lista ${fmt(lista)}</div></div>
     ${descHtml}
     <span class="oi-subtotal" id="oi-sub-${idx}">${fmt(it.cantidad*it.precio_unitario)}</span>
   </div>`;
@@ -1186,7 +1212,13 @@ async function oiPersist(idx){
     }).eq("id", it.id);
     if(error) throw error;
     const subEl=$("#oi-sub-"+idx); if(subEl) subEl.textContent=fmt(it.cantidad*it.precio_unitario);
-    const precEl=$("#oi-precio-"+idx); if(precEl) precEl.textContent=fmt(it.precio_unitario)+" c/u";
+    const precEl=$("#oi-precio-"+idx);
+    if(precEl){
+      const prenda=window._pedCatMap[it.nombre_prenda];
+      const curTalle=prenda?prenda.talles.find(t=>t.talleId===it.talle_id):null;
+      const lista=oiListaFor(curTalle)||it.precio_unitario;
+      precEl.innerHTML=`<b>${fmt(it.precio_unitario)}</b> c/u<div class="oi-lista">Lista ${fmt(lista)}</div>`;
+    }
     oiRecalcTotals();
   }catch(e){ toast(e.message,true); }
 }
@@ -1583,7 +1615,7 @@ async function fetchPreciosCostos(){
   }).sort((a,b)=> a.nombre.localeCompare(b.nombre) || String(a.talle).localeCompare(String(b.talle)));
 }
 async function getPreciosCostos(force){ if(force||!DATA.preciosCostos) DATA.preciosCostos = await fetchPreciosCostos(); return DATA.preciosCostos; }
-function margenClass(m){ if(m==null) return ""; return m>=45?"margin-ok": m>=30?"margin-low":"margin-bad"; }
+function margenClass(m){ if(m==null) return ""; return m>=50?"margin-ok": m>=40?"margin-low":"margin-bad"; }
 async function viewPrecios(v,force){
   try{
     if(force||!DATA.preciosCostos){ loading(v); await getPreciosCostos(true); }
@@ -1636,24 +1668,40 @@ async function viewPrecios(v,force){
 }
 function openSimularPrecio(talleId){
   const r=(DATA.preciosCostos||[]).find(x=>x.talleId===talleId); if(!r) return;
+  window._spTransTouched=false;
   openCenterSheet(`<div class="grabber"></div><h3>${esc(r.nombre)} · T${esc(r.talle)}</h3><p class="sub">${esc(r.sku)}</p>
     <div class="tot-line"><span>Margen actual</span><span class="${margenClass(r.margen)}">${r.margen!=null?r.margen.toFixed(1)+"%":"—"}</span></div>
 
     <div class="section-h" style="margin-top:16px">Simular / aumentar precio</div>
     <div class="two">
-      <div class="field"><label>Nuevo precio lista</label><input type="text" inputmode="numeric" id="sp-lista" value="${fmtMiles(r.precioLista)}" oninput="simularPrecio(${JSON.stringify(talleId)})"></div>
-      <div class="field"><label>Nuevo precio transferencia</label><input type="text" inputmode="numeric" id="sp-trans" value="${fmtMiles(r.precio)}" oninput="simularPrecio(${JSON.stringify(talleId)})"></div>
+      <div class="field"><label>Nuevo precio lista</label><input type="text" inputmode="numeric" id="sp-lista" value="${fmtMiles(r.precioLista)}" oninput="simularPrecio(${JSON.stringify(talleId)},'lista')"></div>
+      <div class="field"><label>Nuevo precio transferencia</label><input type="text" inputmode="numeric" id="sp-trans" value="${fmtMiles(r.precio)}" oninput="simularPrecio(${JSON.stringify(talleId)},'trans')"></div>
     </div>
-    <div class="field"><label>Costo (para simular el margen)</label><input type="text" inputmode="numeric" id="sp-costo" value="${fmtMiles(r.costo)}" oninput="simularPrecio(${JSON.stringify(talleId)})"></div>
+    <p style="margin:-8px 0 12px;font-size:11.5px;color:var(--muted)">La transferencia se ajusta sola con la misma proporción hasta que la edites a mano.</p>
+    <div class="field"><label>Costo (para simular el margen)</label><input type="text" inputmode="numeric" id="sp-costo" value="${fmtMiles(r.costo)}" oninput="simularPrecio(${JSON.stringify(talleId)},'costo')"></div>
     <div class="card" id="sp-result" style="margin-bottom:16px"></div>
     <button class="btn" id="sp-save" onclick='aplicarPrecio(${JSON.stringify(talleId)})'>Aplicar nuevo precio (desde hoy)</button>
     <button class="btn ghost" id="sp-costo-save" style="margin-top:10px" onclick='aplicarCosto(${JSON.stringify(talleId)})'>Guardar nuevo costo (desde hoy)</button>`);
   simularPrecio(talleId);
 }
-function simularPrecio(talleId){
+// field: cuál input disparó el evento ("lista"|"trans"|"costo"|undefined en la llamada inicial).
+// Mientras no se toque "transferencia" a mano, se recalcula sola manteniendo la proporción
+// lista→transferencia original — así cambiar sólo el precio de lista también mueve el margen.
+function simularPrecio(talleId, field){
   const r=(DATA.preciosCostos||[]).find(x=>x.talleId===talleId); if(!r) return;
-  const nuevoLista=parseMiles($("#sp-lista").value), nuevoTrans=parseMiles($("#sp-trans").value), costo=parseMiles($("#sp-costo").value);
-  $("#sp-lista").value=fmtMiles(nuevoLista); $("#sp-trans").value=fmtMiles(nuevoTrans); $("#sp-costo").value=fmtMiles(costo);
+  if(field==="trans") window._spTransTouched=true;
+  const nuevoLista=parseMiles($("#sp-lista").value);
+  if(field==="lista" && !window._spTransTouched){
+    const ratio = r.precioLista>0 ? (r.precio/r.precioLista) : 0.9;
+    $("#sp-trans").value=fmtMiles(Math.round(nuevoLista*ratio));
+  }
+  const nuevoTrans=parseMiles($("#sp-trans").value);
+  const costo=parseMiles($("#sp-costo").value);
+  // Sólo reformatea los campos que no tienen el foco, para no pelear con lo que se está tipeando.
+  const active=document.activeElement;
+  if(active?.id!=="sp-lista") $("#sp-lista").value=fmtMiles(nuevoLista);
+  if(active?.id!=="sp-costo") $("#sp-costo").value=fmtMiles(costo);
+  if(active?.id!=="sp-trans") $("#sp-trans").value=fmtMiles(nuevoTrans);
   const nuevoMargen = nuevoTrans>0 ? ((nuevoTrans-costo)/nuevoTrans*100) : null;
   const el=$("#sp-result"); if(!el) return;
   el.innerHTML=`<div class="tot-line"><span>Margen simulado</span><span class="${margenClass(nuevoMargen)}" style="font-weight:800">${nuevoMargen!=null?nuevoMargen.toFixed(1)+"%":"—"}</span></div>
