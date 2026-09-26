@@ -30,7 +30,7 @@ create table if not exists clientes (
   nro integer not null default nextval('clientes_nro_seq'),
   nombre text not null,
   apellido text not null default '',
-  email text not null unique,
+  email text,                          -- nullable: hay ventas en persona sin email
   telefono text not null default '',
   codigo text generated always as (colegio || nro::text) stored,
   created_at timestamptz not null default now()
