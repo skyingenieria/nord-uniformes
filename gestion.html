@@ -60,7 +60,7 @@
 
   nav{position:fixed;bottom:0;left:0;right:0;z-index:30;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
     padding-bottom:env(safe-area-inset-bottom);background:#fff;border-top:1px solid var(--line);
-    display:grid;grid-template-columns:repeat(5,1fr);box-shadow:0 -2px 14px rgba(15,23,46,.06)}
+    display:grid;grid-template-columns:repeat(4,1fr);box-shadow:0 -2px 14px rgba(15,23,46,.06)}
   nav button{position:relative;background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:10.5px;font-weight:600;padding-top:8px;transition:color .15s}
   nav button .ic{font-size:20px;line-height:1;transition:transform .15s}
   nav button.active{color:var(--azul-900);font-weight:800}
@@ -129,6 +129,13 @@
   .field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px}
   .field input,.field select{width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:12px;outline:none;background:#fff}
   .field input:focus,.field select:focus{border-color:var(--dorado)}
+  .field input[type=number]::-webkit-inner-spin-button,.field input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  .field input[type=number]{-moz-appearance:textfield}
+  .field .hint{font-size:11px;color:var(--muted);margin-top:4px}
+  .item-desc{display:flex;align-items:center;gap:6px;margin-top:4px}
+  .item-desc input{width:56px;padding:6px 7px;border:1.5px solid var(--line);border-radius:8px;font-size:12.5px;text-align:center}
+  .item-desc label{font-size:11.5px;color:var(--muted);font-weight:700}
+  .margin-ok{color:var(--green)} .margin-low{color:var(--amber)} .margin-bad{color:var(--red)}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .tot-line{display:flex;justify-content:space-between;padding:5px 0;font-size:14px}
   .tot-line.big{font-size:19px;font-weight:800;border-top:1.5px solid var(--line);margin-top:6px;padding-top:12px}
@@ -221,11 +228,14 @@
 
   <nav>
     <button data-tab="inicio"     class="active" onclick="go('inicio')"><span class="ic">🏠</span>Inicio</button>
-    <button data-tab="catalogo"   onclick="go('catalogo')"><span class="ic">📦</span>Catálogo</button>
+    <button data-tab="stock"      onclick="go('stock')"><span class="ic">📦</span>Stock</button>
     <button data-tab="vender"     onclick="go('vender')"><span class="ic">🛒</span>Vender</button>
     <button data-tab="pedidos"    onclick="go('pedidos')"><span class="ic">🧾</span>Pedidos</button>
-    <button data-tab="clientes"    class="desk-only" onclick="go('clientes')"><span class="ic">👥</span>Clientes</button>
-    <button data-tab="proveedores" class="desk-only" onclick="go('proveedores')"><span class="ic">🏭</span>Proveedores</button>
+    <button data-tab="clientes"       class="desk-only" onclick="go('clientes')"><span class="ic">👥</span>Clientes</button>
+    <button data-tab="proveedores"    class="desk-only" onclick="go('proveedores')"><span class="ic">🏭</span>Proveedores</button>
+    <button data-tab="compras"        class="desk-only" onclick="go('compras')"><span class="ic">📥</span>Compras</button>
+    <button data-tab="precios"        class="desk-only" onclick="go('precios')"><span class="ic">💲</span>Precios</button>
+    <button data-tab="configuracion"  class="desk-only" onclick="go('configuracion')"><span class="ic">⚙️</span>Configuración</button>
   </nav>
 </div>
 
@@ -249,9 +259,9 @@ let PROFILE = null;   // { id, nombre, rol }
 let TAB = "inicio";
 let navStack = [];
 let sheetOpen = false;
-const DATA = { catalogo:null, clientes:null, pedidos:null, proveedores:null, precios:null, costos:null, stockActual:null };
+const DATA = { catalogo:null, clientes:null, pedidos:null, proveedores:null, compras:null, preciosCostos:null };
 let cart = [];
-let venta = { cliente:null, descuento:0, envio:0, pago:"Transf. Banc." };
+let venta = { cliente:null, descuento:0, envio:0, pago:"Tarjeta (Nave)" };
 
 const $ = (s,el=document)=>el.querySelector(s);
 const fmt = (n)=> "$" + Math.round(Number(n)||0).toLocaleString("es-AR");
@@ -288,7 +298,8 @@ function showApp(){
 }
 
 // ─────────────────────────────────────────────────────────────── NAV
-const TITLES = {inicio:"Inicio", catalogo:"Catálogo", vender:"Vender", pedidos:"Pedidos", clientes:"Clientes", proveedores:"Proveedores"};
+const TITLES = {inicio:"Inicio", stock:"Stock", vender:"Vender", pedidos:"Pedidos", clientes:"Clientes",
+  proveedores:"Proveedores", compras:"Compras", precios:"Precios y costos", configuracion:"Configuración"};
 function go(tab,opts){
   opts=opts||{};
   if(opts.push!==false && TAB!==tab){ navStack.push(TAB); history.pushState({tab},""); }
@@ -303,7 +314,7 @@ function go(tab,opts){
 function goBack(){ if(sheetOpen){ closeSheet(); return; } if(navStack.length) history.back(); }
 function updateBack(){ const b=$("#back-btn"); if(b) b.style.display=(sheetOpen||navStack.length>0)?"grid":"none"; }
 function refresh(){ DATA[mapData(TAB)] = null; render(true); toast("Actualizado"); }
-function mapData(tab){ return tab==="vender"?"catalogo": tab; }
+function mapData(tab){ return (tab==="vender"||tab==="stock"||tab==="configuracion")?"catalogo": tab==="precios"?"preciosCostos": tab; }
 
 // ─────────────────────────────────────────────────────────────── DATA (Supabase)
 // Catálogo completo: prendas + talles + stock actual + precio vigente, en la
@@ -386,36 +397,77 @@ async function getPedidos(force){ if(force||!DATA.pedidos) DATA.pedidos = await 
 // ─────────────────────────────────────────────────────────────── RENDER ROUTER
 async function render(force){
   const v = $("#view");
-  if(TAB==="inicio")      return viewInicio(v,force);
-  if(TAB==="catalogo")    return viewCatalogo(v,force);
-  if(TAB==="vender")      return viewVender(v,force);
-  if(TAB==="pedidos")     return viewPedidos(v,force);
-  if(TAB==="clientes")    return viewClientes(v,force);
-  if(TAB==="proveedores") return viewProveedores(v,force);
+  if(TAB==="inicio")        return viewInicio(v,force);
+  if(TAB==="stock")         return viewStock(v,force);
+  if(TAB==="vender")        return viewVender(v,force);
+  if(TAB==="pedidos")       return viewPedidos(v,force);
+  if(TAB==="clientes")      return viewClientes(v,force);
+  if(TAB==="proveedores")   return viewProveedores(v,force);
+  if(TAB==="compras")       return viewCompras(v,force);
+  if(TAB==="precios")       return viewPrecios(v,force);
+  if(TAB==="configuracion") return viewConfiguracion(v,force);
 }
 function loading(v){ v.innerHTML='<div class="spinner"></div>'; }
 function errBox(v,e){ v.innerHTML=`<div class="empty">⚠️ ${esc(e.message)}<br><br><button class="btn ghost sm" onclick="render(true)">Reintentar</button></div>`; }
 
 // ─────────────────────────────────────────────────────────────── INICIO
+async function fetchOrdenesDashboard(){
+  const { data, error } = await getClient().from("005_ordenes")
+    .select("cantidad,precio_unitario,costo_unitario,nombre_prenda,pedido:004_pedidos(created_at)");
+  if(error) throw error;
+  return data||[];
+}
 async function viewInicio(v,force){
   try{
     loading(v);
-    const peds = await getPedidos(force);
+    const [peds, ordenes] = await Promise.all([ getPedidos(force), fetchOrdenesDashboard() ]);
     const now = new Date();
     const mesActual = now.toLocaleDateString("sv-SE",{timeZone:"America/Argentina/Buenos_Aires"}).slice(0,7);
     const anioActual = mesActual.slice(0,4);
-    let ventasMes=0, ventasAnio=0, pendCount=0, pendTotal=0, aEntregar=0;
+    let pendCount=0, pendTotal=0, aEntregar=0;
     peds.forEach(p=>{
-      const f = (p.created_at||"").slice(0,7);
-      if(f.startsWith(anioActual)) ventasAnio += Number(p.total_venta)||0;
-      if(f===mesActual) ventasMes += Number(p.total_venta)||0;
       if(Number(p.saldo)>0.5){ pendCount++; pendTotal+=Number(p.saldo); }
       if(!/entreg/i.test(p.estado_envio||"")) aEntregar++;
     });
+
+    // Ventas/ganancia por mes (últimos 12) + top prendas, a partir de las órdenes
+    const porMes = {};   // "YYYY-MM" -> {ventas, ganancia}
+    const porProd = {};  // nombre -> {qty, ventas}
+    let ventasMes=0, gananciaMes=0, ventasAnio=0, gananciaAnio=0;
+    ordenes.forEach(o=>{
+      const fecha = o.pedido && o.pedido.created_at ? o.pedido.created_at.slice(0,7) : null;
+      const cant = Number(o.cantidad)||0;
+      const ventaTot = cant*(Number(o.precio_unitario)||0);
+      const gananciaTot = cant*((Number(o.precio_unitario)||0)-(Number(o.costo_unitario)||0));
+      if(fecha){
+        if(!porMes[fecha]) porMes[fecha]={ventas:0,ganancia:0};
+        porMes[fecha].ventas+=ventaTot; porMes[fecha].ganancia+=gananciaTot;
+        if(fecha.startsWith(anioActual)){ ventasAnio+=ventaTot; gananciaAnio+=gananciaTot; }
+        if(fecha===mesActual){ ventasMes+=ventaTot; gananciaMes+=gananciaTot; }
+      }
+      if(o.nombre_prenda){
+        if(!porProd[o.nombre_prenda]) porProd[o.nombre_prenda]={qty:0,ventas:0};
+        porProd[o.nombre_prenda].qty+=cant; porProd[o.nombre_prenda].ventas+=ventaTot;
+      }
+    });
+    const MESES=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+    const serie=[];
+    for(let i=11;i>=0;i--){
+      const d=new Date(now.getFullYear(), now.getMonth()-i, 1);
+      const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      const s=porMes[k]||{ventas:0,ganancia:0};
+      serie.push({label:`${MESES[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`, ventas:Math.round(s.ventas), ganancia:Math.round(s.ganancia)});
+    }
+    const maxV=Math.max(1,...serie.map(s=>s.ventas));
+    const bars=serie.map((s,i)=>`<div class="bar" data-i="${i}" style="height:${Math.max(Math.round((s.ventas/maxV)*100),2)}%" title="${esc(s.label)}"></div>`).join("");
+    const gPts=serie.map((s,i)=>`${(i/(serie.length-1))*100},${100-Math.min(100,(s.ganancia/maxV)*100)}`).join(" ");
+    const labels=serie.map((s,i)=> i%2===0?`<span>${esc(s.label.split(" ")[0])}</span>`:`<span></span>`).join("");
+    const topProductos=Object.entries(porProd).map(([nombre,p])=>({nombre,...p})).sort((a,b)=>b.qty-a.qty).slice(0,8);
+
     v.innerHTML = `
       <div class="kpi-grid">
         <div class="kpi hl"><div class="lbl">Ventas del mes</div><div class="val">${fmt(ventasMes)}</div><div class="sub">Año: ${fmt(ventasAnio)}</div></div>
-        <div class="kpi gold"><div class="lbl">Pedidos totales</div><div class="val">${peds.length}</div><div class="sub">histórico cargado</div></div>
+        <div class="kpi gold"><div class="lbl">Ganancia del mes</div><div class="val">${fmt(gananciaMes)}</div><div class="sub">Año: ${fmt(gananciaAnio)}</div></div>
       </div>
       <div class="kpi-grid" style="margin-top:12px">
         <div class="kpi" onclick="window._pedFilter='debe';go('pedidos')">
@@ -429,25 +481,42 @@ async function viewInicio(v,force){
           <div class="sub">pedido${aEntregar!==1?'s':''} sin entregar · ver →</div>
         </div>
       </div>
-      <div class="section-h">Últimos pedidos</div>
+
+      <div class="section-h">Ventas por mes (últimos 12)</div>
+      <div class="card">
+        <div style="display:flex;align-items:flex-end;gap:4px;height:130px" id="bars">${bars}</div>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="display:block;width:100%;height:130px;margin-top:-130px;pointer-events:none;overflow:visible">
+          <polyline points="${gPts}" fill="none" stroke="var(--dorado)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);margin-top:8px">${labels}</div>
+        <div class="chart-cap" id="chart-cap">Tocá una barra para ver el detalle</div>
+        <div class="legend"><span><i style="background:var(--azul-900)"></i>Ventas</span><span><i style="background:var(--dorado)"></i>Ganancia</span></div>
+      </div>
+
+      <div class="section-h">Top prendas vendidas</div>
       <div class="card">${
-        peds.slice(0,8).map(p=>`<div class="row"><div class="grow"><div class="name">${esc(p.numero)} · ${esc(p.clienteNombre)}</div>
-          <div class="meta">${fmt(p.total_venta)}</div></div>
-          <span class="chip ${Number(p.saldo)>0.5?'r':'g'}">${Number(p.saldo)>0.5?"Debe":"Pagado"}</span></div>`).join("")
-        || '<div class="empty">Sin pedidos todavía</div>'
+        topProductos.length ? topProductos.map(p=>`
+          <div class="row"><div class="grow"><div class="name">${esc(p.nombre)}</div><div class="meta">${fmt(p.ventas)} en ventas</div></div>
+          <span class="chip n">${p.qty} u.</span></div>`).join("")
+        : '<div class="empty">Sin datos todavía</div>'
       }</div>`;
+
+    document.querySelectorAll("#bars .bar").forEach(b=>{
+      b.style.flex="1"; b.style.background="var(--azul-900)"; b.style.borderRadius="4px 4px 0 0"; b.style.minHeight="2px"; b.style.opacity=".9";
+      b.onclick=()=>{ const s=serie[+b.dataset.i]; $("#chart-cap").innerHTML=`<b>${esc(s.label)}</b> · Ventas ${fmt(s.ventas)} · Ganancia ${fmt(s.ganancia)}`;
+        document.querySelectorAll("#bars .bar").forEach(x=>x.style.opacity=".35"); b.style.opacity="1"; };
+    });
   }catch(e){ errBox(v,e); }
 }
 
-// ─────────────────────────────────────────────────────────────── CATÁLOGO
+// ─────────────────────────────────────────────────────────────── STOCK (solo lectura)
 function talleClass(s){ return s<=0?"no": s<=3?"low":"ok"; }
-async function viewCatalogo(v,force){
+async function viewStock(v,force){
   try{
     if(force||!DATA.catalogo){ loading(v); await getCatalogo(true); }
     window._catQ = window._catQ||"";
     v.innerHTML = `
-      <div class="view-title">Catálogo</div>
-      <button class="btn gold" style="margin-bottom:14px" onclick="openNuevaPrenda()">+ Nueva prenda</button>
+      <div class="view-title">Stock</div>
       <div class="search"><span class="mag">🔎</span><input id="cat-q" placeholder="Buscar prenda…" value="${esc(window._catQ)}"></div>
       <div id="cat-list"></div>`;
     const inp=$("#cat-q");
@@ -456,7 +525,7 @@ async function viewCatalogo(v,force){
       const list=(DATA.catalogo||[]).filter(p=>p.nombre.toLowerCase().includes(q));
       $("#cat-list").innerHTML = list.length ? list.map(p=>{
         const tot=p.talles.reduce((s,t)=>s+t.stock,0);
-        return `<div class="card" style="margin-bottom:12px;cursor:pointer" onclick='openPrenda(${JSON.stringify(p.id)})'>
+        return `<div class="card" style="margin-bottom:12px;cursor:pointer" onclick='openPrendaStock(${JSON.stringify(p.id)})'>
           <div class="row" style="padding:0 0 4px">
             <div class="grow"><div class="name">${esc(p.nombre)}</div><div class="meta">desde ${fmt(p.precio)}</div></div>
             <span class="chip ${tot<=0?'r':tot<=8?'a':'g'}">${tot} u.</span>
@@ -464,6 +533,41 @@ async function viewCatalogo(v,force){
           <div class="talles">${p.talles.map(t=>`<div class="talle ${talleClass(t.stock)}"><div class="t">${esc(t.talle)}</div><div class="s">${t.stock}</div></div>`).join("")}</div>
         </div>`;
       }).join("") : '<div class="empty">Sin resultados</div>';
+    };
+    inp.oninput=draw; draw();
+  }catch(e){ errBox(v,e); }
+}
+function openPrendaStock(prendaId){
+  const p=(DATA.catalogo||[]).find(x=>x.id===prendaId); if(!p) return;
+  openSheet(`<div class="grabber"></div>
+    ${p.foto?`<img class="sheet-foto" src="${esc(p.foto)}" onerror="this.style.display='none'">`:''}
+    <h3>${esc(p.nombre)}</h3><p class="sub">${esc(p.genero||"")}${p.categorias.length?" · "+esc(p.categorias.join(", ")):""}</p>
+    <div class="talles">${p.talles.map(t=>`<div class="talle ${talleClass(t.stock)}"><div class="t">${esc(t.talle)}</div><div class="s">${t.stock}</div></div>`).join("")}</div>
+    <div class="section-h">Precios</div>
+    ${p.talles.map(t=>`<div class="row"><div class="grow"><div class="name">Talle ${esc(t.talle)}</div></div>
+      <div style="text-align:right"><div style="font-weight:700">${fmt(t.precio)}</div><div class="meta">Lista ${fmt(t.precioLista)}</div></div></div>`).join("")}
+    <p style="font-size:12px;color:var(--muted);margin-top:14px">Para agregar prendas, talles o cambiar precios: pestaña Configuración.</p>`);
+}
+
+// ─────────────────────────────────────────────────────────────── CONFIGURACIÓN (alta de prendas/talles/precios/compras)
+async function viewConfiguracion(v,force){
+  try{
+    if(force||!DATA.catalogo){ loading(v); await getCatalogo(true); }
+    window._cfgQ = window._cfgQ||"";
+    v.innerHTML = `
+      <div class="view-title">Configuración</div>
+      <div class="section-h" style="margin-top:0">Prendas y talles</div>
+      <button class="btn gold" style="margin-bottom:14px" onclick="openNuevaPrenda()">+ Nueva prenda</button>
+      <div class="search"><span class="mag">🔎</span><input id="cfg-q" placeholder="Buscar prenda para editar…" value="${esc(window._cfgQ)}"></div>
+      <div id="cfg-list"></div>`;
+    const inp=$("#cfg-q");
+    const draw=()=>{
+      const q=inp.value.trim().toLowerCase(); window._cfgQ=inp.value;
+      const list=(DATA.catalogo||[]).filter(p=>p.nombre.toLowerCase().includes(q));
+      $("#cfg-list").innerHTML = list.length ? list.map(p=>`
+        <div class="row" style="cursor:pointer" onclick='openPrenda(${JSON.stringify(p.id)})'>
+          <div class="grow"><div class="name">${esc(p.nombre)}</div><div class="meta">${p.talles.length} talle${p.talles.length!==1?'s':''}</div></div>
+          <span style="color:var(--dorado);font-size:20px">›</span></div>`).join("") : '<div class="empty">Sin resultados</div>';
     };
     inp.oninput=draw; draw();
   }catch(e){ errBox(v,e); }
@@ -490,7 +594,7 @@ async function crearPrenda(){
     }).select().single();
     if(error) throw error;
     DATA.catalogo=null; closeSheet(); toast("Prenda creada — agregale talles desde la ficha");
-    await viewCatalogo($("#view"), true);
+    await viewConfiguracion($("#view"), true);
     openPrenda(data.id);
   }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Crear prenda"; }
 }
@@ -583,9 +687,14 @@ async function registrarCompra(talleId){
 // ─────────────────────────────────────────────────────────────── VENDER
 const CARD_SURCHARGE = 1.15;
 function isCard(){ return /nave|tarjeta/i.test(venta.pago); }
-function unitPrice(i){ return isCard()? (i.precioLista>0?i.precioLista:Math.round(i.precio*CARD_SURCHARGE)) : i.precio; }
+function basePrice(i){ return isCard()? (i.precioLista>0?i.precioLista:Math.round(i.precio*CARD_SURCHARGE)) : i.precio; }
+function unitPrice(i){ const b=basePrice(i); const d=Math.min(100,Math.max(0,i.descPct||0)); return Math.round(b*(1-d/100)); }
 function cartSubtotal(){ return cart.reduce((s,i)=>s+unitPrice(i)*i.qty,0); }
 function cartTotal(){ return Math.max(0, cartSubtotal() - (venta.descuento||0) + (venta.envio||0)); }
+// Inputs de monto ($): sin flechitas de number, con separador de miles en vivo.
+function fmtMiles(n){ n=Math.round(Number(n)||0); return n?n.toLocaleString("es-AR"):""; }
+function parseMiles(s){ return Number(String(s||"").replace(/\D/g,""))||0; }
+function milesOnInput(el){ const n=parseMiles(el.value); el.value=fmtMiles(n); return n; }
 
 async function viewVender(v,force){
   try{
@@ -625,7 +734,7 @@ function drawResults(q){
     return `<div class="card" style="margin-bottom:10px;cursor:pointer" onclick='openTalle(${JSON.stringify(p.id)})'>
       <div class="row" style="padding:0">
         ${p.foto?`<img class="thumb" src="${esc(p.foto)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'thumb ph',textContent:'👕'}))">`:'<div class="thumb ph">👕</div>'}
-        <div class="grow"><div class="name">${esc(p.nombre)}</div><div class="meta">desde ${fmt(p.precio)} · ${tot} u. en stock</div></div>
+        <div class="grow"><div class="name">${esc(p.nombre)}</div><div class="meta">desde ${fmt(p.precio)} <span style="color:var(--muted)">· Lista ${fmt(p.precioLista)}</span> · ${tot} u. en stock</div></div>
         ${enPedido?`<span class="chip g">${enPedido} en pedido</span>`:'<span style="color:var(--dorado);font-size:24px;line-height:1">＋</span>'}
       </div>
     </div>`;
@@ -645,7 +754,7 @@ function talleRows(p){
     const over = q>t.stock;
     return `<div class="row">
       <div class="grow"><div class="name">Talle ${esc(t.talle)}</div>
-        <div class="meta">${fmt(t.precio)} · stock ${t.stock}${t.stock<=0?' · <span style="color:var(--red)">sin stock</span>':''}${over?` · <span style="color:var(--amber)">pedís ${q}</span>`:''}</div></div>
+        <div class="meta">${fmt(t.precio)} <span style="color:var(--muted)">· Lista ${fmt(t.precioLista)}</span> · stock ${t.stock}${t.stock<=0?' · <span style="color:var(--red)">sin stock</span>':''}${over?` · <span style="color:var(--amber)">pedís ${q}</span>`:''}</div></div>
       <div class="qty"><button onclick='chQtyTalle(${JSON.stringify(p.id)},${JSON.stringify(t.talleId)},-1)'>−</button><span>${q}</span><button onclick='chQtyTalle(${JSON.stringify(p.id)},${JSON.stringify(t.talleId)},1)'>+</button></div>
     </div>`;
   }).join("");
@@ -654,7 +763,7 @@ function cartQtyFor(talleId){ const i=cart.find(x=>x.talleId===talleId); return 
 function chQtyTalle(prendaId, talleId, delta){
   const p=(DATA.catalogo||[]).find(x=>x.id===prendaId); const t=p.talles.find(x=>x.talleId===talleId);
   let i=cart.find(x=>x.talleId===talleId);
-  if(!i && delta>0){ i={talleId,nombre:p.nombre,talle:t.talle,precio:t.precio,precioLista:t.precioLista,qty:0,stock:t.stock}; cart.push(i); }
+  if(!i && delta>0){ i={talleId,nombre:p.nombre,talle:t.talle,precio:t.precio,precioLista:t.precioLista,qty:0,stock:t.stock,descPct:0}; cart.push(i); }
   if(i){
     i.qty+=delta;
     if(i.qty<=0) cart=cart.filter(x=>x!==i);
@@ -664,6 +773,7 @@ function chQtyTalle(prendaId, talleId, delta){
   drawResults(window._venderQ||""); drawCart();
 }
 function chQty(idx,d){ cart[idx].qty+=d; if(cart[idx].qty<=0)cart.splice(idx,1); drawCart(); }
+function setItemDesc(idx,val){ const n=Math.min(100,Math.max(0,+val||0)); if(cart[idx]) cart[idx].descPct=n; drawTotals(); const el=$("#v-cart"); if(el){ const rows=el.querySelectorAll(".cart-item .meta"); if(rows[idx]) rows[idx].innerHTML=`${fmt(unitPrice(cart[idx]))} c/u <span style="color:var(--muted)">· Lista ${fmt(cart[idx].precioLista)}</span> · ${fmt(unitPrice(cart[idx])*cart[idx].qty)}`; } }
 function clearCart(){ cart=[]; drawCart(); drawResults(window._venderQ||""); }
 function drawCart(){
   const c=$("#v-cart"); if(!c) return;
@@ -673,8 +783,11 @@ function drawCart(){
       <span style="font-size:12px;color:var(--muted);font-weight:700">${n} prenda${n!==1?'s':''}</span>
       <button class="btn ghost sm" onclick="clearCart()">Vaciar</button></div>` +
     cart.map((i,idx)=>`
-    <div class="cart-item">
-      <div class="grow"><div class="name">${esc(i.nombre)} · T${esc(i.talle)}</div><div class="meta">${fmt(unitPrice(i))} c/u · ${fmt(unitPrice(i)*i.qty)}${(i.stock!=null && i.qty>i.stock)?` · <span style="color:var(--amber)">⚠ supera stock (${i.stock})</span>`:''}</div></div>
+    <div class="cart-item" style="flex-wrap:wrap">
+      <div class="grow"><div class="name">${esc(i.nombre)} · T${esc(i.talle)}</div>
+        <div class="meta">${fmt(unitPrice(i))} c/u <span style="color:var(--muted)">· Lista ${fmt(i.precioLista)}</span> · ${fmt(unitPrice(i)*i.qty)}${(i.stock!=null && i.qty>i.stock)?` · <span style="color:var(--amber)">⚠ supera stock (${i.stock})</span>`:''}</div>
+        <div class="item-desc"><label>Desc. ítem</label><input type="number" min="0" max="100" value="${i.descPct||''}" placeholder="0" oninput="setItemDesc(${idx},this.value)">%</div>
+      </div>
       <div class="qty"><button onclick="chQty(${idx},-1)">−</button><span>${i.qty}</span><button onclick="chQty(${idx},1)">+</button></div>
     </div>`).join("");
   drawCheckout();
@@ -697,14 +810,14 @@ function drawCheckout(){
     <div class="card" style="margin-top:12px">
       <div class="field"><label>Forma de pago</label>
         <select id="v-pago" onchange="venta.pago=this.value;drawCart()">
+          <option value="Tarjeta (Nave)" ${isCard()?"selected":""}>Tarjeta (Nave)</option>
           <option ${venta.pago==="Transf. Banc."?"selected":""}>Transf. Banc.</option>
           <option ${venta.pago==="Efectivo"?"selected":""}>Efectivo</option>
-          <option value="Tarjeta (Nave)" ${isCard()?"selected":""}>Tarjeta (Nave)</option>
         </select>
       </div>
       <div class="two">
-        <div class="field"><label>Descuento ($)</label><input type="number" inputmode="numeric" id="v-desc" value="${venta.descuento||''}" placeholder="0" oninput="venta.descuento=+this.value||0;drawTotals()"></div>
-        <div class="field"><label>Cargo envío ($)</label><input type="number" inputmode="numeric" id="v-env" value="${venta.envio||''}" placeholder="0" oninput="venta.envio=+this.value||0;drawTotals()"></div>
+        <div class="field"><label>Descuento ($)</label><input type="text" inputmode="numeric" id="v-desc" value="${fmtMiles(venta.descuento)}" placeholder="0" oninput="venta.descuento=milesOnInput(this);drawTotals()"></div>
+        <div class="field"><label>Cargo envío ($)</label><input type="text" inputmode="numeric" id="v-env" value="${fmtMiles(venta.envio)}" placeholder="0" oninput="venta.envio=milesOnInput(this);drawTotals()"></div>
       </div>
       <div id="v-totals"></div>
       <button class="btn" style="margin-top:14px" id="v-submit" onclick="registrarPedido()">Registrar pedido</button>
@@ -757,7 +870,7 @@ async function registrarPedido(){
         <button class="btn gold" style="margin-top:10px" onclick='waResumen(${JSON.stringify(resumen)},${JSON.stringify(waTel)})'>${waLabel}</button>
         <button class="btn ghost" style="margin-top:10px" onclick="nuevoPedido()">Nuevo pedido</button>
       </div>`;
-    cart=[]; venta={cliente:null,descuento:0,envio:0,pago:"Transf. Banc."};
+    cart=[]; venta={cliente:null,descuento:0,envio:0,pago:"Tarjeta (Nave)"};
     DATA.pedidos=null; DATA.catalogo=null;
     updateCartBar();
   }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Registrar pedido"; }
@@ -787,10 +900,10 @@ async function cliSeg(mode){
   const body=$("#cli-body");
   if(mode==="nuevo"){
     body.innerHTML=`
-      <div class="field"><label>Nombre</label><input id="c-nom"></div>
+      <div class="field"><label>Nombre *</label><input id="c-nom"></div>
       <div class="field"><label>Apellido / Familia</label><input id="c-ape"></div>
+      <div class="field"><label>WhatsApp *</label><input id="c-tel" inputmode="tel" placeholder="5491132338151"></div>
       <div class="field"><label>Email</label><input id="c-mail" type="email" inputmode="email"></div>
-      <div class="field"><label>WhatsApp</label><input id="c-tel" inputmode="tel"></div>
       <button class="btn" id="c-save" onclick="crearClienteYSeleccionar()">Crear cliente</button>`;
     return;
   }
@@ -814,6 +927,7 @@ function pickCliente(c){ venta.cliente=c; closeSheet(); if(TAB==="vender"){ rend
 async function crearClienteYSeleccionar(){
   const nombre=$("#c-nom").value.trim(), apellido=$("#c-ape").value.trim(), email=$("#c-mail").value.trim(), telefono=$("#c-tel").value.trim();
   if(!nombre) return toast("El nombre es obligatorio",true);
+  if(!telefono) return toast("El WhatsApp es obligatorio",true);
   const btn=$("#c-save"); btn.disabled=true; btn.textContent="Creando…";
   try{
     const c=getClient();
@@ -857,22 +971,34 @@ async function viewPedidos(v,force){
         </div>`).join(""):'<div class="empty">No hay pedidos acá</div>'}`;
   }catch(e){ errBox(v,e); }
 }
-function openPedido(pedidoId){
+async function openPedido(pedidoId){
   const p=(DATA.pedidos||[]).find(x=>x.id===pedidoId); if(!p) return;
+  openSheet(`<div class="grabber"></div><h3>${esc(p.numero)}</h3><p class="sub">${esc(p.clienteNombre)}</p><div class="spinner"></div>`);
+  const { data: items } = await getClient().from("005_ordenes").select("*").eq("pedido_id", pedidoId);
   const opts=["Pendiente","En Preparación","Preparado","Entregado"];
   if(p.estado_envio && !opts.includes(p.estado_envio)) opts.unshift(p.estado_envio);
   const envs=["Retiro Habitat","Envío a domicilio"];
   if(p.envio && !envs.includes(p.envio)) envs.unshift(p.envio);
-  openSheet(`<div class="grabber"></div><h3>${esc(p.numero)}</h3><p class="sub">${esc(p.clienteNombre)}</p>
+  const itemsHtml=(items||[]).map(it=>`<div class="row"><div class="grow">
+      <div class="name" style="font-size:13.5px">${esc(it.nombre_prenda)} · T${esc(it.talle)}</div>
+      <div class="meta">×${it.cantidad} · ${fmt(it.precio_unitario)} c/u</div></div>
+      <span style="font-weight:700">${fmt(it.cantidad*it.precio_unitario)}</span></div>`).join("") || '<div class="empty">Sin ítems</div>';
+  openSheet(`<div class="grabber"></div><h3>${esc(p.numero)}</h3><p class="sub">${esc(p.clienteNombre)} · ${esc(p.forma_pago||"")}</p>
+
+    <div class="section-h" style="margin-top:0">Prendas</div>
+    <div class="card">${itemsHtml}</div>
+    <div class="tot-line" style="margin-top:10px"><span>Subtotal ítems</span><span>${fmt(p.monto)}</span></div>
+    ${Number(p.descuento)?`<div class="tot-line disc"><span>Descuento pedido</span><span>−${fmt(p.descuento)}</span></div>`:""}
+    ${Number(p.cargo_envio)?`<div class="tot-line"><span>Cargo envío</span><span>${fmt(p.cargo_envio)}</span></div>`:""}
     <div class="tot-line"><span>Total venta</span><span>${fmt(p.total_venta)}</span></div>
     <div class="tot-line"><span>Pagado</span><span>${fmt(p.monto_pagado)}</span></div>
     <div class="tot-line big"><span>Saldo</span><span style="color:${Number(p.saldo)>0.5?'var(--red)':'var(--green)'}">${fmt(p.saldo)}</span></div>
 
     <div class="section-h" style="margin:20px 2px 8px">💵 Registrar pago</div>
-    <div class="field"><label>Monto que recibís ($)</label><input type="number" inputmode="numeric" id="pg-monto" value="${Math.max(0,Math.round(p.saldo))||''}"></div>
+    <div class="field"><label>Monto que recibís ($)</label><input type="text" inputmode="numeric" id="pg-monto" value="${fmtMiles(Math.max(0,Math.round(p.saldo)))}" placeholder="0" oninput="milesOnInput(this)"></div>
     <div class="two">
       <div class="field"><label>Fecha</label><input id="pg-fecha" value="${todayISO()}"></div>
-      <div class="field"><label>Forma de pago</label><select id="pg-forma"><option>Transf. Banc.</option><option>Efectivo</option><option>Tarjeta (Nave)</option></select></div>
+      <div class="field"><label>Forma de pago</label><select id="pg-forma"><option>Tarjeta (Nave)</option><option>Transf. Banc.</option><option>Efectivo</option></select></div>
     </div>
     <button class="btn" id="pg-save" onclick='savePago(${JSON.stringify(p.id)})'>Registrar pago</button>
 
@@ -886,10 +1012,26 @@ function openPedido(pedidoId){
     <div class="section-h" style="margin:24px 2px 8px">🧾 Factura</div>
     ${p.factura ? `<div class="tot-line"><span>Comprobante C</span><span>N° ${esc(p.factura.numero_comprobante)}</span></div>
       <div style="color:var(--green);font-weight:700;font-size:13px;margin:8px 0 12px">✅ Ya facturado</div>`
-    : `<p style="font-size:12.5px;color:var(--muted)">Facturación ARCA: próximamente en esta app (por ahora se sigue haciendo desde /erp).</p>`}`);
+    : `<p style="font-size:12.5px;color:var(--muted)">Facturación ARCA: próximamente en esta app (por ahora se sigue haciendo desde /erp).</p>`}
+
+    <button class="btn" style="margin-top:24px;background:var(--red)" id="del-pedido" ${p.factura?'disabled':''} onclick='eliminarPedido(${JSON.stringify(p.id)})'>🗑 Eliminar pedido</button>
+    ${p.factura?'<p style="font-size:11.5px;color:var(--muted);margin-top:6px">No se puede eliminar: ya tiene factura emitida.</p>':'<p style="font-size:11.5px;color:var(--muted);margin-top:6px">Para pedidos de prueba. Borra el pedido, sus ítems y sus pagos — no se puede deshacer.</p>'}`);
+}
+async function eliminarPedido(pedidoId){
+  const p=(DATA.pedidos||[]).find(x=>x.id===pedidoId);
+  if(!confirm(`¿Eliminar el pedido ${p?p.numero:''}? No se puede deshacer.`)) return;
+  const btn=$("#del-pedido"); btn.disabled=true; btn.textContent="Eliminando…";
+  try{
+    const c=getClient();
+    await c.from("006_pagos").delete().eq("pedido_id", pedidoId);
+    await c.from("005_ordenes").delete().eq("pedido_id", pedidoId);
+    const { error } = await c.from("004_pedidos").delete().eq("id", pedidoId);
+    if(error) throw error;
+    DATA.pedidos=null; closeSheet(); toast("Pedido eliminado"); render(true);
+  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="🗑 Eliminar pedido"; }
 }
 async function savePago(pedidoId){
-  const monto=+$("#pg-monto").value; if(!monto||monto<=0) return toast("Ingresá el monto",true);
+  const monto=parseMiles($("#pg-monto").value); if(!monto||monto<=0) return toast("Ingresá el monto",true);
   const btn=$("#pg-save"); btn.disabled=true; btn.textContent="Guardando…";
   try{
     const { error } = await getClient().from("006_pagos").insert({
@@ -933,14 +1075,15 @@ function drawClientes(){
 }
 function openNuevoClienteAdmin(){
   openSheet(`<div class="grabber"></div><h3>Nuevo cliente</h3>
-    <div class="field"><label>Nombre</label><input id="nc-nom"></div>
+    <div class="field"><label>Nombre *</label><input id="nc-nom"></div>
     <div class="field"><label>Apellido / Familia</label><input id="nc-ape"></div>
+    <div class="field"><label>WhatsApp *</label><input id="nc-tel" placeholder="5491132338151"></div>
     <div class="field"><label>Email</label><input id="nc-mail" type="email"></div>
-    <div class="field"><label>WhatsApp</label><input id="nc-tel"></div>
     <button class="btn" id="nc-save" onclick="crearClienteAdmin()">Crear cliente</button>`);
 }
 async function crearClienteAdmin(){
   const nombre=$("#nc-nom").value.trim(); if(!nombre) return toast("El nombre es obligatorio",true);
+  const telefono=$("#nc-tel").value.trim(); if(!telefono) return toast("El WhatsApp es obligatorio",true);
   const btn=$("#nc-save"); btn.disabled=true; btn.textContent="Creando…";
   try{
     const { error } = await getClient().from("003_clientes").insert({
@@ -999,6 +1142,177 @@ async function crearProveedor(){
     if(error) throw error;
     DATA.proveedores=null; $("#pv-nombre").value=""; toast("Proveedor agregado"); render(true);
   }catch(e){ toast(e.message,true); }
+}
+
+// ─────────────────────────────────────────────────────────────── COMPRAS
+async function fetchCompras(){
+  const c = getClient();
+  const [{ data, error }, { data: talles }, { data: prendas }, { data: provs }] = await Promise.all([
+    c.from("009_compras").select("id,fecha,cantidad,costo_unitario,estado,sku_original,proveedor_id,talle_id").order("fecha",{ascending:false}).limit(300),
+    c.from("002_talles").select("id,talle,sku,product_id"),
+    c.from("001_prendas").select("id,nombre"),
+    c.from("008_proveedores").select("id,nombre"),
+  ]);
+  if(error) throw error;
+  const prendaNombre = Object.fromEntries((prendas||[]).map(p=>[p.id,p.nombre]));
+  const talleMap = Object.fromEntries((talles||[]).map(t=>[t.id, { ...t, prendaNombre: prendaNombre[t.product_id] }]));
+  const provMap = Object.fromEntries((provs||[]).map(p=>[p.id,p.nombre]));
+  return (data||[]).map(co=>{
+    const t = talleMap[co.talle_id];
+    return { ...co, prenda: t?t.prendaNombre:null, talleNombre: t?t.talle:null, proveedorNombre: provMap[co.proveedor_id]||"" };
+  });
+}
+async function getCompras(force){ if(force||!DATA.compras) DATA.compras = await fetchCompras(); return DATA.compras; }
+async function viewCompras(v,force){
+  try{
+    if(force||!DATA.compras){ loading(v); await getCompras(true); }
+    window._coQ = window._coQ||"";
+    v.innerHTML = `
+      <div class="view-title">Compras</div>
+      <button class="btn gold" style="margin-bottom:14px" onclick="openNuevaCompra()">+ Registrar compra</button>
+      <div class="search"><span class="mag">🔎</span><input id="co-q" placeholder="Buscar prenda o proveedor…" value="${esc(window._coQ)}"></div>
+      <div id="co-list"></div>`;
+    const inp=$("#co-q");
+    const draw=()=>{
+      const q=inp.value.trim().toLowerCase(); window._coQ=inp.value;
+      const list=(DATA.compras||[]).filter(co=>!q||`${co.prenda||co.sku_original||""} ${co.proveedorNombre||""}`.toLowerCase().includes(q));
+      $("#co-list").innerHTML=list.length?list.map(co=>`<div class="card" style="margin-bottom:10px"><div class="row" style="padding:0"><div class="grow">
+        <div class="name">${esc(co.prenda||co.sku_original||"—")}${co.talleNombre?" · T"+esc(co.talleNombre):""}</div>
+        <div class="meta">${esc(co.fecha||"")}${co.proveedorNombre?" · "+esc(co.proveedorNombre):""} · ${esc(co.estado||"")}</div></div>
+        <div style="text-align:right"><div style="font-weight:700">×${co.cantidad}</div><div class="meta">${fmt(co.costo_unitario)} c/u</div></div></div></div>`).join("")
+        : '<div class="empty">Sin compras todavía</div>';
+    };
+    inp.oninput=draw; draw();
+  }catch(e){ errBox(v,e); }
+}
+function openNuevaCompra(){
+  openSheet(`<div class="grabber"></div><h3>Registrar compra</h3>
+    <div class="field"><label>Prenda</label><select id="nco-prenda" onchange="fillTallesCompra()"></select></div>
+    <div class="field"><label>Talle</label><select id="nco-talle"></select></div>
+    <div class="field"><label>Proveedor</label><select id="nco-prov"><option value="">Sin especificar</option></select></div>
+    <div class="two">
+      <div class="field"><label>Cantidad</label><input type="number" id="nco-cant" value="1"></div>
+      <div class="field"><label>Costo unitario ($)</label><input type="text" inputmode="numeric" id="nco-costo" placeholder="0" oninput="milesOnInput(this)"></div>
+    </div>
+    <div class="two">
+      <div class="field"><label>Fecha</label><input id="nco-fecha" value="${todayISO()}"></div>
+      <div class="field"><label>Estado</label><select id="nco-estado"><option>Entregado</option><option>Falta Bordado</option></select></div>
+    </div>
+    <button class="btn" id="nco-save" onclick="crearCompra()">Registrar compra</button>`);
+  getCatalogo().then(cat=>{
+    const sel=$("#nco-prenda"); if(!sel) return;
+    cat.forEach(p=>sel.insertAdjacentHTML("beforeend",`<option value="${p.id}">${esc(p.nombre)}</option>`));
+    fillTallesCompra();
+  });
+  getProveedores().then(ps=>{ const sel=$("#nco-prov"); if(sel) ps.forEach(p=>sel.insertAdjacentHTML("beforeend",`<option value="${p.id}">${esc(p.nombre)}</option>`)); });
+}
+function fillTallesCompra(){
+  const prendaId=$("#nco-prenda").value;
+  const p=(DATA.catalogo||[]).find(x=>x.id===prendaId);
+  const sel=$("#nco-talle"); if(!sel||!p) return;
+  sel.innerHTML=p.talles.map(t=>`<option value="${t.talleId}">${esc(t.talle)}</option>`).join("");
+}
+async function crearCompra(){
+  const talleId=$("#nco-talle").value; if(!talleId) return toast("Elegí una prenda con talles",true);
+  const cantidad=+$("#nco-cant").value||0; if(!cantidad) return toast("Ingresá la cantidad",true);
+  const costo=parseMiles($("#nco-costo").value);
+  const btn=$("#nco-save"); btn.disabled=true; btn.textContent="Guardando…";
+  try{
+    const { error } = await getClient().from("009_compras").insert({
+      fecha: $("#nco-fecha").value.trim()||todayISO(), proveedor_id: $("#nco-prov").value||null,
+      talle_id: talleId, cantidad, costo_unitario: costo, estado: $("#nco-estado").value,
+    });
+    if(error) throw error;
+    DATA.compras=null; DATA.catalogo=null; closeSheet(); toast("Compra registrada"); render(true);
+  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Registrar compra"; }
+}
+
+// ─────────────────────────────────────────────────────────────── PRECIOS Y COSTOS
+async function fetchPreciosCostos(){
+  const c = getClient();
+  const [{ data: prendas }, { data: talles }, { data: precios }, { data: costos }] = await Promise.all([
+    c.from("001_prendas").select("id,nombre"),
+    c.from("002_talles").select("id,product_id,talle,sku"),
+    c.from("102_precio_vigente").select("*"),
+    c.from("103_costo_vigente").select("*"),
+  ]);
+  const prendaNombre = Object.fromEntries((prendas||[]).map(p=>[p.id,p.nombre]));
+  const precioMap = Object.fromEntries((precios||[]).map(p=>[p.talle_id,p]));
+  const costoMap = Object.fromEntries((costos||[]).map(c2=>[c2.talle_id,c2]));
+  return (talles||[]).map(t=>{
+    const pr=precioMap[t.id]||{}, co=costoMap[t.id]||{};
+    const precio=Number(pr.precio_transferencia)||0, costo=Number(co.costo)||0;
+    return { talleId:t.id, nombre:prendaNombre[t.product_id]||"", talle:t.talle, sku:t.sku,
+      precioLista:Number(pr.precio_lista)||0, precio, costo, margen: precio>0?((precio-costo)/precio*100):null };
+  }).sort((a,b)=> a.nombre.localeCompare(b.nombre) || String(a.talle).localeCompare(String(b.talle)));
+}
+async function getPreciosCostos(force){ if(force||!DATA.preciosCostos) DATA.preciosCostos = await fetchPreciosCostos(); return DATA.preciosCostos; }
+function margenClass(m){ if(m==null) return ""; return m>=45?"margin-ok": m>=30?"margin-low":"margin-bad"; }
+async function viewPrecios(v,force){
+  try{
+    if(force||!DATA.preciosCostos){ loading(v); await getPreciosCostos(true); }
+    window._prQ = window._prQ||"";
+    v.innerHTML=`
+      <div class="view-title">Precios y costos</div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-8px">Margen = (precio transferencia − costo) / precio transferencia. Tocá una fila para simular un aumento antes de aplicarlo.</p>
+      <div class="search"><span class="mag">🔎</span><input id="pr-q" placeholder="Buscar prenda…" value="${esc(window._prQ)}"></div>
+      <div class="card" id="pr-list"></div>`;
+    const inp=$("#pr-q");
+    const draw=()=>{
+      const q=inp.value.trim().toLowerCase(); window._prQ=inp.value;
+      const list=(DATA.preciosCostos||[]).filter(r=>r.nombre.toLowerCase().includes(q));
+      $("#pr-list").innerHTML=list.length?list.map(r=>`<div class="row" style="cursor:pointer" onclick='openSimularPrecio(${JSON.stringify(r.talleId)})'>
+        <div class="grow"><div class="name">${esc(r.nombre)} · T${esc(r.talle)}</div>
+          <div class="meta">Costo ${fmt(r.costo)} · Transf. ${fmt(r.precio)} · Lista ${fmt(r.precioLista)}</div></div>
+        <span class="chip n ${margenClass(r.margen)}">${r.margen!=null?r.margen.toFixed(0)+"%":"—"}</span></div>`).join("")
+        : '<div class="empty">Sin resultados</div>';
+    };
+    inp.oninput=draw; draw();
+  }catch(e){ errBox(v,e); }
+}
+function openSimularPrecio(talleId){
+  const r=(DATA.preciosCostos||[]).find(x=>x.talleId===talleId); if(!r) return;
+  openSheet(`<div class="grabber"></div><h3>${esc(r.nombre)} · T${esc(r.talle)}</h3><p class="sub">${esc(r.sku)}</p>
+    <div class="tot-line"><span>Margen actual</span><span class="${margenClass(r.margen)}">${r.margen!=null?r.margen.toFixed(1)+"%":"—"}</span></div>
+
+    <div class="section-h" style="margin-top:16px">Simular / aumentar precio</div>
+    <div class="two">
+      <div class="field"><label>Nuevo precio lista</label><input type="text" inputmode="numeric" id="sp-lista" value="${fmtMiles(r.precioLista)}" oninput="simularPrecio(${JSON.stringify(talleId)})"></div>
+      <div class="field"><label>Nuevo precio transferencia</label><input type="text" inputmode="numeric" id="sp-trans" value="${fmtMiles(r.precio)}" oninput="simularPrecio(${JSON.stringify(talleId)})"></div>
+    </div>
+    <div class="field"><label>Costo (para simular el margen)</label><input type="text" inputmode="numeric" id="sp-costo" value="${fmtMiles(r.costo)}" oninput="simularPrecio(${JSON.stringify(talleId)})"></div>
+    <div class="card" id="sp-result" style="margin-bottom:16px"></div>
+    <button class="btn" id="sp-save" onclick='aplicarPrecio(${JSON.stringify(talleId)})'>Aplicar nuevo precio (desde hoy)</button>
+    <button class="btn ghost" id="sp-costo-save" style="margin-top:10px" onclick='aplicarCosto(${JSON.stringify(talleId)})'>Guardar nuevo costo (desde hoy)</button>`);
+  simularPrecio(talleId);
+}
+function simularPrecio(talleId){
+  const r=(DATA.preciosCostos||[]).find(x=>x.talleId===talleId); if(!r) return;
+  const nuevoLista=parseMiles($("#sp-lista").value), nuevoTrans=parseMiles($("#sp-trans").value), costo=parseMiles($("#sp-costo").value);
+  $("#sp-lista").value=fmtMiles(nuevoLista); $("#sp-trans").value=fmtMiles(nuevoTrans); $("#sp-costo").value=fmtMiles(costo);
+  const nuevoMargen = nuevoTrans>0 ? ((nuevoTrans-costo)/nuevoTrans*100) : null;
+  const el=$("#sp-result"); if(!el) return;
+  el.innerHTML=`<div class="tot-line"><span>Margen simulado</span><span class="${margenClass(nuevoMargen)}" style="font-weight:800">${nuevoMargen!=null?nuevoMargen.toFixed(1)+"%":"—"}</span></div>
+    <div class="tot-line"><span>Ganancia por unidad</span><span>${fmt(nuevoTrans-costo)}</span></div>`;
+}
+async function aplicarPrecio(talleId){
+  const nuevoLista=parseMiles($("#sp-lista").value), nuevoTrans=parseMiles($("#sp-trans").value);
+  if(!nuevoLista&&!nuevoTrans) return toast("Ingresá al menos un precio",true);
+  const btn=$("#sp-save"); btn.disabled=true; btn.textContent="Guardando…";
+  try{
+    const { error } = await getClient().from("010_precios").insert({ talle_id:talleId, precio_lista:nuevoLista, precio_transferencia:nuevoTrans||Math.round(nuevoLista*0.9), vigente_desde:todayISO() });
+    if(error) throw error;
+    DATA.preciosCostos=null; DATA.catalogo=null; closeSheet(); toast("Precio actualizado"); render(true);
+  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Aplicar nuevo precio (desde hoy)"; }
+}
+async function aplicarCosto(talleId){
+  const costo=parseMiles($("#sp-costo").value); if(!costo) return toast("Ingresá el costo",true);
+  const btn=$("#sp-costo-save"); btn.disabled=true; btn.textContent="Guardando…";
+  try{
+    const { error } = await getClient().from("011_costos_reposicion").insert({ talle_id:talleId, costo, vigente_desde:todayISO() });
+    if(error) throw error;
+    DATA.preciosCostos=null; closeSheet(); toast("Costo actualizado"); render(true);
+  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Guardar nuevo costo (desde hoy)"; }
 }
 
 // ─────────────────────────────────────────────────────────────── SHEET
