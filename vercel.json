@@ -7,6 +7,7 @@
     { "source": "/confirmacion", "destination": "/confirmacion.html" },
     { "source": "/carrito-beta", "destination": "/carrito-beta.html" },
     { "source": "/erp",        "destination": "/erp.html" },
+    { "source": "/gestion",    "destination": "/gestion.html" },
     { "source": "/comprobante", "destination": "/comprobante.html" },
     { "source": "/privacidad", "destination": "/privacidad.html" },
     { "source": "/terminos",   "destination": "/terminos.html" },
