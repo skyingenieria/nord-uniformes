@@ -33,17 +33,37 @@ Desarrolladores: Fede (alonsofede93@gmail.com) y su novia (Flor).
 
 ⚠️ **Vercel Hobby = máximo 12 serverless functions.** El proyecto está al límite. Agregar un endpoint nuevo puede romper el deploy. Si necesitás agregar lógica, consolidar en endpoints existentes o usar helpers con `_` al inicio del nombre (no cuentan como ruta).
 
-### Datos (Google Sheets ERP)
-Los productos **no están en el código** — vienen del ERP (Google Sheet).  
-Sheet ID: `1-sEnBHMyt2a5ZKtVmdWl5_mMqhQMC8B1sAudlzBzBHg`
+### Datos — migración a Supabase (en curso)
 
-Solapas que lee `api/products.js`:
-- **Stock** (A2:J) — qué prendas existen y stock por talle
-- **Lista de precios** (A2:G) — precio de transferencia por SKU (col F)
-- **Listado de Prendas** (A2:I) — categorías, género, descripción, foto1 (col H), foto2 (col I)
+**Estado (etapa 1 de 3, completada):** catálogo (prendas, talles, stock, precios)
+migrado a Supabase. Clientes, Pedidos/Ordenes, Facturación ARCA y Códigos de
+descuento **siguen en el Google Sheet ERP** (próximas etapas).
 
-Filtro: solo filas con colegio = `"WS"` (Wellspring). Cache de 5 min.  
-Agregar/borrar una prenda en el sheet se refleja en la web automáticamente (tras el cache).
+- `supabase/schema.sql` — tablas `products` + `product_variants` y la función
+  `decrement_stock` (RPC). Correr una sola vez en el SQL Editor de Supabase.
+- `api/_supabase.js` — cliente compartido (service_role key, solo backend).
+- `api/products.js` — catálogo público (`wellspring.html`), lee de Supabase.
+- `api/erp.js` (`action=stock`) — inventario multi-colegio (`erp.html`), lee de Supabase.
+- Al confirmar una venta (`api/orders.js` y `api/erp.js` `action=pedido`) se
+  descuenta el stock en Supabase (best-effort, no bloquea la venta si falla).
+- `scripts/migrate-catalogo-to-supabase.js` — importa/resincroniza desde el
+  Sheet (`Stock`, `Lista de precios`, `Listado de Prendas`) hacia Supabase.
+  Re-corrible (upsert). Correr con `npm run migrate:catalogo`.
+
+⚠️ Mientras dure la transición, el stock de Wellspring en la pestaña 'Stock'
+del Sheet queda **desactualizado** para lo que se vende por la web (las
+fórmulas del Sheet no se enteran de las ventas). Para corregir stock a mano,
+hacerlo directo en Supabase (Table Editor) o en el Sheet + recorrer
+`npm run migrate:catalogo` para traer el cambio.
+
+Filtro de la web: solo filas con colegio = `"WS"` (Wellspring). Cache de 5 min
+en `api/products.js` (igual que antes).
+
+**Todavía en Google Sheets ERP** (Sheet ID `1-sEnBHMyt2a5ZKtVmdWl5_mMqhQMC8B1sAudlzBzBHg`):
+- **Clientes** — alta/consulta de clientes (`api/cliente/check-or-create.js`, `api/erp.js action=clientes`)
+- **Pedidos** / **Ordenes** — ledger de ventas, pagos y envíos (`api/orders.js`, `api/pedidos/next-id.js`, `api/erp.js` acciones `pedidos`/`ordenes`/`pago`/`entrega`/`dashboard`)
+- **Facturas** — registro de Factura C (`api/arca.js`, `api/erp.js action=facturar`)
+- **Codigos** — códigos de descuento (`api/erp.js action=validate-code`)
 
 ---
 
@@ -75,6 +95,8 @@ Integración con pasarela Nave para tarjeta débito/crédito.
 | `SPREADSHEET_ID` | Google Sheet del ERP |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | Service account para leer el Sheet |
 | `GOOGLE_PRIVATE_KEY` | Clave privada del service account |
+| `SUPABASE_URL` | URL del proyecto Supabase (catálogo) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key de Supabase — secreta, solo backend |
 | `NAVE_ENV` | `prod` o `sandbox` |
 | `NAVE_CLIENT_ID` | Credencial Nave |
 | `NAVE_CLIENT_SECRET` | Credencial Nave |
