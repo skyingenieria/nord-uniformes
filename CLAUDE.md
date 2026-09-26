@@ -37,32 +37,55 @@ Desarrolladores: Fede (alonsofede93@gmail.com) y su novia (Flor).
 
 ⚠️ **Regla vigente (pedida por Flor el 2026-09-26): no tocar wellspring.html,
 carrito.html, erp.html ni ningún archivo de `api/` hasta que se indique lo
-contrario.** Primero se termina de armar la base de datos en Supabase y la
-web app nueva; recién como último paso se conecta el sitio actual a Supabase
-(o se lo reemplaza directamente por la app nueva — a decidir más adelante).
-`api/products.js`, `api/erp.js` y `api/orders.js` en este momento son
-idénticos a como estaban antes de empezar esta migración: leen y escriben
-Google Sheets, cero dependencia de Supabase. Si alguna sesión anterior dejó
-estos archivos leyendo de Supabase, es un error — hay que revertirlos.
+contrario.** `api/products.js`, `api/erp.js` y `api/orders.js` en este
+momento son idénticos a como estaban antes de empezar esta migración: leen
+y escriben Google Sheets, cero dependencia de Supabase. Si alguna sesión
+anterior dejó estos archivos leyendo de Supabase, es un error — revertirlos.
 
-**Lo que SÍ existe y no depende de la web (se puede seguir trabajando libre):**
-- `supabase/schema.sql` — tablas `products` + `product_variants` (catálogo:
-  prendas, talles, stock, precios) + función `decrement_stock`. **Ya corrido**
-  en el proyecto Supabase.
-- `supabase/schema_pedidos.sql` — tablas `clientes`, `codigos_descuento`,
-  `pedidos`, `pedido_items`, `pagos`, `facturas`, `profiles` (roles de
-  usuario), vista `pedidos_con_saldo`. **Ya corrido** en el proyecto Supabase.
-  (Ojo al copiar este archivo a mano: evitar caracteres Unicode raros tipo
-  `──`/`→` en comentarios — se corrompen al copiar/pegar en el SQL Editor de
-  Supabase y tiran "syntax error at end of input". Usar ASCII plano, o el
-  botón "Copy raw contents" de GitHub en vez de seleccionar texto a mano.)
+**Plan en 4 etapas (definido por Flor el 2026-09-26):**
+1. **Migración de base de datos** Sheets → Supabase (en curso, ver abajo).
+2. Web app **desktop** (gestión completa: catálogo, clientes, pedidos, pagos,
+   facturas, dashboard) — Supabase Auth con roles `admin`/`vendedor`.
+3. Web app **mobile** — misma app, responsive, con un subconjunto de
+   funciones (venta rápida, pedidos, cobros, facturas) para vendedores.
+4. Recién ahí conectar/reemplazar el sitio actual (`wellspring.html` /
+   `carrito.html` / `erp.html`) con Supabase.
+
+**Etapa 1 (migración de datos) — estado:**
+- `supabase/schema.sql` y `supabase/schema_pedidos.sql` — **ya corridos** en
+  el proyecto Supabase (`https://piaagjddrrcbijienvll.supabase.co`).
+  (Ojo al copiar SQL a mano: evitar caracteres Unicode raros tipo `──`/`→`
+  en comentarios — se corrompen al pegar en el SQL Editor de Supabase y
+  tiran "syntax error at end of input"/"syntax error at or near ';'". Usar
+  ASCII plano, y el botón "Copy raw contents" de GitHub en vez de
+  seleccionar texto a mano.)
+- Flor pasó el Excel real del ERP (`ERP_Nord.xlsx`, export del Sheet). Se
+  generaron 4 archivos con los INSERTs de los datos reales, para correr
+  **en este orden** en el SQL Editor de Supabase:
+  1. `supabase/data/01_catalogo.sql` — 24 prendas, 215 talles.
+  2. `supabase/data/02_clientes.sql` — 34 clientes (incluye el ALTER TABLE
+     que relaja `clientes.email` a nullable/sin unique: los datos reales
+     tienen clientes sin email y algunos placeholders repetidos).
+  3. `supabase/data/03_pedidos.sql` — 34 pedidos + 78 items + 34 pagos.
+     Se excluyeron a propósito 5 pedidos "Pedido Inexistente" (basura de
+     prueba en el Sheet original).
+  4. `supabase/data/04_facturas.sql` — 10 facturas.
+  - Nota de calidad de datos (no bloqueante): varios emails de clientes en
+    el Sheet son placeholders/basura ("noaplica", "nose", nombres sin
+    "@dominio"). Se cargaron tal cual salvo los casos obviamente vacíos
+    (esos quedan NULL). Vale la pena limpiarlos a mano más adelante desde
+    la web app nueva.
+  - **Pendiente confirmar:** que Flor corrió estos 4 archivos sin errores.
 - `api/_supabase.js` — cliente Supabase compartido (service_role key), listo
-  para cuando se empiece a cablear la API real. Todavía sin usar en ningún
-  endpoint activo.
-- `scripts/migrate-catalogo-to-supabase.js` — importa el catálogo desde el
-  Sheet (`Stock`, `Lista de precios`, `Listado de Prendas`) hacia Supabase.
-  Re-corrible (upsert). `npm run migrate:catalogo`. **Todavía no se corrió**
-  contra datos reales (bloqueado por acceso de red, ver abajo).
+  para cuando se empiece a cablear la API real (Etapa 2). Todavía sin usar
+  en ningún endpoint activo.
+- `scripts/migrate-catalogo-to-supabase.js` — alternativa por API (en vez de
+  SQL a mano) para re-sincronizar el catálogo más adelante si hace falta.
+  Re-corrible (upsert). `npm run migrate:catalogo`. Requiere acceso de red
+  desde la sesión al proyecto Supabase, que en sesiones de Claude Code en
+  la nube venía fallando ("Host not in allowlist") incluso con "full
+  access" configurado — por eso para la carga inicial se optó por generar
+  SQL y que Flor lo corra directo en el editor.
 
 **Proyecto Supabase:** `https://piaagjddrrcbijienvll.supabase.co` (ver
 Project Settings → API en supabase.com por la `anon key` / `service_role key`
@@ -70,17 +93,17 @@ Project Settings → API en supabase.com por la `anon key` / `service_role key`
 local de cada uno y eventualmente en Vercel cuando se decida conectar).
 
 **Pendiente para retomar:**
-1. Acceso de red desde las sesiones de Claude Code en la nube a
-   `*.supabase.co` viene fallando con "Host not in allowlist" incluso
-   después de poner "full access" en la config de red del entorno y
-   reabrir sesión — quedó sin resolver. Puede que haga falta una sesión
-   nueva (no reabrir la misma) para que tome el cambio, o revisar que el
-   full access se haya guardado en el entorno correcto.
-2. Con la red andando: correr `npm run migrate:catalogo` para traer los
-   datos reales del catálogo a Supabase, y armar el script/proceso
-   equivalente para clientes/pedidos/pagos/facturas (todavía no escrito).
-3. Diseñar y construir la **web app nueva** (ver decisiones abajo) contra
-   este schema — recién ahí se evalúa conectar o reemplazar el sitio actual.
+1. Confirmar que Flor corrió los 4 archivos de `supabase/data/` sin errores
+   (ver Etapa 1 arriba) y que los conteos coinciden (24 prendas / 215
+   talles / 34 clientes / 34 pedidos / 78 items / 34 pagos / 10 facturas).
+2. Con Etapa 1 confirmada: arrancar **Etapa 2**, la web app desktop (ver
+   decisiones abajo).
+3. El acceso de red desde las sesiones de Claude Code en la nube a
+   `*.supabase.co` venía fallando con "Host not in allowlist" incluso con
+   "full access" configurado en el entorno — no se llegó a resolver, se
+   optó por generar SQL en vez de depender de la conexión directa. Si en
+   Etapa 2 hace falta conectar de nuevo (por ejemplo para probar la app
+   nueva contra datos reales), puede volver a aparecer este problema.
 
 **Decisiones ya tomadas sobre la web app nueva** (para cuando se retome):
 - Una sola app responsive (no dos apps separadas): mismo código, mismo
