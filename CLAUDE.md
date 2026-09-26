@@ -60,50 +60,53 @@ anterior dejó estos archivos leyendo de Supabase, es un error — revertirlos.
   ASCII plano, y el botón "Copy raw contents" de GitHub en vez de
   seleccionar texto a mano.)
 - Flor pasó el Excel real del ERP (`ERP_Nord.xlsx`, export del Sheet). Se
-  generaron 4 archivos con los INSERTs de los datos reales, para correr
-  **en este orden** en el SQL Editor de Supabase:
-  1. `supabase/data/01_catalogo.sql` — 24 prendas, 215 talles.
-  2. `supabase/data/02_clientes.sql` — 34 clientes (incluye el ALTER TABLE
-     que relaja `clientes.email` a nullable/sin unique: los datos reales
-     tienen clientes sin email y algunos placeholders repetidos).
-  3. `supabase/data/03_pedidos.sql` — 34 pedidos + 78 items + 34 pagos.
-     Se excluyeron a propósito 5 pedidos "Pedido Inexistente" (basura de
-     prueba en el Sheet original).
-  4. `supabase/data/04_facturas.sql` — 10 facturas.
+  generaron 4 archivos con los INSERTs de los datos reales en
+  `supabase/data/` (01_catalogo, 02_clientes, 03_pedidos, 04_facturas),
+  pensados para correr en el SQL Editor de Supabase — pero el SQL Editor
+  resultó poco confiable (algunos paste no persistían sin marcar error
+  visible: `products`/`pedidos` quedaron en 0 filas más de una vez pese a
+  no siempre reportar error). Cuando se destrabó el acceso de red desde la
+  sesión (ver más abajo), **se terminó cargando por API directamente**
+  (parseando esos mismos .sql e insertando vía `supabase-js`), sin
+  depender más del SQL Editor para esto.
+  - **Estado: ETAPA 1 COMPLETA Y VERIFICADA** (2026-09-26). Conteos reales
+    confirmados contra la base: 24 prendas, 215 talles, 34 clientes, 34
+    pedidos, 78 items, 34 pagos, 10 facturas. La vista `pedidos_con_saldo`
+    fue chequeada contra 3 pedidos y matchea exacto con la columna "Total
+    Venta" del Sheet original.
+  - `02_clientes.sql` incluye el `ALTER TABLE` que relaja `clientes.email`
+    a nullable/sin unique (ya aplicado): los datos reales tienen clientes
+    sin email y algunos placeholders repetidos ("noaplica", etc.).
+  - Se excluyeron a propósito 5 pedidos "Pedido Inexistente" (basura de
+    prueba en el Sheet original, sin cliente ni órdenes asociadas).
   - Nota de calidad de datos (no bloqueante): varios emails de clientes en
     el Sheet son placeholders/basura ("noaplica", "nose", nombres sin
     "@dominio"). Se cargaron tal cual salvo los casos obviamente vacíos
     (esos quedan NULL). Vale la pena limpiarlos a mano más adelante desde
     la web app nueva.
-  - **Pendiente confirmar:** que Flor corrió estos 4 archivos sin errores.
 - `api/_supabase.js` — cliente Supabase compartido (service_role key), listo
   para cuando se empiece a cablear la API real (Etapa 2). Todavía sin usar
   en ningún endpoint activo.
 - `scripts/migrate-catalogo-to-supabase.js` — alternativa por API (en vez de
   SQL a mano) para re-sincronizar el catálogo más adelante si hace falta.
-  Re-corrible (upsert). `npm run migrate:catalogo`. Requiere acceso de red
-  desde la sesión al proyecto Supabase, que en sesiones de Claude Code en
-  la nube venía fallando ("Host not in allowlist") incluso con "full
-  access" configurado — por eso para la carga inicial se optó por generar
-  SQL y que Flor lo corra directo en el editor.
+  Re-corrible (upsert). `npm run migrate:catalogo`.
 
 **Proyecto Supabase:** `https://piaagjddrrcbijienvll.supabase.co` (ver
 Project Settings → API en supabase.com por la `anon key` / `service_role key`
 — la service_role key es secreta, no va al repo, vive solo en `.env.local`
 local de cada uno y eventualmente en Vercel cuando se decida conectar).
 
-**Pendiente para retomar:**
-1. Confirmar que Flor corrió los 4 archivos de `supabase/data/` sin errores
-   (ver Etapa 1 arriba) y que los conteos coinciden (24 prendas / 215
-   talles / 34 clientes / 34 pedidos / 78 items / 34 pagos / 10 facturas).
-2. Con Etapa 1 confirmada: arrancar **Etapa 2**, la web app desktop (ver
-   decisiones abajo).
-3. El acceso de red desde las sesiones de Claude Code en la nube a
-   `*.supabase.co` venía fallando con "Host not in allowlist" incluso con
-   "full access" configurado en el entorno — no se llegó a resolver, se
-   optó por generar SQL en vez de depender de la conexión directa. Si en
-   Etapa 2 hace falta conectar de nuevo (por ejemplo para probar la app
-   nueva contra datos reales), puede volver a aparecer este problema.
+**Sobre el acceso de red desde las sesiones de Claude Code en la nube:**
+venía fallando con "Host not in allowlist" hacia `*.supabase.co` incluso
+con "full access" configurado en el entorno. En algún momento entre
+reintentos se destrabó solo (probablemente tardó en propagarse el cambio
+de config, o hizo falta una sesión nueva) — si vuelve a aparecer en Etapa
+2/3, probar: (1) confirmar "full access" en Network access del entorno,
+(2) abrir una sesión nueva en vez de reusar una vieja, (3) tener paciencia,
+puede tardar en propagar.
+
+**Pendiente para retomar:** arrancar **Etapa 2**, la web app desktop (ver
+decisiones abajo). Etapa 1 (datos) está lista para consumir.
 
 **Decisiones ya tomadas sobre la web app nueva** (para cuando se retome):
 - Una sola app responsive (no dos apps separadas): mismo código, mismo
