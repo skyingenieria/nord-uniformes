@@ -758,6 +758,17 @@ module.exports = async (req, res) => {
     // adentro (no el esquema legacy de abajo, que es solo para /erp).
     if (action === "facturar-supabase" && req.method === "POST") return await postFacturarSupabase(req, res);
 
+    // "drive-factura" la usan las dos apps: /erp con el token legacy (como
+    // siempre) y ahora también /gestion con su propio token de Supabase Auth.
+    // Cualquiera de los dos autoriza — no cambia nada para /erp.
+    if (action === "drive-factura" && req.method === "POST") {
+      const tok = (req.headers.authorization || "").replace("Bearer ", "").trim();
+      const okLegacy = verifyToken(tok);
+      const okSupabase = okLegacy ? false : !!(await verifySupabaseUser(tok));
+      if (!okLegacy && !okSupabase) return res.status(401).json({ error: "No autorizado" });
+      return await postDriveFactura(req, res);
+    }
+
     // Resto: requiere token de admin
     const token = (req.headers.authorization || "").replace("Bearer ", "").trim();
     if (!verifyToken(token)) return res.status(401).json({ error: "No autorizado" });
@@ -776,7 +787,6 @@ module.exports = async (req, res) => {
       if (action === "pago")     return await postPago(req, res);
       if (action === "entrega")  return await postEntrega(req, res);
       if (action === "facturar") return await postFacturar(req, res);
-      if (action === "drive-factura") return await postDriveFactura(req, res);
       return res.status(400).json({ error: "Accion POST desconocida" });
     }
 
