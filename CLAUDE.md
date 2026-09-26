@@ -33,37 +33,77 @@ Desarrolladores: Fede (alonsofede93@gmail.com) y su novia (Flor).
 
 ⚠️ **Vercel Hobby = máximo 12 serverless functions.** El proyecto está al límite. Agregar un endpoint nuevo puede romper el deploy. Si necesitás agregar lógica, consolidar en endpoints existentes o usar helpers con `_` al inicio del nombre (no cuentan como ruta).
 
-### Datos — migración a Supabase (en curso)
+### Datos — hoy 100% Google Sheets. Migración a Supabase en construcción, en paralelo, todavía SIN conectar
 
-**Estado (etapa 1 de 3, completada):** catálogo (prendas, talles, stock, precios)
-migrado a Supabase. Clientes, Pedidos/Ordenes, Facturación ARCA y Códigos de
-descuento **siguen en el Google Sheet ERP** (próximas etapas).
+⚠️ **Regla vigente (pedida por Flor el 2026-09-26): no tocar wellspring.html,
+carrito.html, erp.html ni ningún archivo de `api/` hasta que se indique lo
+contrario.** Primero se termina de armar la base de datos en Supabase y la
+web app nueva; recién como último paso se conecta el sitio actual a Supabase
+(o se lo reemplaza directamente por la app nueva — a decidir más adelante).
+`api/products.js`, `api/erp.js` y `api/orders.js` en este momento son
+idénticos a como estaban antes de empezar esta migración: leen y escriben
+Google Sheets, cero dependencia de Supabase. Si alguna sesión anterior dejó
+estos archivos leyendo de Supabase, es un error — hay que revertirlos.
 
-- `supabase/schema.sql` — tablas `products` + `product_variants` y la función
-  `decrement_stock` (RPC). Correr una sola vez en el SQL Editor de Supabase.
-- `api/_supabase.js` — cliente compartido (service_role key, solo backend).
-- `api/products.js` — catálogo público (`wellspring.html`), lee de Supabase.
-- `api/erp.js` (`action=stock`) — inventario multi-colegio (`erp.html`), lee de Supabase.
-- Al confirmar una venta (`api/orders.js` y `api/erp.js` `action=pedido`) se
-  descuenta el stock en Supabase (best-effort, no bloquea la venta si falla).
-- `scripts/migrate-catalogo-to-supabase.js` — importa/resincroniza desde el
+**Lo que SÍ existe y no depende de la web (se puede seguir trabajando libre):**
+- `supabase/schema.sql` — tablas `products` + `product_variants` (catálogo:
+  prendas, talles, stock, precios) + función `decrement_stock`. **Ya corrido**
+  en el proyecto Supabase.
+- `supabase/schema_pedidos.sql` — tablas `clientes`, `codigos_descuento`,
+  `pedidos`, `pedido_items`, `pagos`, `facturas`, `profiles` (roles de
+  usuario), vista `pedidos_con_saldo`. **Ya corrido** en el proyecto Supabase.
+  (Ojo al copiar este archivo a mano: evitar caracteres Unicode raros tipo
+  `──`/`→` en comentarios — se corrompen al copiar/pegar en el SQL Editor de
+  Supabase y tiran "syntax error at end of input". Usar ASCII plano, o el
+  botón "Copy raw contents" de GitHub en vez de seleccionar texto a mano.)
+- `api/_supabase.js` — cliente Supabase compartido (service_role key), listo
+  para cuando se empiece a cablear la API real. Todavía sin usar en ningún
+  endpoint activo.
+- `scripts/migrate-catalogo-to-supabase.js` — importa el catálogo desde el
   Sheet (`Stock`, `Lista de precios`, `Listado de Prendas`) hacia Supabase.
-  Re-corrible (upsert). Correr con `npm run migrate:catalogo`.
+  Re-corrible (upsert). `npm run migrate:catalogo`. **Todavía no se corrió**
+  contra datos reales (bloqueado por acceso de red, ver abajo).
 
-⚠️ Mientras dure la transición, el stock de Wellspring en la pestaña 'Stock'
-del Sheet queda **desactualizado** para lo que se vende por la web (las
-fórmulas del Sheet no se enteran de las ventas). Para corregir stock a mano,
-hacerlo directo en Supabase (Table Editor) o en el Sheet + recorrer
-`npm run migrate:catalogo` para traer el cambio.
+**Proyecto Supabase:** `https://piaagjddrrcbijienvll.supabase.co` (ver
+Project Settings → API en supabase.com por la `anon key` / `service_role key`
+— la service_role key es secreta, no va al repo, vive solo en `.env.local`
+local de cada uno y eventualmente en Vercel cuando se decida conectar).
 
-Filtro de la web: solo filas con colegio = `"WS"` (Wellspring). Cache de 5 min
-en `api/products.js` (igual que antes).
+**Pendiente para retomar:**
+1. Acceso de red desde las sesiones de Claude Code en la nube a
+   `*.supabase.co` viene fallando con "Host not in allowlist" incluso
+   después de poner "full access" en la config de red del entorno y
+   reabrir sesión — quedó sin resolver. Puede que haga falta una sesión
+   nueva (no reabrir la misma) para que tome el cambio, o revisar que el
+   full access se haya guardado en el entorno correcto.
+2. Con la red andando: correr `npm run migrate:catalogo` para traer los
+   datos reales del catálogo a Supabase, y armar el script/proceso
+   equivalente para clientes/pedidos/pagos/facturas (todavía no escrito).
+3. Diseñar y construir la **web app nueva** (ver decisiones abajo) contra
+   este schema — recién ahí se evalúa conectar o reemplazar el sitio actual.
 
-**Todavía en Google Sheets ERP** (Sheet ID `1-sEnBHMyt2a5ZKtVmdWl5_mMqhQMC8B1sAudlzBzBHg`):
-- **Clientes** — alta/consulta de clientes (`api/cliente/check-or-create.js`, `api/erp.js action=clientes`)
-- **Pedidos** / **Ordenes** — ledger de ventas, pagos y envíos (`api/orders.js`, `api/pedidos/next-id.js`, `api/erp.js` acciones `pedidos`/`ordenes`/`pago`/`entrega`/`dashboard`)
-- **Facturas** — registro de Factura C (`api/arca.js`, `api/erp.js action=facturar`)
-- **Codigos** — códigos de descuento (`api/erp.js action=validate-code`)
+**Decisiones ya tomadas sobre la web app nueva** (para cuando se retome):
+- Una sola app responsive (no dos apps separadas): mismo código, mismo
+  login, pero en pantallas chicas se muestra un subconjunto de funciones
+  (pensado para vendedores usando el celular: venta rápida, pedidos,
+  cobros, facturas). El escritorio muestra todo (+ inventario, clientes,
+  dashboard, gestión de catálogo).
+- Login individual por persona vía **Supabase Auth** (no la clave única
+  ADMIN_PASSWORD actual), con rol `admin` o `vendedor` por usuario (tabla
+  `profiles` en `schema_pedidos.sql`). Permite saber quién hizo cada venta/
+  cobro y, a futuro, limitar acciones por rol.
+- El objetivo de fondo: que la web app nueva hable directo con Supabase
+  (Supabase Auth + RLS) para la mayoría de las operaciones, reduciendo la
+  dependencia de funciones serverless en Vercel — ayuda además con el límite
+  de 12 funciones del plan Hobby mencionado arriba.
+
+**Qué reemplaza cada tabla nueva:**
+- `products` / `product_variants` → hojas `Stock`, `Lista de precios`, `Listado de Prendas`
+- `clientes` → hoja `Clientes`
+- `pedidos` / `pedido_items` / `pagos` → hojas `Pedidos` y `Ordenes`
+- `facturas` → hoja `Facturas`
+- `codigos_descuento` → hoja `Codigos`
+- `profiles` → no existía antes (hoy es una clave única `ADMIN_PASSWORD`)
 
 ---
 
@@ -95,8 +135,6 @@ Integración con pasarela Nave para tarjeta débito/crédito.
 | `SPREADSHEET_ID` | Google Sheet del ERP |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | Service account para leer el Sheet |
 | `GOOGLE_PRIVATE_KEY` | Clave privada del service account |
-| `SUPABASE_URL` | URL del proyecto Supabase (catálogo) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key de Supabase — secreta, solo backend |
 | `NAVE_ENV` | `prod` o `sandbox` |
 | `NAVE_CLIENT_ID` | Credencial Nave |
 | `NAVE_CLIENT_SECRET` | Credencial Nave |
@@ -110,6 +148,11 @@ Integración con pasarela Nave para tarjeta débito/crédito.
 | `ARCA_ENV` | `homologacion` o `produccion` |
 
 Para desarrollo local: pedirle a Fede el archivo `.env.local` (no está en el repo).
+
+`SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` **todavía no están en Vercel** a
+propósito (ver sección "Datos" arriba): el sitio no usa Supabase todavía. Solo
+hace falta tenerlas en un `.env.local` local para correr los scripts de
+`scripts/` contra el proyecto Supabase mientras se arma la migración.
 
 ---
 
