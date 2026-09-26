@@ -37,10 +37,25 @@ Desarrolladores: Fede (alonsofede93@gmail.com) y su novia (Flor).
 
 ⚠️ **Regla vigente (pedida por Flor el 2026-09-26): no tocar wellspring.html,
 carrito.html, erp.html ni ningún archivo de `api/` hasta que se indique lo
-contrario.** `api/products.js`, `api/erp.js` y `api/orders.js` en este
-momento son idénticos a como estaban antes de empezar esta migración: leen
-y escriben Google Sheets, cero dependencia de Supabase. Si alguna sesión
-anterior dejó estos archivos leyendo de Supabase, es un error — revertirlos.
+contrario.** `api/products.js` y `api/orders.js` siguen intactos, cero
+dependencia de Supabase. Si alguna sesión anterior dejó estos archivos
+leyendo de Supabase, es un error — revertirlos.
+
+**Única excepción concedida (Flor, 2026-09-26, sesión de gestion.html):**
+agregar a `api/erp.js` lo mínimo para que **gestion.html** pueda facturar
+por ARCA y guardar el PDF en Drive, sin tocar ninguna acción existente de
+`/erp` (Sheets, token legacy). Lo que se agregó, todo aditivo:
+- Acción nueva `action=facturar-supabase` (POST): emite Factura C y la
+  guarda en `007_facturas` (Supabase). Valida el token de **Supabase Auth**
+  del usuario logueado en /gestion (vía GoTrue), no el token legacy — y usa
+  ESE mismo token para escribir en `007_facturas` por REST, así las RLS ya
+  cargadas deciden el permiso (no hace falta `SUPABASE_SERVICE_ROLE_KEY` en
+  Vercel).
+- La acción `drive-factura` (ya existía, la usa /erp para subir el PDF a
+  Drive) ahora acepta **también** un token de Supabase Auth además del
+  legacy — ninguna acción ni comportamiento existente cambió para /erp.
+- Todo lo demás de `api/erp.js` (stock/clientes/pedidos/ordenes/dashboard/
+  pedido/pago/entrega/facturar de Sheets) sigue exactamente igual.
 
 **Plan en 4 etapas (definido por Flor el 2026-09-26):**
 1. **Migración de base de datos** Sheets → Supabase — **completa**, ver abajo.
@@ -182,6 +197,37 @@ desde la web app nueva cuando haya tiempo):
   (Supabase Auth + RLS) para la mayoría de las operaciones, reduciendo la
   dependencia de funciones serverless en Vercel — ayuda además con el límite
   de 12 funciones del plan Hobby mencionado arriba.
+
+**Estado de `gestion.html` (Etapa 2, en desarrollo activo):** vive en
+`https://www.norduniformes.com.ar/gestion` (rewrite en `vercel.json`), habla
+directo a Supabase desde el browser (`supabase-js`, anon key pública — la
+seguridad la da RLS). Tabs: Inicio (dashboard con ventas/ganancia/margen%),
+Stock (solo lectura), Vender, Pedidos, Clientes, Proveedores, Compras,
+Precios y costos, Contabilidad, Configuración (alta de prendas/talles).
+
+- **Modelo de precios de `gestion.html`** (distinto del "Modelo de precios"
+  de abajo, que es de wellspring/carrito — ésos NO se tocaron): el precio
+  base de cada ítem, en Vender y al editar un pedido ya creado, es **siempre
+  el precio de lista**, sin importar la forma de pago. El % de descuento por
+  ítem es lo que lo baja desde ahí — típicamente hasta el precio de
+  transferencia (hay un botón "→Transf." por línea que carga ese % exacto
+  automáticamente), pero puede ser cualquier valor manual. El checkout
+  muestra el desglose: subtotal a precio de lista, descuento por prenda
+  (suma de los descuentos ítem por ítem) y descuento del pedido (aparte, un
+  monto fijo en $).
+- **Edición de pedidos ya creados:** de sólo lectura por default (una línea
+  por ítem: talle/cantidad/precio/%desc/subtotal) — hay que tocar "✏️ Editar
+  prendas" para habilitar los controles editables, para evitar cambios
+  accidentales una vez armado el pedido.
+- **Facturación ARCA + Drive:** desde Pedidos se emite Factura C real (acción
+  `facturar-supabase` de `api/erp.js`, ver excepción documentada arriba). Al
+  emitir se genera el PDF (reusando `/factura.js` + `/factura-pdf.js`, los
+  mismos scripts estáticos que usa `/erp`) y se sube a Google Drive en
+  segundo plano vía la acción `drive-factura`; el link queda en
+  `007_facturas.drive_link` y se ve como botón/link "Ver factura en Drive"
+  en el pedido y en la tabla de Contabilidad. **Pendiente correr en el SQL
+  Editor:** `supabase/data/07_drive_link.sql` (agrega esa columna) — mientras
+  no se corra, el link se ve en la sesión pero no se guarda entre visitas.
 
 ---
 
