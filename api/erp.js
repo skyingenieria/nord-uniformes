@@ -600,6 +600,106 @@ async function postFacturar(req, res) {
   res.json({ ok: true, factura: { ...factura, nro: `${factura.ptoVta}-${factura.cbteNro}`, qr }, registrado });
 }
 
+// ── Facturación desde /gestion (Supabase) ────────────────────────────────────
+// Accion nueva y separada de "facturar" de arriba: esa es para /erp (Sheets,
+// token legacy ADMIN_PASSWORD). Esta es para la app nueva /gestion, que usa
+// Supabase Auth. No toca Sheets. Valida el propio access token de Supabase del
+// usuario logueado (via GoTrue) y lo reusa tal cual para escribir en
+// 007_facturas por REST — así las RLS ya definidas (cualquier usuario
+// autenticado con perfil en 012_profiles) deciden el permiso, sin necesitar
+// SUPABASE_SERVICE_ROLE_KEY en Vercel (que a propósito no está configurada).
+// URL y anon key son las mismas que ya viajan hardcodeadas y públicas en
+// gestion.html (no son secretas: la seguridad la da RLS, no la key).
+const SUPABASE_URL_APP = "https://piaagjddrrcbijienvll.supabase.co";
+const SUPABASE_ANON_KEY_APP = "sb_publishable_yd1wUT0mgOFUcqzbJl_9Cw_WZ8AX6Vp";
+
+async function verifySupabaseUser(token) {
+  if (!token) return null;
+  try {
+    const r = await fetch(`${SUPABASE_URL_APP}/auth/v1/user`, {
+      headers: { apikey: SUPABASE_ANON_KEY_APP, Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch {
+    return null;
+  }
+}
+
+function fchToIso(fch) {
+  const s = String(fch || "");
+  return s.length === 8 ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` : null;
+}
+
+// POST facturar-supabase — emite Factura C para un pedido de /gestion y la
+// registra en 007_facturas. Body: { pedidoId, clienteId?, importe, docTipo?, docNro? }
+// Auth: Authorization: Bearer <access_token de Supabase Auth> (no el token legacy).
+async function postFacturarSupabase(req, res) {
+  const token = (req.headers.authorization || "").replace("Bearer ", "").trim();
+  const user = await verifySupabaseUser(token);
+  if (!user) return res.status(401).json({ error: "No autorizado" });
+
+  const { pedidoId, clienteId = null, importe, docTipo = 99, docNro = "" } = req.body || {};
+  if (!pedidoId) return res.status(400).json({ error: "Falta pedidoId" });
+  const imp = Number(importe);
+  if (!imp || imp <= 0) return res.status(400).json({ error: "Importe inválido" });
+
+  const faltan = arca.faltanCredenciales();
+  if (faltan.length) return res.status(400).json({ error: "Faltan credenciales de ARCA en Vercel: " + faltan.join(", ") });
+
+  const sbHeaders = { apikey: SUPABASE_ANON_KEY_APP, Authorization: `Bearer ${token}` };
+
+  // No duplicar: si el pedido ya tiene factura, la devuelve.
+  try {
+    const yaR = await fetch(`${SUPABASE_URL_APP}/rest/v1/007_facturas?pedido_id=eq.${encodeURIComponent(pedidoId)}&select=*`, { headers: sbHeaders });
+    if (yaR.ok) {
+      const ya = await yaR.json();
+      if (ya.length && ya[0].cae) return res.json({ ok: true, yaFacturado: true, factura: ya[0] });
+    }
+  } catch (e) {
+    // si falla la lectura seguimos e intentamos facturar igual
+  }
+
+  let factura;
+  try {
+    factura = await arca.emitirFacturaC({ docTipo: parseInt(docTipo, 10), docNro, importe: imp, concepto: 1 });
+  } catch (e) {
+    return res.status(502).json({ ok: false, error: e.message });
+  }
+
+  const qr = afipQrUrl(factura, docTipo, docNro);
+  const dt = parseInt(docTipo, 10);
+  const tipoReceptor = dt === 99 ? "Consumidor Final" : (dt === 80 ? "CUIT" : "DNI");
+
+  // Registrar (best-effort: la factura ya se emitió en ARCA).
+  let registrado = true;
+  let facturaRow = null;
+  try {
+    const ins = await fetch(`${SUPABASE_URL_APP}/rest/v1/007_facturas`, {
+      method: "POST",
+      headers: { ...sbHeaders, "Content-Type": "application/json", "Prefer": "return=representation" },
+      body: JSON.stringify({
+        pedido_id: pedidoId, cliente_id: clienteId, importe: factura.importe, tipo_receptor: tipoReceptor,
+        numero_comprobante: `${factura.ptoVta}-${factura.cbteNro}`, cae: factura.cae,
+        cae_vencimiento: fchToIso(factura.caeVto), fecha: fchToIso(factura.fecha) || new Date().toISOString().slice(0, 10),
+        ambiente: factura.env, qr_url: qr,
+      }),
+    });
+    if (ins.ok) {
+      const rows = await ins.json();
+      facturaRow = rows[0] || null;
+    } else {
+      registrado = false;
+      console.error("Factura emitida pero no registrada en Supabase:", await ins.text());
+    }
+  } catch (e) {
+    registrado = false;
+    console.error("Factura emitida pero no registrada:", e.message);
+  }
+
+  res.json({ ok: true, factura: facturaRow || { pedido_id: pedidoId, numero_comprobante: `${factura.ptoVta}-${factura.cbteNro}`, cae: factura.cae, importe: factura.importe, qr_url: qr }, registrado });
+}
+
 // ── Guardar PDF de la factura en Google Drive (OAuth de la cuenta del usuario) ─
 const DRIVE_FOLDER = process.env.DRIVE_FACTURAS_FOLDER || "1pz9XMcDXWBeWMdR5JHs7C5H2CQMl4kLe";
 
@@ -653,6 +753,10 @@ module.exports = async (req, res) => {
   try {
     // Accion publica (no requiere token)
     if (action === "validate-code") return await validateCode(req, res);
+
+    // Accion de /gestion (Supabase Auth): tiene su propia validación de token
+    // adentro (no el esquema legacy de abajo, que es solo para /erp).
+    if (action === "facturar-supabase" && req.method === "POST") return await postFacturarSupabase(req, res);
 
     // Resto: requiere token de admin
     const token = (req.headers.authorization || "").replace("Bearer ", "").trim();

@@ -256,6 +256,7 @@
     <button data-tab="proveedores"    class="desk-only" onclick="go('proveedores')"><span class="ic">🏭</span>Proveedores</button>
     <button data-tab="compras"        class="desk-only" onclick="go('compras')"><span class="ic">📥</span>Compras</button>
     <button data-tab="precios"        class="desk-only" onclick="go('precios')"><span class="ic">💲</span>Precios</button>
+    <button data-tab="contabilidad"   class="desk-only" onclick="go('contabilidad')"><span class="ic">📊</span>Contabilidad</button>
     <button data-tab="configuracion"  class="desk-only" onclick="go('configuracion')"><span class="ic">⚙️</span>Configuración</button>
   </nav>
 </div>
@@ -280,7 +281,7 @@ let PROFILE = null;   // { id, nombre, rol }
 let TAB = "inicio";
 let navStack = [];
 let sheetOpen = false;
-const DATA = { catalogo:null, clientes:null, pedidos:null, proveedores:null, compras:null, preciosCostos:null };
+const DATA = { catalogo:null, clientes:null, pedidos:null, proveedores:null, compras:null, preciosCostos:null, facturas:null };
 let cart = [];
 let venta = { cliente:null, descuento:0, envio:0, pago:"Tarjeta (Nave)" };
 
@@ -320,7 +321,7 @@ function showApp(){
 
 // ─────────────────────────────────────────────────────────────── NAV
 const TITLES = {inicio:"Inicio", stock:"Stock", vender:"Vender", pedidos:"Pedidos", clientes:"Clientes",
-  proveedores:"Proveedores", compras:"Compras", precios:"Precios y costos", configuracion:"Configuración"};
+  proveedores:"Proveedores", compras:"Compras", precios:"Precios y costos", contabilidad:"Contabilidad", configuracion:"Configuración"};
 function go(tab,opts){
   opts=opts||{};
   if(opts.push!==false && TAB!==tab){ navStack.push(TAB); history.pushState({tab},""); }
@@ -335,7 +336,7 @@ function go(tab,opts){
 function goBack(){ if(sheetOpen){ closeSheet(); return; } if(navStack.length) history.back(); }
 function updateBack(){ const b=$("#back-btn"); if(b) b.style.display=(sheetOpen||navStack.length>0)?"grid":"none"; }
 function refresh(){ DATA[mapData(TAB)] = null; render(true); toast("Actualizado"); }
-function mapData(tab){ return (tab==="vender"||tab==="stock"||tab==="configuracion")?"catalogo": tab==="precios"?"preciosCostos": tab; }
+function mapData(tab){ return (tab==="vender"||tab==="stock"||tab==="configuracion")?"catalogo": tab==="precios"?"preciosCostos": tab==="contabilidad"?"facturas": tab; }
 
 // ─────────────────────────────────────────────────────────────── DATA (Supabase)
 // Catálogo completo: prendas + talles + stock actual + precio vigente, en la
@@ -426,6 +427,7 @@ async function render(force){
   if(TAB==="proveedores")   return viewProveedores(v,force);
   if(TAB==="compras")       return viewCompras(v,force);
   if(TAB==="precios")       return viewPrecios(v,force);
+  if(TAB==="contabilidad")  return viewContabilidad(v,force);
   if(TAB==="configuracion") return viewConfiguracion(v,force);
 }
 function loading(v){ v.innerHTML='<div class="spinner"></div>'; }
@@ -1050,8 +1052,14 @@ async function openPedido(pedidoId){
 
     <div class="section-h" style="margin:24px 2px 8px">🧾 Factura</div>
     ${p.factura ? `<div class="tot-line"><span>Comprobante C</span><span>N° ${esc(p.factura.numero_comprobante)}</span></div>
+      <div class="tot-line"><span>CAE</span><span>${esc(p.factura.cae||"")}</span></div>
       <div style="color:var(--green);font-weight:700;font-size:13px;margin:8px 0 12px">✅ Ya facturado</div>`
-    : `<p style="font-size:12.5px;color:var(--muted)">Facturación ARCA: próximamente en esta app (por ahora se sigue haciendo desde /erp).</p>`}
+    : `<div class="field"><label>Tipo de comprobante</label><select id="fa-doctipo" onchange="faToggleDoc()">
+         <option value="99">Consumidor Final</option><option value="96">DNI</option><option value="80">CUIT</option>
+       </select></div>
+       <div class="field" id="fa-docnro-wrap" style="display:none"><label>N° de documento</label><input id="fa-docnro" inputmode="numeric" placeholder="Sin puntos ni guiones"></div>
+       <div class="tot-line"><span>Importe a facturar</span><span>${fmt(p.total_venta)}</span></div>
+       <button class="btn" id="fa-save" onclick='facturarPedido(${JSON.stringify(p.id)})'>Emitir Factura C</button>`}
 
     <button class="btn" style="margin-top:24px;background:var(--red)" id="del-pedido" ${p.factura?'disabled':''} onclick='eliminarPedido(${JSON.stringify(p.id)})'>🗑 Eliminar pedido</button>
     ${p.factura?'<p style="font-size:11.5px;color:var(--muted);margin-top:6px">No se puede eliminar: ya tiene factura emitida.</p>':'<p style="font-size:11.5px;color:var(--muted);margin-top:6px">Para pedidos de prueba. Borra el pedido, sus ítems y sus pagos — no se puede deshacer.</p>'}`);
@@ -1138,6 +1146,29 @@ async function oiChangeTalle(idx,talleId){
   }catch(e){}
   const row=$("#oi-row-"+idx); if(row) row.outerHTML=oiRowHtml(it,idx);
   oiPersist(idx);
+}
+function faToggleDoc(){
+  const v=$("#fa-doctipo")?.value;
+  const w=$("#fa-docnro-wrap"); if(w) w.style.display=(v==="99")?"none":"block";
+}
+async function getAccessToken(){
+  const { data:{session} } = await getClient().auth.getSession();
+  return session?.access_token||"";
+}
+async function facturarPedido(pedidoId){
+  const p=(DATA.pedidos||[]).find(x=>x.id===pedidoId); if(!p) return;
+  const btn=$("#fa-save"); btn.disabled=true; btn.textContent="Emitiendo…";
+  try{
+    const token=await getAccessToken(); if(!token) throw new Error("Sesión inválida, volvé a iniciar sesión");
+    const docTipo=$("#fa-doctipo")?.value||"99";
+    const docNro=$("#fa-docnro")?.value.trim()||"";
+    const r=await fetch("/api/erp?action=facturar-supabase",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({
+      pedidoId:p.id, clienteId:p.cliente_id||null, importe:p.total_venta, docTipo, docNro,
+    })});
+    const d=await r.json();
+    if(!r.ok || d.error) throw new Error(d.error||"No se pudo facturar");
+    DATA.pedidos=null; DATA.facturas=null; toast(d.yaFacturado?"El pedido ya estaba facturado":"Factura emitida"); openPedido(pedidoId);
+  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Emitir Factura C"; }
 }
 async function eliminarPedido(pedidoId){
   const p=(DATA.pedidos||[]).find(x=>x.id===pedidoId);
@@ -1503,6 +1534,83 @@ async function aplicarCosto(talleId){
     if(error) throw error;
     DATA.preciosCostos=null; closeSheet(); toast("Costo actualizado"); render(true);
   }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Guardar nuevo costo (desde hoy)"; }
+}
+
+// ─────────────────────────────────────────────────────────────── CONTABILIDAD
+async function fetchFacturas(){
+  const c = getClient();
+  const [{ data: facturas, error }, { data: pedidos }, { data: clientes }] = await Promise.all([
+    c.from("007_facturas").select("*").order("fecha",{ascending:false}),
+    c.from("004_pedidos").select("id,numero,cliente_id"),
+    c.from("003_clientes").select("id,nombre,apellido"),
+  ]);
+  if(error) throw error;
+  const pedMap = Object.fromEntries((pedidos||[]).map(p=>[p.id,p]));
+  const cliMap = Object.fromEntries((clientes||[]).map(c2=>[c2.id,c2]));
+  return (facturas||[]).map(f=>{
+    const ped = pedMap[f.pedido_id];
+    const cli = cliMap[f.cliente_id] || (ped ? cliMap[ped.cliente_id] : null);
+    return { ...f, pedidoNumero: ped?ped.numero:"", clienteNombre: cli?`${cli.nombre||""} ${cli.apellido||""}`.trim():"" };
+  });
+}
+async function getFacturas(force){ if(force||!DATA.facturas) DATA.facturas = await fetchFacturas(); return DATA.facturas; }
+async function viewContabilidad(v,force){
+  try{
+    if(force||!DATA.facturas){ loading(v); await getFacturas(true); }
+    window._faQ = window._faQ||"";
+    window._faSort = window._faSort||{field:"fecha",dir:-1};
+    const list0=DATA.facturas||[];
+    const totalFacturado=list0.reduce((s,f)=>s+(Number(f.importe)||0),0);
+    const hoy=new Date(); const ym=hoy.toISOString().slice(0,7);
+    const totalMes=list0.filter(f=>String(f.fecha||"").slice(0,7)===ym).reduce((s,f)=>s+(Number(f.importe)||0),0);
+    v.innerHTML=`
+      <div class="view-title">Contabilidad</div>
+      <div class="two" style="margin-bottom:14px">
+        <div class="card" style="text-align:center;padding:16px"><div style="font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase">Total facturado</div><div style="font-size:22px;font-weight:800;margin-top:4px">${fmt(totalFacturado)}</div></div>
+        <div class="card" style="text-align:center;padding:16px"><div style="font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase">Facturado este mes</div><div style="font-size:22px;font-weight:800;margin-top:4px">${fmt(totalMes)}</div></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-6px">${list0.length} factura${list0.length!==1?"s":""} emitida${list0.length!==1?"s":""}. Tocá los encabezados para ordenar.</p>
+      <div class="search"><span class="mag">🔎</span><input id="fa-q" placeholder="Buscar cliente o N° de pedido…" value="${esc(window._faQ)}"></div>
+      <div class="table-wrap"><table class="pr-table" id="fa-table">
+        <thead><tr>
+          <th data-field="fecha">Fecha</th>
+          <th data-field="numero_comprobante">Comprobante</th>
+          <th data-field="pedidoNumero">Pedido</th>
+          <th data-field="clienteNombre">Cliente</th>
+          <th data-field="tipo_receptor">Receptor</th>
+          <th data-field="importe">Importe</th>
+        </tr></thead>
+        <tbody id="fa-tbody"></tbody>
+      </table></div>`;
+    const inp=$("#fa-q");
+    const draw=()=>{
+      const q=inp.value.trim().toLowerCase(); window._faQ=inp.value;
+      const {field,dir}=window._faSort;
+      const list=(DATA.facturas||[]).filter(f=>!q||`${f.clienteNombre||""} ${f.pedidoNumero||""}`.toLowerCase().includes(q)).sort((a,b)=>{
+        const av=a[field], bv=b[field];
+        if(typeof av==="string"||typeof bv==="string") return String(av||"").localeCompare(String(bv||""),"es")*dir;
+        return ((av??-Infinity)-(bv??-Infinity))*dir;
+      });
+      $("#fa-tbody").innerHTML=list.length?list.map(f=>`<tr>
+          <td>${esc(f.fecha||"")}</td><td>${esc(f.numero_comprobante||"")}</td><td>${esc(f.pedidoNumero||"—")}</td>
+          <td>${esc(f.clienteNombre||"—")}</td><td>${esc(f.tipo_receptor||"")}</td><td style="font-weight:700">${fmt(f.importe)}</td></tr>`).join("")
+        : `<tr><td colspan="6"><div class="empty">Sin facturas todavía</div></td></tr>`;
+      $("#fa-table").querySelectorAll("th").forEach(th=>{
+        th.classList.toggle("sorted", th.dataset.field===field);
+        th.querySelectorAll(".arrow").forEach(a=>a.remove());
+        if(th.dataset.field===field) th.insertAdjacentHTML("beforeend", `<span class="arrow">${dir>0?"▲":"▼"}</span>`);
+      });
+    };
+    inp.oninput=draw;
+    $("#fa-table").querySelectorAll("th").forEach(th=>{
+      th.onclick=()=>{
+        const f=th.dataset.field;
+        if(window._faSort.field===f) window._faSort.dir*=-1; else window._faSort={field:f,dir:f==="fecha"?-1:1};
+        draw();
+      };
+    });
+    draw();
+  }catch(e){ errBox(v,e); }
 }
 
 // ─────────────────────────────────────────────────────────────── SHEET
