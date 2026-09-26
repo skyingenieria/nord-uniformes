@@ -17,7 +17,6 @@
 const { google } = require("googleapis");
 const crypto = require("crypto");
 const arca = require("./arca/_client");
-const { supabase, decrementStock } = require("./_supabase");
 
 // ── Auth ──────────────────────────────────────────────────────────────────
 function makeAuth() {
@@ -82,50 +81,81 @@ async function computeNextId(sheets) {
   return `${currentYear}-${String(maxNum + 1).padStart(2, "0")}`;
 }
 
-// ── GET stock (Supabase — ver supabase/schema.sql) ───────────────────────────
-const SIZE_ORDER_STOCK = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
-function talleSortStock(a, b) {
-  const na = Number(a.talle), nb = Number(b.talle);
-  const aNum = !isNaN(na) && a.talle.trim() !== "", bNum = !isNaN(nb) && b.talle.trim() !== "";
-  if (aNum && bNum) return na - nb;
-  if (aNum) return -1; if (bNum) return 1;
-  const ai = SIZE_ORDER_STOCK.indexOf(a.talle.toUpperCase()), bi = SIZE_ORDER_STOCK.indexOf(b.talle.toUpperCase());
-  if (ai !== -1 && bi !== -1) return ai - bi;
-  return a.talle.localeCompare(b.talle);
-}
-
+// ── GET stock ────────────────────────────────────────────────────────────────
 async function getStock(res, colegioFilter) {
-  let query = supabase()
-    .from("products")
-    .select(`
-      colegio, nombre, genero, categorias, foto1,
-      product_variants ( talle, sku, stock, costo, precio_transferencia, precio_lista )
-    `);
-  if (colegioFilter) query = query.eq("colegio", colegioFilter);
+  const sheets = sheetsClient();
+  const sid = process.env.SPREADSHEET_ID;
+  const [stockRes, preciosRes, catRes] = await Promise.all([
+    sheets.spreadsheets.values.get({ spreadsheetId: sid, range: "'Stock'!A2:J5000", valueRenderOption: "UNFORMATTED_VALUE" }),
+    sheets.spreadsheets.values.get({ spreadsheetId: sid, range: "'Lista de precios'!A2:G5000", valueRenderOption: "UNFORMATTED_VALUE" }),
+    sheets.spreadsheets.values.get({ spreadsheetId: sid, range: "'Listado de Prendas'!A2:I5000", valueRenderOption: "FORMATTED_VALUE" }),
+  ]);
 
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
+  // Lista de precios: F(5)=Precio Lista (tarjeta) · G(6)=Precio Trans (transferencia) · E(4)=Costo
+  const precioMap = {}, listaMap = {}, costoMap = {};
+  for (const r of (preciosRes.data.values || [])) {
+    const sku = String(r[3] || "").trim();
+    if (!sku) continue;
+    const lista = Math.round(Number(r[5]) || 0);
+    const trans = Math.round(Number(r[6]) || 0);
+    const c     = Math.round(Number(r[4]) || 0);
+    if (trans || lista) precioMap[sku] = trans || lista; // base = transferencia
+    if (lista || trans) listaMap[sku]  = lista || trans; // tarjeta / lista
+    if (c) costoMap[sku] = c;
+  }
+  // Filas de encabezado a ignorar (algunas hojas tienen el header en la fila 2)
+  const isHeader = (colegio, nombre, sku) =>
+    colegio === "Colegio" || nombre === "Prenda" || sku === "SKU";
 
-  const products = (data || [])
-    .map(p => ({
-      colegio: p.colegio,
-      nombre: p.nombre,
-      foto: p.foto1 || "",
-      genero: p.genero || "",
-      categorias: p.categorias || [],
-      talles: (p.product_variants || [])
-        .map(v => ({
-          talle: String(v.talle),
-          sku: v.sku,
-          stock: Math.round(Number(v.stock) || 0),
-          precio: Math.round(Number(v.precio_transferencia) || 0),
-          precioLista: Math.round(Number(v.precio_lista) || 0),
-          costo: Math.round(Number(v.costo) || 0),
-        }))
-        .sort(talleSortStock),
-    }))
-    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+  // Meta por prenda desde Listado de Prendas: foto (H=7), genero (F=5),
+  // categorias (E=4, separadas por coma).
+  const metaMap = {};
+  for (const r of (catRes.data.values || [])) {
+    const nombre = String(r[1] || "").trim();
+    if (!nombre || nombre === "Prenda") continue;
+    if (!metaMap[nombre]) metaMap[nombre] = { foto: "", genero: "", cats: new Set() };
+    const m = metaMap[nombre];
+    const foto = String(r[7] || "").trim(); if (foto && !m.foto) m.foto = foto;
+    const gen  = String(r[5] || "").trim(); if (gen && !m.genero) m.genero = gen;
+    String(r[4] || "").split(",").map(c => c.trim()).filter(Boolean).forEach(c => m.cats.add(c));
+  }
 
+  const productsMap = {};
+  for (const r of (stockRes.data.values || [])) {
+    const colegio = String(r[0] || "").trim();
+    const nombre  = String(r[1] || "").trim();
+    const sku     = String(r[3] || "").trim();
+    // Talles de letra (S/M/L/XL) tienen la col Talle vacia: se toma del SKU
+    let talle = String(r[2] ?? "").trim();
+    if (!talle && sku) talle = sku.split("-").pop();
+    if (!nombre || !talle) continue;
+    if (isHeader(colegio, nombre, sku)) continue;
+    if (colegioFilter && colegio !== colegioFilter) continue;
+    const stock  = Math.round(Number(r[7]) || 0);         // H = Stock actual
+    const precio = precioMap[sku] || Math.round(Number(r[9]) || 0); // transferencia (Precio Unit de Stock como fallback)
+    const precioLista = listaMap[sku] || precio;                    // lista / tarjeta
+    const costo  = costoMap[sku]  || Math.round(Number(r[8]) || 0); // Costo Unit
+    const key = `${colegio}||${nombre}`;
+    if (!productsMap[key]) {
+      const meta = metaMap[nombre] || { foto: "", genero: "", cats: new Set() };
+      productsMap[key] = { colegio, nombre, foto: meta.foto || "",
+        genero: meta.genero || "", categorias: [...meta.cats], talles: [] };
+    }
+    productsMap[key].talles.push({ talle, sku, stock, precio, precioLista, costo });
+  }
+
+  const SIZE_ORDER = ["XS","S","M","L","XL","XXL","XXXL"];
+  const talleSort = (a, b) => {
+    const na = Number(a.talle), nb = Number(b.talle);
+    const aNum = !isNaN(na) && a.talle.trim() !== "", bNum = !isNaN(nb) && b.talle.trim() !== "";
+    if (aNum && bNum) return na - nb;
+    if (aNum) return -1; if (bNum) return 1;
+    const ai = SIZE_ORDER.indexOf(a.talle.toUpperCase()), bi = SIZE_ORDER.indexOf(b.talle.toUpperCase());
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    return a.talle.localeCompare(b.talle);
+  };
+  const products = Object.values(productsMap).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  products.forEach(p => p.talles.sort(talleSort));
   res.setHeader("Cache-Control", "no-store");
   res.json(products);
 }
@@ -379,8 +409,6 @@ async function postPedido(req, res) {
     insertDataOption: "OVERWRITE",
     requestBody: { values: filas },
   });
-
-  await Promise.all(items.map(it => decrementStock(colegio, it.nombre, it.talle, it.qty || 1)));
 
   res.json({ success: true, idPedido, itemsGuardados: filas.length });
 }

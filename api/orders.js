@@ -1,5 +1,4 @@
 const { google } = require("googleapis");
-const { decrementStock } = require("./_supabase");
 
 function makeAuth() {
   return new google.auth.GoogleAuth({
@@ -58,8 +57,6 @@ module.exports = async (req, res) => {
       insertDataOption: "OVERWRITE",
       requestBody: { values: filasOrdenes },
     });
-
-    await Promise.all(items.map(item => decrementStock("WS", item.nombre, item.talle, item.qty || 1)));
 
     // Cargo de envío: se registra en la col F "Cargo Envio" de la fila del pedido
     // en la hoja 'Pedidos' (que se genera sola por fórmula tras el append). Escritura
