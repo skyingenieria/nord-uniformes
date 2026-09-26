@@ -3,13 +3,13 @@
 -- Reemplaza las hojas 'Clientes', 'Pedidos', 'Ordenes', 'Facturas' y 'Codigos'
 -- del Sheet ERP. Requiere haber corrido antes supabase/schema.sql (catálogo).
 --
--- Correr una sola vez en el SQL Editor de Supabase (Project → SQL Editor → New query).
+-- Correr una sola vez en el SQL Editor de Supabase (Project -> SQL Editor -> New query).
 
 create extension if not exists pgcrypto;
 
--- ── Roles de usuario ──────────────────────────────────────────────────────────
+-- Roles de usuario --
 -- Un registro por cada login de Supabase Auth (creado a mano desde el
--- dashboard de Supabase: Authentication → Users → Add user, y después un
+-- dashboard de Supabase: Authentication -> Users -> Add user, y después un
 -- insert acá con su rol). "admin" ve todo; "vendedor" solo la parte de venta.
 create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -21,7 +21,7 @@ create table if not exists profiles (
 alter table profiles enable row level security;
 create policy "select_own_profile" on profiles for select using (auth.uid() = id);
 
--- ── Clientes ──────────────────────────────────────────────────────────────────
+-- Clientes --
 create sequence if not exists clientes_nro_seq;
 
 create table if not exists clientes (
@@ -38,7 +38,7 @@ create table if not exists clientes (
 create index if not exists clientes_codigo_idx on clientes (codigo);
 alter table clientes enable row level security;
 
--- ── Códigos de descuento ──────────────────────────────────────────────────────
+-- Códigos de descuento --
 create table if not exists codigos_descuento (
   id uuid primary key default gen_random_uuid(),
   codigo text not null unique,
@@ -51,7 +51,7 @@ create table if not exists codigos_descuento (
 );
 alter table codigos_descuento enable row level security;
 
--- ── Pedidos ───────────────────────────────────────────────────────────────────
+-- Pedidos --
 create table if not exists pedidos (
   id uuid primary key default gen_random_uuid(),
   numero text unique,                 -- formato "YY-NN", lo completa el trigger de abajo
@@ -105,7 +105,7 @@ create trigger trg_set_pedido_numero
 before insert on pedidos
 for each row execute function set_pedido_numero();
 
--- ── Items del pedido (prendas vendidas) ───────────────────────────────────────
+-- Items del pedido (prendas vendidas) --
 -- Precio y costo se copian del talle al momento de la venta (snapshot): si el
 -- precio en el catálogo cambia después, no altera pedidos ya facturados.
 create table if not exists pedido_items (
@@ -121,7 +121,7 @@ create table if not exists pedido_items (
 create index if not exists pedido_items_pedido_id_idx on pedido_items (pedido_id);
 alter table pedido_items enable row level security;
 
--- ── Pagos (pueden ser varios por pedido: parciales) ───────────────────────────
+-- Pagos (pueden ser varios por pedido: parciales) --
 create table if not exists pagos (
   id uuid primary key default gen_random_uuid(),
   pedido_id uuid not null references pedidos(id) on delete cascade,
@@ -134,7 +134,7 @@ create table if not exists pagos (
 create index if not exists pagos_pedido_id_idx on pagos (pedido_id);
 alter table pagos enable row level security;
 
--- ── Facturas (Factura C — ARCA/AFIP) ─────────────────────────────────────────
+-- Facturas (Factura C — ARCA/AFIP) --
 create table if not exists facturas (
   id uuid primary key default gen_random_uuid(),
   pedido_id uuid not null unique references pedidos(id),
@@ -151,7 +151,7 @@ create table if not exists facturas (
 );
 alter table facturas enable row level security;
 
--- ── Vista: total y saldo por pedido ───────────────────────────────────────────
+-- Vista: total y saldo por pedido --
 -- Reemplaza las columnas calculadas por fórmula que tenía la hoja 'Pedidos'
 -- (Total Venta, Monto Pago, Saldo, etc.).
 create or replace view pedidos_con_saldo as
