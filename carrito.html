@@ -131,6 +131,25 @@
     .btn-outline{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--azul);color:var(--azul);padding:12px 28px;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;transition:all .2s;border-radius:10px}
     .btn-outline:hover{background:var(--azul-900);color:var(--crema);border-color:var(--azul-900);box-shadow:0 4px 12px rgba(15,23,46,.2)}
 
+    /* Precio tachado (lista) + precio con descuento al lado */
+    .price-strike{text-decoration:line-through;color:var(--azul-400);font-size:12px;margin-right:6px;font-weight:600}
+    .price-now.promo{color:#2e7d52}
+    .promo-tag{color:#2e7d52;font-weight:800;font-size:11px;letter-spacing:.02em}
+
+    /* Tarjeta de oferta — más llamativa, mismos colores de marca */
+    .promo-card{position:relative;border:1.5px solid var(--dorado);background:linear-gradient(135deg,#fffaf0,#fdf2dc);overflow:hidden}
+    .promo-card::before{content:"";position:absolute;top:0;left:0;width:5px;height:100%;background:linear-gradient(180deg,var(--dorado),var(--dorado-700))}
+    .promo-badge{position:absolute;top:18px;right:18px;background:var(--azul-900);color:#fff;font-weight:900;font-size:13px;padding:6px 13px;border-radius:999px;letter-spacing:.01em;box-shadow:0 3px 10px rgba(15,23,46,.25)}
+    .promo-eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--dorado-700);margin-bottom:8px}
+    .promo-title{font-size:17px;font-weight:800;margin-bottom:5px;padding-right:76px;letter-spacing:-.01em}
+    .promo-sub{font-size:12.5px;color:var(--azul-600);margin-bottom:16px;line-height:1.5}
+    .promo-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .promo-select{flex:1;min-width:120px;border:1px solid var(--niebla-200);background:#fff;padding:11px 13px;border-radius:8px;font-family:var(--sans);font-size:14px;color:var(--azul-900)}
+    .promo-btn{background:var(--azul-900);color:#fff;border-color:var(--azul-900);flex:0 0 auto}
+    .promo-btn:hover{background:var(--azul);color:#fff;border-color:var(--azul)}
+
+    .ahorro-row{color:#2e7d52;font-weight:700;background:#eaf6ef;padding:9px 11px;border-radius:8px;margin:4px 0}
+
     @media(max-width:900px){
       .checkout-grid{grid-template-columns:1fr}
       .summary-panel{position:static}
@@ -175,9 +194,12 @@ function listaDe(precio, precioLista) { return (precioLista && precioLista > 0) 
 
 // ── Promo "Chomba Blanca" 30% off ────────────────────────────────────────
 // Con cualquier otra prenda que no sea medias, se puede sumar una Chomba
-// Blanca (el talle que quieras) con 30% de descuento — hasta 1 unidad. La
-// misma regla se re-valida server-side en api/orders.js al crear el pedido,
-// así que esto de acá es sólo para mostrar el precio correcto en pantalla.
+// Blanca (el talle que quieras) con 30% de descuento sobre el precio de
+// LISTA — siempre sobre lista, sea cual sea el método de pago — y hasta 1
+// unidad en total por pedido (si ya hay una, se puede sumar otra pero va a
+// precio de lista). La misma regla se re-valida server-side en
+// api/orders.js al crear el pedido, así que esto de acá es sólo para
+// mostrar el precio correcto en pantalla y cobrar bien vía Nave.
 const SB_URL = "https://piaagjddrrcbijienvll.supabase.co";
 const SB_ANON_KEY = "sb_publishable_yd1wUT0mgOFUcqzbJl_9Cw_WZ8AX6Vp";
 const PROMO_NOMBRE = "Chomba Blanca";
@@ -213,17 +235,70 @@ async function loadChombaPromo() {
 }
 function cartHasQualifyingItem(cart) { return cart.some(i => i.nombre !== PROMO_NOMBRE && !/^medias?\b/i.test(i.nombre || "")); }
 function cartHasPromoItem(cart) { return cart.some(i => i.nombre === PROMO_NOMBRE); }
-function promoActive(cart) { return cartHasQualifyingItem(cart) && cartHasPromoItem(cart); }
-// Precio "efectivo" de una línea (lista o transferencia según corresponda),
-// con el 30% aplicado a como mucho 1 unidad si es la línea de la promo.
-function itemEfectivo(base, i, cart) {
-  if (i.nombre !== PROMO_NOMBRE || !promoActive(cart)) return base;
-  const promoQty = Math.min(i.qty, 1);
-  const conDescuento = Math.round(base * (1 - PROMO_PCT / 100));
-  return Math.round((conDescuento * promoQty + base * (i.qty - promoQty)) / i.qty);
+// Cuántas unidades de cada línea llevan el 30% — como mucho 1 EN TOTAL entre
+// todas las líneas de "Chomba Blanca" del carrito (si hay dos talles
+// distintos, sólo la primera unidad de la primera línea lo lleva).
+function chombaDiscountFlags(cart) {
+  const flags = new Array(cart.length).fill(0);
+  if (!cartHasQualifyingItem(cart)) return flags;
+  let remaining = 1;
+  cart.forEach((i, idx) => {
+    if (i.nombre !== PROMO_NOMBRE || remaining <= 0) return;
+    const used = Math.min(i.qty, remaining);
+    flags[idx] = used;
+    remaining -= used;
+  });
+  return flags;
 }
-function itemListaEfectivo(i, cart) { return itemEfectivo(listaDe(i.precio, i.precioLista), i, cart); }
-function itemTransferEfectivo(i, cart) { return itemEfectivo(Number(i.precio) || 0, i, cart); }
+// Precio de lista SIN ningún descuento — es lo que se muestra tachado.
+function itemListaOriginal(i) { return listaDe(i.precio, i.precioLista); }
+// Precio efectivo por unidad de una línea para el método de pago dado.
+// El 30% de la promo se calcula siempre sobre precio de lista y reemplaza
+// (no se suma a) el descuento normal por transferencia en esa línea.
+function itemPrecioEfectivo(i, idx, cart, metodo, flags) {
+  const lista = itemListaOriginal(i);
+  const promoQty = flags[idx] || 0;
+  const normal = metodo === "nave" ? lista : (Number(i.precio) || 0);
+  if (promoQty <= 0) return normal;
+  const conPromo = Math.round(lista * (1 - PROMO_PCT / 100));
+  return Math.round((conPromo * promoQty + normal * (i.qty - promoQty)) / i.qty);
+}
+function computeTotals(cart, metodo, flags) {
+  const totalLista = cart.reduce((s, i) => s + itemListaOriginal(i) * i.qty, 0);
+  const totalEfectivo = cart.reduce((s, i, idx) => s + itemPrecioEfectivo(i, idx, cart, metodo, flags) * i.qty, 0);
+  return { totalLista, totalEfectivo, ahorro: totalLista - totalEfectivo };
+}
+function priceHtmlFor(i, idx, cart, metodo, flags) {
+  const lista = itemListaOriginal(i);
+  const efectivo = itemPrecioEfectivo(i, idx, cart, metodo, flags);
+  const isPromoLine = (flags[idx] || 0) > 0;
+  if (efectivo >= lista) return fmt(lista * i.qty);
+  return `<span class="price-strike">${fmt(lista * i.qty)}</span><span class="price-now${isPromoLine ? " promo" : ""}">${fmt(efectivo * i.qty)}</span>`;
+}
+function buildItemsHtml(cart, metodo, flags) {
+  return cart.map((i, idx) => {
+    const isPromoLine = (flags[idx] || 0) > 0;
+    return `
+    <div class="cart-item">
+      <div class="item-info">
+        <p class="item-name">${i.nombre}${isPromoLine ? ' <span class="promo-tag">· 30% OFF</span>' : ''}</p>
+        <p class="item-talle">Talle ${i.talle}</p>
+      </div>
+      <div class="qty-wrap">
+        <button class="qty-btn" onclick="changeQty('${i.key}',-1)">−</button>
+        <span class="qty-num">${i.qty}</span>
+        <button class="qty-btn" onclick="changeQty('${i.key}',1)">+</button>
+      </div>
+      <div class="item-price">${priceHtmlFor(i, idx, cart, metodo, flags)}</div>
+      <button class="item-remove" onclick="removeItem('${i.key}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+  }).join("");
+}
+function buildSummaryLines(cart, metodo, flags) {
+  return cart.map((i, idx) => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${priceHtmlFor(i, idx, cart, metodo, flags)}</span></div>`).join("");
+}
 function agregarChombaPromo() {
   const sel = document.getElementById("promo-talle");
   const talle = sel?.value;
@@ -277,22 +352,23 @@ function onMetodoPagoChange() {
     btn.textContent = "IR A PAGAR";
     btn.classList.remove("nave-btn");
   }
-  // Mostrar/ocultar descuento por transferencia y actualizar total
+  // Los precios por línea (tachado lista + precio con descuento) dependen del
+  // método elegido, así que hay que re-pintar ítems y resumen — pero sin
+  // tocar innerHTML de "Tus datos" para no perder lo que la persona ya tipeó.
   const cart = getCart();
-  const subTransfer = cart.reduce((s, i) => s + itemTransferEfectivo(i, cart) * i.qty, 0);
-  const subLista    = cart.reduce((s, i) => s + itemListaEfectivo(i, cart) * i.qty, 0);
-  const descuentoRow = document.getElementById("descuento-row");
-  const descuentoVal = document.getElementById("descuento-val");
+  const flags = chombaDiscountFlags(cart);
+  const { totalEfectivo, ahorro } = computeTotals(cart, metodo, flags);
+  const itemsList = document.getElementById("cart-items-list");
+  if (itemsList) itemsList.innerHTML = buildItemsHtml(cart, metodo, flags);
+  const summaryLines = document.getElementById("summary-lines");
+  if (summaryLines) summaryLines.innerHTML = buildSummaryLines(cart, metodo, flags);
+  const ahorroRow = document.getElementById("ahorro-row");
+  const ahorroVal = document.getElementById("ahorro-val");
   const totalDisplay = document.getElementById("total-display");
-  if (descuentoRow && totalDisplay) {
-    if (metodo === "nave") {
-      descuentoRow.style.display = "none";
-      totalDisplay.textContent = fmt(subLista);
-    } else {
-      descuentoRow.style.display = "";
-      descuentoVal.textContent = "-" + fmt(subLista - subTransfer);
-      totalDisplay.textContent = fmt(subTransfer);
-    }
+  if (ahorroRow && totalDisplay) {
+    ahorroRow.style.display = ahorro > 0.5 ? "" : "none";
+    if (ahorroVal) ahorroVal.textContent = fmt(ahorro);
+    totalDisplay.textContent = fmt(totalEfectivo);
   }
   // Pre-calentar token de Nave para reducir latencia al pagar
   if (metodo === "nave") fetch("/api/nave/warmup").catch(() => {});
@@ -311,43 +387,28 @@ function render() {
     return;
   }
 
-  const subTransfer = cart.reduce((s, i) => s + itemTransferEfectivo(i, cart) * i.qty, 0);
-  const subLista    = cart.reduce((s, i) => s + itemListaEfectivo(i, cart) * i.qty, 0);
-  const descuento   = subLista - subTransfer;
+  const metodo = getMetodoPago();
+  const flags = chombaDiscountFlags(cart);
+  const { totalEfectivo, ahorro } = computeTotals(cart, metodo, flags);
   const totalItems  = cart.reduce((s, i) => s + i.qty, 0);
-  const showPromoCard = cartHasQualifyingItem(cart) && !cartHasPromoItem(cart) && _chombaTalles && _chombaTalles.length;
-  const isPromoActive = promoActive(cart);
+  const showPromoCard = cartHasQualifyingItem(cart) && _chombaTalles && _chombaTalles.length;
+  const alreadyHasChomba = cartHasPromoItem(cart);
 
-  const itemsHtml = cart.map(i => {
-    const isPromoLine = i.nombre === PROMO_NOMBRE && isPromoActive;
-    return `
-    <div class="cart-item">
-      <div class="item-info">
-        <p class="item-name">${i.nombre}${isPromoLine ? ' <span style="color:#2e7d52;font-weight:800;font-size:11px">· 30% OFF</span>' : ''}</p>
-        <p class="item-talle">Talle ${i.talle}</p>
-      </div>
-      <div class="qty-wrap">
-        <button class="qty-btn" onclick="changeQty('${i.key}',-1)">−</button>
-        <span class="qty-num">${i.qty}</span>
-        <button class="qty-btn" onclick="changeQty('${i.key}',1)">+</button>
-      </div>
-      <div class="item-price">${fmt(itemListaEfectivo(i, cart) * i.qty)}</div>
-      <button class="item-remove" onclick="removeItem('${i.key}')">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>`;
-  }).join("");
+  const itemsHtml = buildItemsHtml(cart, metodo, flags);
 
   const promoHtml = showPromoCard ? `
-      <div class="section-block" style="border-color:var(--dorado);background:linear-gradient(135deg,#fff,#fdf8ef)">
-        <p class="section-block-title" style="color:var(--dorado-700)">🎁 Oferta especial</p>
-        <p style="font-size:14px;font-weight:800;margin-bottom:4px">Sumá una Chomba Blanca con 30% OFF</p>
-        <p style="font-size:12.5px;color:var(--azul-400);margin-bottom:14px">Por tu compra, elegí el talle que quieras:</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <select id="promo-talle" style="flex:1;min-width:120px;border:1px solid var(--niebla-200);background:var(--crema);padding:11px 13px;border-radius:8px;font-family:var(--sans);font-size:14px;color:var(--azul-900)">
+      <div class="section-block promo-card">
+        <div class="promo-badge">-30%</div>
+        <p class="promo-eyebrow">🎁 Oferta por tu compra</p>
+        <p class="promo-title">${alreadyHasChomba ? "Sumá otra Chomba Blanca" : "Sumá una Chomba Blanca"}</p>
+        <p class="promo-sub">${alreadyHasChomba
+          ? "El 30% OFF sobre el precio de lista aplica una sola vez por pedido — ésta se suma a precio de lista."
+          : "30% OFF sobre el precio de lista. Elegí el talle que quieras:"}</p>
+        <div class="promo-actions">
+          <select id="promo-talle" class="promo-select">
             ${_chombaTalles.map(t => `<option value="${t.talle}">Talle ${t.talle}</option>`).join("")}
           </select>
-          <button class="btn-outline" style="white-space:nowrap" onclick="agregarChombaPromo()">+ Agregar</button>
+          <button class="btn-outline promo-btn" onclick="agregarChombaPromo()">+ Agregar</button>
         </div>
       </div>` : "";
 
@@ -355,7 +416,7 @@ function render() {
     <div class="left">
       <div class="section-block">
         <p class="section-block-title">Artículos (${totalItems})</p>
-        ${itemsHtml}
+        <div id="cart-items-list">${itemsHtml}</div>
       </div>
       ${promoHtml}
 
@@ -386,15 +447,15 @@ function render() {
       <div class="section-block">
         <p class="section-block-title">Forma de pago</p>
         <div class="pago-options">
-          <label class="pago-option selected" onclick="this.classList.add('selected');this.parentElement.querySelectorAll('.pago-option').forEach(o=>o!==this&&o.classList.remove('selected'));onMetodoPagoChange()">
-            <input type="radio" name="metodo-pago" value="transferencia" checked>
+          <label class="pago-option${metodo==='transferencia'?' selected':''}" onclick="this.classList.add('selected');this.parentElement.querySelectorAll('.pago-option').forEach(o=>o!==this&&o.classList.remove('selected'));onMetodoPagoChange()">
+            <input type="radio" name="metodo-pago" value="transferencia" ${metodo==='transferencia'?'checked':''}>
             <div class="pago-option-label">
               <div class="pago-option-title">🏦 Transferencia bancaria</div>
               <div class="pago-option-desc"><strong style="color:#2e7d52">Mejor precio</strong> · te enviamos los datos al confirmar.</div>
             </div>
           </label>
-          <label class="pago-option" onclick="this.classList.add('selected');this.parentElement.querySelectorAll('.pago-option').forEach(o=>o!==this&&o.classList.remove('selected'));onMetodoPagoChange()">
-            <input type="radio" name="metodo-pago" value="nave">
+          <label class="pago-option${metodo==='nave'?' selected':''}" onclick="this.classList.add('selected');this.parentElement.querySelectorAll('.pago-option').forEach(o=>o!==this&&o.classList.remove('selected'));onMetodoPagoChange()">
+            <input type="radio" name="metodo-pago" value="nave" ${metodo==='nave'?'checked':''}>
             <div class="pago-option-label">
               <div class="pago-option-title">
                 💳 Pagar con Tarjeta
@@ -408,9 +469,9 @@ function render() {
 
     <div class="summary-panel">
       <p class="summary-title">Resumen del pedido</p>
-      ${cart.map(i => `<div class="sum-row"><span>${i.nombre}${i.nombre===PROMO_NOMBRE&&isPromoActive?' (30% OFF)':''} x${i.qty}</span><span>${fmt(itemListaEfectivo(i, cart)*i.qty)}</span></div>`).join("")}
-      <div class="sum-row" id="descuento-row" style="color:#2e7d52;font-weight:700;background:#eaf6ef;padding:9px 11px;border-radius:8px;margin:4px 0"><span>💸 Descuento por transferencia</span><span id="descuento-val">-${fmt(descuento)}</span></div>
-      <div class="sum-row total"><span>Total</span><span id="total-display">${fmt(subTransfer)}</span></div>
+      <div id="summary-lines">${buildSummaryLines(cart, metodo, flags)}</div>
+      <div class="sum-row ahorro-row" id="ahorro-row" style="${ahorro > 0.5 ? "" : "display:none"}"><span>💸 En esta compra te ahorraste</span><span id="ahorro-val">${fmt(ahorro)}</span></div>
+      <div class="sum-row total"><span>Total</span><span id="total-display">${fmt(totalEfectivo)}</span></div>
 
       <button class="btn-pagar" onclick="irAPagar()">IR A PAGAR</button>
 
@@ -500,7 +561,7 @@ function render() {
 
       <p class="note">Todos los campos con <span style="color:#c0392b">*</span> son obligatorios.</p>
     </div>`;
-  onMetodoPagoChange(); // sincroniza descuento/total con el método elegido
+  onMetodoPagoChange(); // sincroniza botón/paneles con el método elegido (ítems y resumen ya salieron bien arriba)
 }
 
 // ── IR A PAGAR ────────────────────────────────────────────────────────────
@@ -518,11 +579,10 @@ async function irAPagar() {
   const apellido = document.getElementById("inp-apellido").value.trim();
   const tel      = document.getElementById("inp-tel").value.trim();
   const email    = document.getElementById("inp-email").value.trim();
-  const cart        = getCart();
-  const subTransfer = cart.reduce((s, i) => s + itemTransferEfectivo(i, cart) * i.qty, 0);
-  const subLista    = cart.reduce((s, i) => s + itemListaEfectivo(i, cart) * i.qty, 0);
-  const descuento   = subLista - subTransfer;
-  const totalFinal  = metodo === "nave" ? subLista : subTransfer;
+  const cart  = getCart();
+  const flags = chombaDiscountFlags(cart);
+  const { totalLista, totalEfectivo, ahorro } = computeTotals(cart, metodo, flags);
+  const totalFinal = totalEfectivo;
 
   const btn = document.querySelector(".btn-pagar");
   btn.textContent = "Guardando pedido…";
@@ -538,12 +598,14 @@ async function irAPagar() {
     if (!clienteRes.ok || !clienteData.id) throw new Error(clienteData.error || "Error cliente");
 
     // 2. Guardar pedido + orden en Supabase (004_pedidos/005_ordenes). El "numero"
-    // (YY-NN) se genera solo en el servidor, no hace falta pedirlo antes.
+    // (YY-NN) se genera solo en el servidor, no hace falta pedirlo antes. El
+    // descuento por transferencia y el de la promo ya están adentro de cada
+    // precio_unitario (que el servidor recalcula de cero) — no se manda un
+    // "descuento" de cabecera para no contarlo dos veces.
     const ordersRes = await fetch("/api/orders", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         backend: "supabase", clienteId: clienteData.id, items: cart,
-        descuento: metodo === "nave" ? 0 : descuento,
         pago: metodo === "nave" ? "Tarjeta (Nave)" : "Transf. Banc.",
       }),
     });
@@ -559,7 +621,7 @@ async function irAPagar() {
       body: JSON.stringify({
         idPedido, codigoCliente: clienteData.codigo,
         nombre, apellido, email, telefono: tel, items: cart,
-        subtotal: subLista, descuento: metodo === "nave" ? 0 : descuento, total: totalFinal,
+        subtotal: totalLista, descuento: ahorro, total: totalFinal,
         pago: metodo, envio: "retiro",
       }),
     }).catch(() => {});
@@ -572,9 +634,9 @@ async function irAPagar() {
     // 4. Flujo según método. A Nave le pasamos el uuid del pedido (pedido.id),
     // no el "numero" — así el webhook nunca lo confunde con un pedido de Sheets.
     if (metodo === "nave") {
-      await pagarConNave({ idPedido: pedido.id, total: subLista, nombre, apellido, email, tel, cart, btn });
+      await pagarConNave({ idPedido: pedido.id, total: totalFinal, nombre, apellido, email, tel, cart, btn });
     } else {
-      pagarConTransferencia({ subTransfer, subLista, descuento, idPedido, clienteData, nombre, apellido, email, cart, btn });
+      pagarConTransferencia({ totalFinal, idPedido, clienteData, nombre, apellido, email, cart, btn });
     }
 
   } catch (err) {
@@ -584,8 +646,8 @@ async function irAPagar() {
   }
 }
 
-function pagarConTransferencia({ subTransfer, subLista, descuento, idPedido, clienteData, nombre, apellido, email, cart, btn }) {
-  document.getElementById("total-a-pagar").textContent = fmt(subTransfer);
+function pagarConTransferencia({ totalFinal, idPedido, clienteData, nombre, apellido, email, cart, btn }) {
+  document.getElementById("total-a-pagar").textContent = fmt(totalFinal);
   document.getElementById("datos-pago").classList.add("visible");
   btn.textContent = "✓ PEDIDO REGISTRADO";
   btn.style.background = "#2e7d52";
@@ -686,11 +748,12 @@ function copiar(texto, btn) {
 
 function enviarComprobante() {
   const cart = getCart();
-  const sub  = cart.reduce((s, i) => s + itemTransferEfectivo(i, cart) * i.qty, 0);
+  const flags = chombaDiscountFlags(cart);
+  const sub = computeTotals(cart, "transferencia", flags).totalEfectivo;
   const nombre   = document.getElementById("inp-nombre")?.value.trim() || "";
   const apellido = document.getElementById("inp-apellido")?.value.trim() || "";
   const idPedido = _savedOrderId || "—";
-  const items = cart.map(i => `• ${i.nombre} talle ${i.talle} x${i.qty}: ${fmt(itemTransferEfectivo(i, cart) * i.qty)}`).join("\n");
+  const items = cart.map((i, idx) => `• ${i.nombre} talle ${i.talle} x${i.qty}: ${fmt(itemPrecioEfectivo(i, idx, cart, "transferencia", flags) * i.qty)}`).join("\n");
   const msg = `Hola NORD Uniformes! Acá va mi comprobante de pago 🧾\n\n*Pedido #${idPedido}*\n*Familia: ${apellido} - ${nombre}*\n\n${items}\n\n*Total transferido: ${fmt(sub)}*\n\nAlias: nord.uniformes\n\n¡Gracias! 🙌`;
   window.open(`https://wa.me/5491135057838?text=${encodeURIComponent(msg)}`, "_blank");
 }

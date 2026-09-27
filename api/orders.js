@@ -20,14 +20,17 @@ function makeAuth() {
 // para pagar menos. La rama de abajo (Sheets) queda intacta, sin usarse,
 // como red de seguridad: la usaba el /carrito viejo, archivado en
 // _archive/carrito-sheets.html.
-// Promo "Chomba Blanca" al 30% off (hasta 1 unidad) si el pedido incluye
-// otra prenda que no sea medias — evaluada acá contra el contenido real del
-// pedido, nunca contra un flag que mande el cliente (no se puede falsear).
+// Promo "Chomba Blanca" al 30% off SIEMPRE sobre precio de lista (no sobre
+// transferencia, cualquiera sea el método de pago) si el pedido incluye
+// otra prenda que no sea medias — hasta 1 unidad EN TOTAL por pedido, aunque
+// haya varias líneas de Chomba Blanca en distintos talles. Evaluada acá
+// contra el contenido real del pedido, nunca contra un flag que mande el
+// cliente (no se puede falsear).
 const CHOMBA_PROMO_NOMBRE = "Chomba Blanca";
 const CHOMBA_PROMO_PCT = 30;
 
 async function postOrderSupabase(req, res) {
-  const { clienteId, items = [], envio = 0, descuento = 0, pago = "Transf. Banc." } = req.body;
+  const { clienteId, items = [], envio = 0, pago = "Transf. Banc." } = req.body;
   if (!clienteId) return res.status(400).json({ error: "Falta clienteId" });
   if (!items.length) return res.status(400).json({ error: "El pedido no tiene items" });
 
@@ -50,6 +53,7 @@ async function postOrderSupabase(req, res) {
     const costoMap = Object.fromEntries((costos || []).map(c => [c.talle_id, Number(c.costo) || 0]));
 
     const nonMediaOther = items.some(it => it.nombre !== CHOMBA_PROMO_NOMBRE && !/^medias?\b/i.test(it.nombre || ""));
+    let chombaDiscountRemaining = nonMediaOther ? 1 : 0;
 
     const filas = [];
     for (const item of items) {
@@ -57,13 +61,15 @@ async function postOrderSupabase(req, res) {
       const talleId = prendaId ? talleIdByProdTalle[`${prendaId}::${String(item.talle)}`] : null;
       if (!talleId) return res.status(400).json({ error: `No se encontró "${item.nombre}" talle ${item.talle} en el catálogo` });
       const pr = precioMap[talleId] || {};
-      const precioBase = isCard ? (Number(pr.precio_lista) || 0) : (Number(pr.precio_transferencia) || 0);
+      const precioLista = Number(pr.precio_lista) || 0;
+      const precioBase = isCard ? precioLista : (Number(pr.precio_transferencia) || 0);
       const cantidad = Number(item.qty) || 1;
 
       let precioUnit = precioBase, descuentoPct = 0;
-      if (item.nombre === CHOMBA_PROMO_NOMBRE && nonMediaOther) {
-        const promoQty = Math.min(cantidad, 1);
-        const conDescuento = Math.round(precioBase * (1 - CHOMBA_PROMO_PCT / 100));
+      if (item.nombre === CHOMBA_PROMO_NOMBRE && chombaDiscountRemaining > 0 && precioLista > 0) {
+        const promoQty = Math.min(cantidad, chombaDiscountRemaining);
+        chombaDiscountRemaining -= promoQty;
+        const conDescuento = Math.round(precioLista * (1 - CHOMBA_PROMO_PCT / 100));
         precioUnit = Math.round((conDescuento * promoQty + precioBase * (cantidad - promoQty)) / cantidad);
         descuentoPct = precioBase > 0 ? Math.round((1 - precioUnit / precioBase) * 100) : 0;
       }
@@ -75,9 +81,12 @@ async function postOrderSupabase(req, res) {
       });
     }
 
+    // "descuento" de cabecera queda siempre en 0: el precio de cada línea ya
+    // sale con cualquier descuento aplicado (transferencia y/o la promo), asi
+    // que restar algo acá otra vez duplicaría el descuento en total_venta.
     const { data: pedido, error: ePedido } = await sb.from("004_pedidos").insert({
       colegio: "WS", cliente_id: clienteId, forma_pago: pago,
-      cargo_envio: Number(envio) || 0, descuento: Number(descuento) || 0, envio: "retiro",
+      cargo_envio: Number(envio) || 0, descuento: 0, envio: "retiro",
     }).select().single();
     if (ePedido) throw ePedido;
 
