@@ -121,6 +121,7 @@ dobles en SQL crudo (`"002_talles"`) — pero **no** en `supabase-js`
 | 010 | `010_precios` | Lista de precios (columnas por fecha) | **histórico append-only**: una fila por cambio de precio, `vigente_desde`. Nunca se hace UPDATE |
 | 011 | `011_costos_reposicion` | Costo Reposición (columnas por fecha) | mismo criterio: histórico append-only |
 | 012 | `012_profiles` | *(no existía)* | rol `admin`/`vendedor` por usuario de Supabase Auth |
+| 013 | `013_gastos` | *(un Sheet aparte)* | gastos operativos: logística, bolsas/packaging, software, impuestos, etc. `categoria` es texto libre (con sugerencias en un datalist), no enum. **Migración pendiente de correr** en el SQL Editor — ver `supabase/data/10_gastos.sql` y la lista de migraciones más abajo |
 | — | `codigos_descuento` | Codigos | **eliminada** (no se usa) — pendiente confirmar que el `DROP TABLE` corrió, ver abajo |
 | 101 | `101_stock_actual` | Stock (columna "Stock actual") | `= Σ 009_compras.cantidad − Σ 005_ordenes.cantidad`, por talle. Se recalcula solo, nunca se escribe a mano |
 | 102 | `102_precio_vigente` | — | última fila de `010_precios` con `vigente_desde <= hoy`, por talle |
@@ -211,9 +212,13 @@ desde la web app nueva cuando haya tiempo):
 (rewrite en `vercel.json`, **sin subdominio propio** — decisión de Flor,
 2026-09-27). Tabs: Dashboard (ventas/ganancia/margen%, año calendario, y
 tráfico del sitio vía GA4 con carga bajo demanda), Stock (solo lectura),
-Vender, Pedidos, Órdenes (detalle línea por línea de lo vendido), Clientes,
-Proveedores, Compras (editable tipo Excel), Precios y costos (editable tipo
-Excel), Contabilidad, Catálogo (alta de prendas/talles).
+Vender, Pedidos (con alta/baja de prendas al editar un pedido ya creado),
+Órdenes (detalle línea por línea de lo vendido, editable tipo Excel: talle,
+cantidad, descuento%), Clientes, Proveedores, Compras (editable tipo Excel,
+todas las celdas), Precios y costos (editable tipo Excel), Gastos (alta y
+edición tipo Excel de gastos operativos: logística, packaging, software,
+impuestos, etc — tabla `013_gastos`), Contabilidad (con botón "Subir a
+Drive" por factura), Catálogo (alta de prendas/talles).
 
 - **Modelo de precios de `gestion.html`** (distinto del "Modelo de precios"
   de abajo, que es de wellspring/carrito): el precio base de cada ítem, en
@@ -252,6 +257,12 @@ quedan documentadas acá para no perder el rastro):
 `004_pedidos.notas`, y recrea la vista `104_pedidos_con_saldo` con `notas`
 al final del `select` — Postgres no deja insertar columnas en el medio de
 una vista con `create or replace view`, sólo al final).
+
+**Pendiente de correr** (agregado 2026-09-27, todavía no confirmado):
+`supabase/data/10_gastos.sql` — crea `013_gastos` (categoría/monto/fecha/
+proveedor/descripción) + RLS igual al resto de las tablas de negocio. El
+tab Gastos de `gestion.html` ya está deployado y le pega a esta tabla, así
+que hasta que no corra la migración el tab va a tirar error al abrirlo.
 
 ---
 
