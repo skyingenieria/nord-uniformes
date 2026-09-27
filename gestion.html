@@ -167,6 +167,8 @@
   .oi-add button{white-space:nowrap}
   .ga-add{grid-template-columns:1.1fr 100px 90px 1fr 1.2fr auto;border-top:none;padding-top:0}
   .ga-add input{text-align:left}
+  .eg-add{grid-template-columns:1fr 100px 1fr 76px 90px 1.2fr auto;border-top:none;padding-top:0}
+  .eg-add input{text-align:left}
   @media (max-width:480px){
     .oi-row{grid-template-columns:minmax(36px,1fr) 36px 54px 56px 38px 48px;column-gap:4px;padding:8px 0}
     .oi-row.editing{grid-template-columns:minmax(28px,1fr) 36px 54px 56px 38px 48px 20px}
@@ -183,6 +185,7 @@
     .oi-row .oi-del{font-size:15px}
     .oi-add{grid-template-columns:1fr;gap:6px}
     .ga-add{grid-template-columns:1fr}
+    .eg-add{grid-template-columns:1fr}
   }
   .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff;border-radius:14px;border:1px solid var(--line)}
   table.pr-table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
@@ -305,6 +308,7 @@
     <button data-tab="precios"        class="desk-only" onclick="go('precios')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span>Precios</button>
     <button data-tab="contabilidad"   class="desk-only" onclick="go('contabilidad')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Contabilidad</button>
     <button data-tab="gastos"         class="desk-only" onclick="go('gastos')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>Gastos</button>
+    <button data-tab="egresos"        class="desk-only" onclick="go('egresos')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></span>Egresos</button>
     <button data-tab="configuracion"  class="desk-only" onclick="go('configuracion')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>Catálogo</button>
   </nav>
 </div>
@@ -329,7 +333,7 @@ let PROFILE = null;   // { id, nombre, rol }
 let TAB = "inicio";
 let navStack = [];
 let sheetOpen = false;
-const DATA = { catalogo:null, clientes:null, pedidos:null, ordenes:null, proveedores:null, compras:null, preciosCostos:null, facturas:null, gastos:null };
+const DATA = { catalogo:null, clientes:null, pedidos:null, ordenes:null, proveedores:null, compras:null, preciosCostos:null, facturas:null, gastos:null, egresos:null, dolarBlue:null, stockValor:null };
 let cart = [];
 let venta = { cliente:null, descuento:0, envio:0, pago:"Tarjeta (Nave)" };
 
@@ -378,7 +382,7 @@ function showApp(){
 
 // ─────────────────────────────────────────────────────────────── NAV
 const TITLES = {inicio:"Dashboard", stock:"Stock", vender:"Vender", pedidos:"Pedidos", ordenes:"Órdenes", clientes:"Clientes",
-  proveedores:"Proveedores", compras:"Compras", precios:"Precios y costos", gastos:"Gastos", contabilidad:"Contabilidad", configuracion:"Catálogo"};
+  proveedores:"Proveedores", compras:"Compras", precios:"Precios y costos", gastos:"Gastos", egresos:"Egresos", contabilidad:"Contabilidad", configuracion:"Catálogo"};
 function go(tab,opts){
   opts=opts||{};
   if(opts.push!==false && TAB!==tab){ navStack.push(TAB); history.pushState({tab},""); }
@@ -668,6 +672,7 @@ async function render(force){
   if(TAB==="precios")       return viewPrecios(v,force);
   if(TAB==="contabilidad")  return viewContabilidad(v,force);
   if(TAB==="gastos")        return viewGastos(v,force);
+  if(TAB==="egresos")       return viewEgresos(v,force);
   if(TAB==="configuracion") return viewConfiguracion(v,force);
 }
 function loading(v){ v.innerHTML='<div class="spinner"></div>'; }
@@ -680,10 +685,74 @@ async function fetchOrdenesDashboard(){
   if(error) throw error;
   return data||[];
 }
+const fmtUsd = (n)=> "US$" + Math.round(Number(n)||0).toLocaleString("es-AR");
+// Cotización diaria del dólar blue (014_dolar_blue) — se usa para convertir
+// ventas/ganancia a USD en el Dashboard, cotización del día de cada operación
+// (no un promedio mensual). Se mantiene al día sola: cada vez que se abre el
+// Dashboard, si falta algún día completa desde api.argentinadatos.com (no
+// hace falta cron ni función serverless nueva).
+async function fetchDolarBlue(){
+  const { data, error } = await getClient().from("014_dolar_blue").select("fecha,promedio");
+  if(error) throw error;
+  return Object.fromEntries((data||[]).map(r=>[r.fecha, Number(r.promedio)||0]));
+}
+async function getDolarBlue(force){ if(force||!DATA.dolarBlue) DATA.dolarBlue = await fetchDolarBlue(); return DATA.dolarBlue; }
+async function ensureDolarBlueUpToDate(){
+  try{
+    const { data: last } = await getClient().from("014_dolar_blue").select("fecha").order("fecha",{ascending:false}).limit(1).maybeSingle();
+    const today = todayISO();
+    if(last && last.fecha>=today) return;
+    const r = await fetch("https://api.argentinadatos.com/v1/cotizaciones/dolares/blue");
+    if(!r.ok) return;
+    const all = await r.json();
+    const rows = (all||[])
+      .filter(x=>x.fecha && x.compra && x.venta && (!last || x.fecha>last.fecha) && x.fecha<=today)
+      .map(x=>({ fecha:x.fecha, compra:Number(x.compra), venta:Number(x.venta) }));
+    if(rows.length){
+      const { error } = await getClient().from("014_dolar_blue").upsert(rows, { onConflict:"fecha" });
+      if(!error) DATA.dolarBlue=null;
+    }
+  }catch(e){ console.error("No se pudo actualizar la cotización del dólar blue:", e); }
+}
+// Valorización de stock: cantidad, costo de reposición total y valorización
+// de venta (a precio de lista) por prenda, sumando todos sus talles.
+async function fetchStockValorizacion(){
+  const c=getClient();
+  const [{ data: prendas, error:e1 }, { data: talles, error:e2 }, { data: stock, error:e3 }, { data: costos, error:e4 }, { data: precios, error:e5 }] = await Promise.all([
+    c.from("001_prendas").select("id,nombre"),
+    c.from("002_talles").select("id,product_id"),
+    c.from("101_stock_actual").select("talle_id,stock"),
+    c.from("103_costo_vigente").select("talle_id,costo"),
+    c.from("102_precio_vigente").select("talle_id,precio_lista"),
+  ]);
+  if(e1) throw e1; if(e2) throw e2; if(e3) throw e3; if(e4) throw e4; if(e5) throw e5;
+  const prodByTalle = Object.fromEntries((talles||[]).map(t=>[t.id,t.product_id]));
+  const stockMap = Object.fromEntries((stock||[]).map(s=>[s.talle_id, Number(s.stock)||0]));
+  const costoMap = Object.fromEntries((costos||[]).map(cc=>[cc.talle_id, Number(cc.costo)||0]));
+  const precioMap = Object.fromEntries((precios||[]).map(p=>[p.talle_id, Number(p.precio_lista)||0]));
+  const porProd = {};
+  (talles||[]).forEach(t=>{
+    const st=stockMap[t.id]||0; if(st<=0) return;
+    if(!porProd[t.product_id]) porProd[t.product_id]={cantidad:0, costoTotal:0, ventaTotal:0};
+    porProd[t.product_id].cantidad += st;
+    porProd[t.product_id].costoTotal += st*(costoMap[t.id]||0);
+    porProd[t.product_id].ventaTotal += st*(precioMap[t.id]||0);
+  });
+  const nombreById = Object.fromEntries((prendas||[]).map(p=>[p.id,p.nombre]));
+  return Object.entries(porProd).map(([pid,v])=>({ nombre: nombreById[pid]||"—", ...v }))
+    .sort((a,b)=>b.ventaTotal-a.ventaTotal);
+}
+async function getStockValorizacion(force){ if(force||!DATA.stockValor) DATA.stockValor = await fetchStockValorizacion(); return DATA.stockValor; }
 async function viewInicio(v,force){
   try{
     loading(v);
     const [peds, ordenes] = await Promise.all([ getPedidos(force), fetchOrdenesDashboard() ]);
+    // 014_dolar_blue/valorización de stock son tablas nuevas (2026-09-27):
+    // si todavía no corrió la migración en Supabase, no tiran abajo todo el
+    // Dashboard — esas dos secciones quedan vacías con un aviso.
+    let dolarMap={}, stockVal=[], usdReady=true, stockReady=true;
+    try{ await ensureDolarBlueUpToDate(); dolarMap=await getDolarBlue(true); }catch(e){ usdReady=false; }
+    try{ stockVal=await getStockValorizacion(force); }catch(e){ stockReady=false; }
     const now = new Date();
     const mesActual = now.toLocaleDateString("sv-SE",{timeZone:"America/Argentina/Buenos_Aires"}).slice(0,7);
     const anioActual = mesActual.slice(0,4);
@@ -694,11 +763,13 @@ async function viewInicio(v,force){
     });
 
     // Ventas/ganancia por mes (últimos 12) + top prendas, a partir de las órdenes
-    const porMes = {};   // "YYYY-MM" -> {ventas, ganancia}
-    const porProd = {};  // nombre -> {qty, ventas}
+    const porMes = {};    // "YYYY-MM" -> {ventas, ganancia}
+    const porMesUsd = {}; // "YYYY-MM" -> {qty, ventasUsd, gananciaUsd, sinCotiz}
+    const porProd = {};   // nombre -> {qty, ventas}
     let ventasMes=0, gananciaMes=0, ventasAnio=0, gananciaAnio=0;
     ordenes.forEach(o=>{
-      const fecha = o.pedido && o.pedido.created_at ? o.pedido.created_at.slice(0,7) : null;
+      const fechaCompleta = o.pedido && o.pedido.created_at ? o.pedido.created_at.slice(0,10) : null;
+      const fecha = fechaCompleta ? fechaCompleta.slice(0,7) : null;
       const cant = Number(o.cantidad)||0;
       const ventaTot = cant*(Number(o.precio_unitario)||0);
       const gananciaTot = cant*((Number(o.precio_unitario)||0)-(Number(o.costo_unitario)||0));
@@ -707,12 +778,32 @@ async function viewInicio(v,force){
         porMes[fecha].ventas+=ventaTot; porMes[fecha].ganancia+=gananciaTot;
         if(fecha.startsWith(anioActual)){ ventasAnio+=ventaTot; gananciaAnio+=gananciaTot; }
         if(fecha===mesActual){ ventasMes+=ventaTot; gananciaMes+=gananciaTot; }
+        if(!porMesUsd[fecha]) porMesUsd[fecha]={qty:0,ventasUsd:0,gananciaUsd:0,sinCotiz:0};
+        porMesUsd[fecha].qty+=cant;
+        const rate = fechaCompleta && dolarMap[fechaCompleta];
+        if(rate>0){ porMesUsd[fecha].ventasUsd+=ventaTot/rate; porMesUsd[fecha].gananciaUsd+=gananciaTot/rate; }
+        else porMesUsd[fecha].sinCotiz+=cant;
       }
       if(o.nombre_prenda){
         if(!porProd[o.nombre_prenda]) porProd[o.nombre_prenda]={qty:0,ventas:0};
         porProd[o.nombre_prenda].qty+=cant; porProd[o.nombre_prenda].ventas+=ventaTot;
       }
     });
+    const mesesUsd = Object.keys(porMesUsd).sort();
+    const MESES_LARGO=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+    const usdRows = mesesUsd.map(k=>{
+      const [y,m]=k.split("-"); const s=porMesUsd[k];
+      const label=`${MESES_LARGO[Number(m)-1]} ${y}`;
+      return `<div class="row"><div class="grow"><div class="name">${esc(label)}</div>
+          <div class="meta">${s.qty} prenda${s.qty!==1?"s":""} vendida${s.qty!==1?"s":""}${s.sinCotiz?` · ⚠ ${s.sinCotiz} sin cotización`:""}</div></div>
+        <div style="text-align:right"><div class="chip n">${fmtUsd(s.ventasUsd)}</div><div class="meta" style="margin-top:3px">Ganancia ${fmtUsd(s.gananciaUsd)}</div></div>
+      </div>`;
+    }).join("");
+    const stockValRows = stockVal.map(s=>`<div class="row"><div class="grow"><div class="name">${esc(s.nombre)}</div>
+        <div class="meta">${s.cantidad} en stock</div></div>
+      <div style="text-align:right"><div class="chip n">${fmt(s.ventaTotal)}</div><div class="meta" style="margin-top:3px">Costo ${fmt(s.costoTotal)}</div></div>
+    </div>`).join("");
+    const stockValTotal = stockVal.reduce((a,s)=>({cantidad:a.cantidad+s.cantidad, costoTotal:a.costoTotal+s.costoTotal, ventaTotal:a.ventaTotal+s.ventaTotal}), {cantidad:0,costoTotal:0,ventaTotal:0});
     const MESES=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
     const serie=[];
     for(let i=11;i>=0;i--){
@@ -771,6 +862,20 @@ async function viewInicio(v,force){
           <span class="chip n">${p.qty} u.</span></div>`).join("")
         : '<div class="empty">Sin datos todavía</div>'
       }</div>
+
+      <div class="section-h">Ventas y ganancia en USD por mes</div>
+      <p style="font-size:11.5px;color:var(--muted);margin-top:-8px">Cada operación se convierte con la cotización del dólar blue promedio de su propio día (no un promedio del mes).</p>
+      <div class="card">${!usdReady ? '<div class="empty">⚠️ Falta correr la migración de 014_dolar_blue en Supabase</div>' : (usdRows || '<div class="empty">Sin datos todavía</div>')}</div>
+
+      <div class="section-h">Valorización de stock</div>
+      <p style="font-size:11.5px;color:var(--muted);margin-top:-8px">Lo que tenemos en stock hoy, a costo de reposición y a precio de lista.</p>
+      <div class="card">${!stockReady ? '<div class="empty">⚠️ No se pudo calcular la valorización de stock</div>' : `
+        <div class="row" style="font-weight:800;border-bottom:1.5px solid var(--line);padding-bottom:10px;margin-bottom:2px">
+          <div class="grow"><div class="name">Total (${stockValTotal.cantidad} u.)</div></div>
+          <div style="text-align:right"><div class="chip n">${fmt(stockValTotal.ventaTotal)}</div><div class="meta" style="margin-top:3px">Costo ${fmt(stockValTotal.costoTotal)}</div></div>
+        </div>
+        ${stockValRows || '<div class="empty">Sin stock todavía</div>'}
+      `}</div>
 
       <div class="section-h" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
         <span>Tráfico del sitio (GA4)</span>
@@ -2670,6 +2775,175 @@ async function gaDeleteGasto(id){
     DATA.gastos=(DATA.gastos||[]).filter(x=>x.id!==id);
     const row=$("#ga-row-"+id); if(row) row.remove();
     toast("Gasto eliminado");
+  }catch(e){ toast(e.message,true); }
+}
+
+// ─────────────────────────────────────────────────────────────── EGRESOS
+// Registro auxiliar de pagos/aportes extraordinarios (plata que pone Flor o
+// Fede). Standalone a propósito: 015_egresos no tiene FK a ninguna otra
+// tabla ni participa de ninguna vista calculada, es solo un anotador.
+const EGRESO_MONEDAS = ["ARS","USD"];
+async function fetchEgresos(){
+  const { data, error } = await getClient().from("015_egresos").select("*")
+    .order("fecha",{ascending:false}).order("created_at",{ascending:false}).limit(1000);
+  if(error) throw error;
+  return data||[];
+}
+async function getEgresos(force){ if(force||!DATA.egresos) DATA.egresos = await fetchEgresos(); return DATA.egresos; }
+async function viewEgresos(v,force){
+  try{
+    if(force||!DATA.egresos){ loading(v); await getEgresos(true); }
+    window._egQ = window._egQ||"";
+    window._egSort = window._egSort||{field:"fecha",dir:-1};
+    const list0=DATA.egresos||[];
+    v.innerHTML=`
+      <div class="view-title">Egresos</div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-8px">Pagos o aportes extraordinarios (plata que pone Flor o Fede). No se relaciona con ninguna otra tabla — es solo un registro.</p>
+      <div class="card" style="margin-bottom:14px">
+        <div class="section-h" style="margin-top:0">+ Nuevo egreso</div>
+        <div class="oi-add eg-add" id="eg-add-row">
+          <input type="text" id="eg-pagado" placeholder="Pagado por (Flor/Fede/...)">
+          <input type="text" id="eg-fecha" value="${todayISO()}">
+          <input type="text" id="eg-prov" placeholder="Proveedor (opcional)">
+          <select id="eg-moneda">${EGRESO_MONEDAS.map(m=>`<option value="${m}">${m}</option>`).join("")}</select>
+          <input type="text" inputmode="numeric" id="eg-monto" placeholder="Monto">
+          <input type="text" id="eg-comentario" placeholder="Comentario (opcional)">
+          <button type="button" class="btn ghost sm" onclick="egAddEgreso()">+ Agregar</button>
+        </div>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-6px">${list0.length} egreso${list0.length!==1?"s":""} registrado${list0.length!==1?"s":""}. Todas las celdas son editables.</p>
+      <div class="search"><span class="mag">🔎</span><input id="eg-q" placeholder="Buscar proveedor, compra o comentario…" value="${esc(window._egQ)}"></div>
+      <div class="table-wrap"><table class="pr-table" id="eg-table">
+        <thead><tr>
+          <th data-field="fecha">Fecha</th>
+          <th data-field="pagado_por">Pagado por</th>
+          <th data-field="proveedor">Proveedor</th>
+          <th data-field="compra_ref">Compra</th>
+          <th data-field="moneda">Moneda</th>
+          <th data-field="monto_total">Monto</th>
+          <th data-field="estado">Estado</th>
+          <th data-field="comentario">Comentario</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="eg-tbody"></tbody>
+      </table></div>`;
+    const inp=$("#eg-q");
+    const draw=()=>{
+      const q=inp.value.trim().toLowerCase(); window._egQ=inp.value;
+      const {field,dir}=window._egSort;
+      const list=(DATA.egresos||[]).filter(g=>!q||`${g.pagado_por||""} ${g.proveedor||""} ${g.compra_ref||""} ${g.comentario||""}`.toLowerCase().includes(q)).sort((a,b)=>{
+        const av=a[field], bv=b[field];
+        if(typeof av==="string"||typeof bv==="string") return String(av||"").localeCompare(String(bv||""),"es")*dir;
+        return ((av??-Infinity)-(bv??-Infinity))*dir;
+      });
+      $("#eg-tbody").innerHTML=list.length?list.map(g=>egRowHtml(g)).join("")
+        : `<tr><td colspan="9"><div class="empty">Sin egresos todavía</div></td></tr>`;
+      $("#eg-table").querySelectorAll("th[data-field]").forEach(th=>{
+        th.classList.toggle("sorted", th.dataset.field===field);
+        th.querySelectorAll(".arrow").forEach(a=>a.remove());
+        if(th.dataset.field===field) th.insertAdjacentHTML("beforeend", `<span class="arrow">${dir>0?"▲":"▼"}</span>`);
+      });
+    };
+    inp.oninput=draw;
+    $("#eg-table").querySelectorAll("th[data-field]").forEach(th=>{
+      th.onclick=()=>{
+        const f=th.dataset.field;
+        if(window._egSort.field===f) window._egSort.dir*=-1; else window._egSort={field:f,dir:f==="fecha"?-1:1};
+        draw();
+      };
+    });
+    draw();
+  }catch(e){ errBox(v,e); }
+}
+function egDisplay(g,field){
+  if(field==="monto_total") return fmt(g.monto_total);
+  return esc(g[field] || (["proveedor","compra_ref","estado","comentario"].includes(field)?"—":""));
+}
+function egRowHtml(g){
+  const monedaHtml = `<select onchange="egSaveCell('${g.id}','moneda',this.value)">${EGRESO_MONEDAS.map(m=>
+    `<option value="${m}" ${m===g.moneda?"selected":""}>${m}</option>`).join("")}</select>`;
+  return `<tr id="eg-row-${g.id}">
+    <td class="pr-editable" data-id="${g.id}" data-field="fecha" data-type="text" onclick="egEditCell(this)">${esc(g.fecha||"")}</td>
+    <td class="pr-editable" data-id="${g.id}" data-field="pagado_por" data-type="text" onclick="egEditCell(this)">${egDisplay(g,"pagado_por")}</td>
+    <td class="pr-editable" data-id="${g.id}" data-field="proveedor" data-type="text" onclick="egEditCell(this)">${egDisplay(g,"proveedor")}</td>
+    <td class="pr-editable" data-id="${g.id}" data-field="compra_ref" data-type="text" onclick="egEditCell(this)">${egDisplay(g,"compra_ref")}</td>
+    <td>${monedaHtml}</td>
+    <td class="pr-editable" data-id="${g.id}" data-field="monto_total" data-type="num" onclick="egEditCell(this)">${egDisplay(g,"monto_total")}</td>
+    <td class="pr-editable" data-id="${g.id}" data-field="estado" data-type="text" onclick="egEditCell(this)">${egDisplay(g,"estado")}</td>
+    <td class="pr-editable" data-id="${g.id}" data-field="comentario" data-type="text" onclick="egEditCell(this)">${egDisplay(g,"comentario")}</td>
+    <td><button type="button" class="oi-del" title="Eliminar" onclick="egDeleteEgreso('${g.id}')">✕</button></td>
+  </tr>`;
+}
+function egEditCell(td){
+  if(td.querySelector("input")) return;
+  const id=td.dataset.id, field=td.dataset.field, type=td.dataset.type;
+  const g=(DATA.egresos||[]).find(x=>x.id===id); if(!g) return;
+  const inputVal = type==="num" ? fmtMiles(g.monto_total) : (g[field]??"");
+  td.innerHTML=`<input type="text" ${type==="num"?'inputmode="numeric"':""} value="${esc(inputVal)}">`;
+  const input=td.querySelector("input");
+  input.focus(); input.select();
+  let done=false;
+  const cancel=()=>{ if(done) return; done=true; td.innerHTML=egDisplay(g,field); };
+  const commit=()=>{ if(done) return; done=true; egSaveCell(id, field, type==="num"?parseMiles(input.value):input.value.trim()); };
+  input.addEventListener("keydown", e=>{
+    if(e.key==="Enter"){ e.preventDefault(); commit(); }
+    else if(e.key==="Escape"){ e.preventDefault(); cancel(); }
+  });
+  input.addEventListener("blur", commit);
+}
+async function egSaveCell(id, field, value){
+  const g=(DATA.egresos||[]).find(x=>x.id===id); if(!g) return;
+  const td=document.querySelector(`.pr-editable[data-id="${id}"][data-field="${field}"]`);
+  const isOptional = field!=="fecha" && field!=="pagado_por" && field!=="monto_total" && field!=="moneda";
+  const curVal = g[field]==null ? "" : g[field];
+  if(String(value)===String(curVal)){ if(td) td.innerHTML=egDisplay(g,field); return; }
+  if(field==="monto_total" && !value && value!==0){ toast("Ingresá un monto válido",true); if(td) td.innerHTML=egDisplay(g,field); return; }
+  if(field==="pagado_por" && !value){ toast("El campo 'Pagado por' no puede quedar vacío",true); if(td) td.innerHTML=egDisplay(g,field); return; }
+  if(field==="fecha" && !value){ toast("La fecha no puede quedar vacía",true); if(td) td.innerHTML=egDisplay(g,field); return; }
+  try{
+    const patch={ [field]: isOptional && !value ? null : value };
+    const { error } = await getClient().from("015_egresos").update(patch).eq("id", id);
+    if(error) throw error;
+    Object.assign(g, patch);
+    if(td) td.innerHTML=egDisplay(g,field);
+  }catch(e){ toast(e.message,true); if(td) td.innerHTML=egDisplay(g,field); }
+}
+async function egAddEgreso(){
+  const pagado_por=$("#eg-pagado").value.trim();
+  const fecha=$("#eg-fecha").value.trim()||todayISO();
+  const proveedor=$("#eg-prov").value.trim();
+  const moneda=$("#eg-moneda").value;
+  const monto_total=parseMiles($("#eg-monto").value);
+  const comentario=$("#eg-comentario").value.trim();
+  if(!pagado_por) return toast("Decí quién pagó",true);
+  if(!monto_total) return toast("Ingresá un monto válido",true);
+  const btn=document.querySelector("#eg-add-row button");
+  if(btn){ btn.disabled=true; btn.textContent="Agregando…"; }
+  try{
+    const { data, error } = await getClient().from("015_egresos").insert({
+      pagado_por, fecha, proveedor: proveedor||null, moneda, monto_total, comentario: comentario||null,
+    }).select().single();
+    if(error) throw error;
+    DATA.egresos=[data, ...(DATA.egresos||[])];
+    $("#eg-pagado").value=""; $("#eg-prov").value=""; $("#eg-monto").value=""; $("#eg-comentario").value=""; $("#eg-fecha").value=todayISO();
+    const tbody=$("#eg-tbody");
+    if(tbody){
+      if(tbody.querySelector(".empty")) tbody.innerHTML="";
+      tbody.insertAdjacentHTML("afterbegin", egRowHtml(data));
+    }
+    toast("Egreso registrado");
+  }catch(e){ toast(e.message,true); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent="+ Agregar"; } }
+}
+async function egDeleteEgreso(id){
+  const g=(DATA.egresos||[]).find(x=>x.id===id); if(!g) return;
+  if(!confirm(`¿Eliminar el egreso de "${g.pagado_por}" por ${fmt(g.monto_total)}?`)) return;
+  try{
+    const { error } = await getClient().from("015_egresos").delete().eq("id", id);
+    if(error) throw error;
+    DATA.egresos=(DATA.egresos||[]).filter(x=>x.id!==id);
+    const row=$("#eg-row-"+id); if(row) row.remove();
+    toast("Egreso eliminado");
   }catch(e){ toast(e.message,true); }
 }
 

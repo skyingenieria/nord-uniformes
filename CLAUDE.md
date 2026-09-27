@@ -121,7 +121,9 @@ dobles en SQL crudo (`"002_talles"`) — pero **no** en `supabase-js`
 | 010 | `010_precios` | Lista de precios (columnas por fecha) | **histórico append-only**: una fila por cambio de precio, `vigente_desde`. Nunca se hace UPDATE |
 | 011 | `011_costos_reposicion` | Costo Reposición (columnas por fecha) | mismo criterio: histórico append-only |
 | 012 | `012_profiles` | *(no existía)* | rol `admin`/`vendedor` por usuario de Supabase Auth |
-| 013 | `013_gastos` | *(un Sheet aparte)* | gastos operativos: logística, bolsas/packaging, software, impuestos, etc. `categoria` es texto libre (con sugerencias en un datalist), no enum. **Migración pendiente de correr** en el SQL Editor — ver `supabase/data/10_gastos.sql` y la lista de migraciones más abajo |
+| 013 | `013_gastos` | *(un Sheet aparte)* | gastos operativos: logística, bolsas/packaging, software, impuestos, etc. `categoria` es texto libre (con sugerencias en un datalist), no enum. Migración corrida, histórico del Excel ya cargado (10 filas, 2026-09-27) |
+| 014 | `014_dolar_blue` | *(no existía)* | cotización diaria del dólar blue (`compra`/`venta`/`promedio` generado), para convertir ventas/ganancia a USD en el Dashboard. Histórico desde 2026-06-08 vía `api.argentinadatos.com`; `gestion.html` la mantiene al día sola (sin cron) cada vez que se abre el Dashboard. **Migración pendiente de correr** — ver `supabase/data/13_dolar_blue.sql` |
+| 015 | `015_egresos` | *(un Sheet aparte)* | registro auxiliar de pagos/aportes extraordinarios (plata que pone Flor o Fede) — standalone a propósito, sin FK a ninguna otra tabla ni participación en las vistas 101-104. **Migración pendiente de correr** — ver `supabase/data/12_egresos.sql` |
 | — | `codigos_descuento` | Codigos | **eliminada** (no se usa) — pendiente confirmar que el `DROP TABLE` corrió, ver abajo |
 | 101 | `101_stock_actual` | Stock (columna "Stock actual") | `= Σ 009_compras.cantidad − Σ 005_ordenes.cantidad`, por talle. Se recalcula solo, nunca se escribe a mano |
 | 102 | `102_precio_vigente` | — | última fila de `010_precios` con `vigente_desde <= hoy`, por talle |
@@ -210,15 +212,19 @@ desde la web app nueva cuando haya tiempo):
 
 **Estado de `gestion.html`:** vive en `https://www.norduniformes.com.ar/gestion`
 (rewrite en `vercel.json`, **sin subdominio propio** — decisión de Flor,
-2026-09-27). Tabs: Dashboard (ventas/ganancia/margen%, año calendario, y
-tráfico del sitio vía GA4 con carga bajo demanda), Stock (solo lectura),
-Vender, Pedidos (con alta/baja de prendas al editar un pedido ya creado),
-Órdenes (detalle línea por línea de lo vendido, editable tipo Excel: talle,
-cantidad, descuento%), Clientes, Proveedores, Compras (editable tipo Excel,
-todas las celdas), Precios y costos (editable tipo Excel), Gastos (alta y
-edición tipo Excel de gastos operativos: logística, packaging, software,
-impuestos, etc — tabla `013_gastos`), Contabilidad (con botón "Subir a
-Drive" por factura), Catálogo (alta de prendas/talles).
+2026-09-27). Tabs: Dashboard (ventas/ganancia/margen%, año calendario, tabla
+mensual de prendas vendidas + monto/ganancia en USD al dólar blue del día de
+cada operación, valorización de stock a costo de reposición y a precio de
+lista, y tráfico del sitio vía GA4 con carga bajo demanda), Stock (solo
+lectura), Vender, Pedidos (con alta/baja de prendas al editar un pedido ya
+creado), Órdenes (detalle línea por línea de lo vendido, editable tipo
+Excel: talle, cantidad, descuento%), Clientes, Proveedores, Compras
+(editable tipo Excel, todas las celdas), Precios y costos (editable tipo
+Excel), Gastos (alta y edición tipo Excel de gastos operativos: logística,
+packaging, software, impuestos, etc — tabla `013_gastos`), Egresos (alta y
+edición tipo Excel de pagos/aportes extraordinarios de Flor/Fede — tabla
+`015_egresos`, standalone, no se relaciona con nada más), Contabilidad (con
+botón "Subir a Drive" por factura), Catálogo (alta de prendas/talles).
 
 - **Modelo de precios de `gestion.html`** (distinto del "Modelo de precios"
   de abajo, que es de wellspring/carrito): en Vender, sin tocar nada, Transf./
@@ -261,11 +267,18 @@ quedan documentadas acá para no perder el rastro):
 al final del `select` — Postgres no deja insertar columnas en el medio de
 una vista con `create or replace view`, sólo al final).
 
+`supabase/data/10_gastos.sql` (013_gastos) — **corrida y confirmada**
+2026-09-27, con el histórico del Excel ya cargado.
+
 **Pendiente de correr** (agregado 2026-09-27, todavía no confirmado):
-`supabase/data/10_gastos.sql` — crea `013_gastos` (categoría/monto/fecha/
-proveedor/descripción) + RLS igual al resto de las tablas de negocio. El
-tab Gastos de `gestion.html` ya está deployado y le pega a esta tabla, así
-que hasta que no corra la migración el tab va a tirar error al abrirlo.
+- `supabase/data/13_dolar_blue.sql` — crea `014_dolar_blue`. La tabla mensual
+  en USD del Dashboard y la actualización automática al abrirlo dependen de
+  esto; mientras no corra, esa sección del Dashboard muestra un aviso en vez
+  de romper el resto de la página (el resto del Dashboard sigue andando).
+- `supabase/data/12_egresos.sql` — crea `015_egresos`. El tab Egresos de
+  `gestion.html` ya está deployado y le pega a esta tabla, así que hasta que
+  no corra la migración el tab va a tirar error al abrirlo (no afecta a
+  ningún otro tab).
 
 ---
 
