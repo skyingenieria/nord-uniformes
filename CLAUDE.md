@@ -122,8 +122,8 @@ dobles en SQL crudo (`"002_talles"`) — pero **no** en `supabase-js`
 | 011 | `011_costos_reposicion` | Costo Reposición (columnas por fecha) | mismo criterio: histórico append-only |
 | 012 | `012_profiles` | *(no existía)* | rol `admin`/`vendedor` por usuario de Supabase Auth |
 | 013 | `013_gastos` | *(un Sheet aparte)* | gastos operativos: logística, bolsas/packaging, software, impuestos, etc. `categoria` es texto libre (con sugerencias en un datalist), no enum. Migración corrida, histórico del Excel ya cargado (10 filas, 2026-09-27) |
-| 014 | `014_dolar_blue` | *(no existía)* | cotización diaria del dólar blue (`compra`/`venta`/`promedio` generado), para convertir ventas/ganancia a USD en el Dashboard. Histórico desde 2026-06-08 vía `api.argentinadatos.com`; `gestion.html` la mantiene al día sola (sin cron) cada vez que se abre el Dashboard. **Migración pendiente de correr** — ver `supabase/data/13_dolar_blue.sql` |
-| 015 | `015_egresos` | *(un Sheet aparte)* | registro auxiliar de pagos/aportes extraordinarios (plata que pone Flor o Fede) — standalone a propósito, sin FK a ninguna otra tabla ni participación en las vistas 101-104. **Migración pendiente de correr** — ver `supabase/data/12_egresos.sql` |
+| 014 | `014_dolar_blue` | *(no existía)* | cotización diaria del dólar blue (`compra`/`venta`/`promedio` generado), para convertir ventas/ganancia a USD en el Dashboard. Histórico desde 2026-06-08 vía `api.argentinadatos.com` (112 días cargados); `gestion.html` la mantiene al día sola (sin cron) cada vez que se abre el Dashboard |
+| 015 | `015_egresos` | *(un Sheet aparte)* | registro auxiliar de pagos/aportes extraordinarios (plata que pone Flor o Fede) — standalone a propósito, sin FK a ninguna otra tabla ni participación en las vistas 101-104. 8 filas del Excel ya cargadas |
 | — | `codigos_descuento` | Codigos | **eliminada** (no se usa) — pendiente confirmar que el `DROP TABLE` corrió, ver abajo |
 | 101 | `101_stock_actual` | Stock (columna "Stock actual") | `= Σ 009_compras.cantidad − Σ 005_ordenes.cantidad`, por talle. Se recalcula solo, nunca se escribe a mano |
 | 102 | `102_precio_vigente` | — | última fila de `010_precios` con `vigente_desde <= hoy`, por talle |
@@ -267,18 +267,13 @@ quedan documentadas acá para no perder el rastro):
 al final del `select` — Postgres no deja insertar columnas en el medio de
 una vista con `create or replace view`, sólo al final).
 
-`supabase/data/10_gastos.sql` (013_gastos) — **corrida y confirmada**
-2026-09-27, con el histórico del Excel ya cargado.
-
-**Pendiente de correr** (agregado 2026-09-27, todavía no confirmado):
-- `supabase/data/13_dolar_blue.sql` — crea `014_dolar_blue`. La tabla mensual
-  en USD del Dashboard y la actualización automática al abrirlo dependen de
-  esto; mientras no corra, esa sección del Dashboard muestra un aviso en vez
-  de romper el resto de la página (el resto del Dashboard sigue andando).
-- `supabase/data/12_egresos.sql` — crea `015_egresos`. El tab Egresos de
-  `gestion.html` ya está deployado y le pega a esta tabla, así que hasta que
-  no corra la migración el tab va a tirar error al abrirlo (no afecta a
-  ningún otro tab).
+`supabase/data/10_gastos.sql` (013_gastos), `12_egresos.sql` (015_egresos) y
+`13_dolar_blue.sql` (014_dolar_blue) — las tres **corridas y confirmadas**
+2026-09-27. Datos cargados: 10 gastos y 8 egresos del Excel, y 112 días de
+cotización del dólar blue (2026-06-08 a hoy, vía api.argentinadatos.com).
+Verificado end-to-end (Playwright con cuenta de prueba descartable + cálculo
+independiente contra la API de Supabase): Dashboard, tab Egresos y tab
+Gastos andando sin errores.
 
 ---
 
