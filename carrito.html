@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NORD | Carrito</title>
@@ -172,6 +173,71 @@ function fmt(n) { return "$" + Number(n).toLocaleString("es-AR"); }
 // Precio de lista (con tarjeta): valor real de la hoja (col F); si falta, transferencia + 15%.
 function listaDe(precio, precioLista) { return (precioLista && precioLista > 0) ? Math.round(precioLista) : Math.round((Number(precio) || 0) * 1.15); }
 
+// ── Promo "Chomba Blanca" 30% off ────────────────────────────────────────
+// Con cualquier otra prenda que no sea medias, se puede sumar una Chomba
+// Blanca (el talle que quieras) con 30% de descuento — hasta 1 unidad. La
+// misma regla se re-valida server-side en api/orders.js al crear el pedido,
+// así que esto de acá es sólo para mostrar el precio correcto en pantalla.
+const SB_URL = "https://piaagjddrrcbijienvll.supabase.co";
+const SB_ANON_KEY = "sb_publishable_yd1wUT0mgOFUcqzbJl_9Cw_WZ8AX6Vp";
+const PROMO_NOMBRE = "Chomba Blanca";
+const PROMO_PCT = 30;
+let _sbClient = null;
+function waitForSupabaseLib() {
+  return new Promise(resolve => {
+    if (window.supabase) return resolve();
+    const iv = setInterval(() => { if (window.supabase) { clearInterval(iv); resolve(); } }, 20);
+  });
+}
+async function getSb() {
+  await waitForSupabaseLib();
+  if (!_sbClient) _sbClient = window.supabase.createClient(SB_URL, SB_ANON_KEY);
+  return _sbClient;
+}
+let _chombaTalles = null; // null = todavía no cargó / no se pudo cargar
+async function loadChombaPromo() {
+  try {
+    const c = await getSb();
+    const { data: prenda } = await c.from("001_prendas").select("id").eq("nombre", PROMO_NOMBRE).maybeSingle();
+    if (!prenda) return;
+    const [{ data: talles }, { data: precios }] = await Promise.all([
+      c.from("002_talles").select("id,talle").eq("product_id", prenda.id),
+      c.from("102_precio_vigente").select("talle_id,precio_lista,precio_transferencia"),
+    ]);
+    const precioMap = Object.fromEntries((precios || []).map(p => [p.talle_id, p]));
+    _chombaTalles = (talles || []).map(t => {
+      const pr = precioMap[t.id] || {};
+      return { talle: t.talle, precio: Number(pr.precio_transferencia) || 0, precioLista: Number(pr.precio_lista) || 0 };
+    });
+  } catch (e) { console.error("No se pudo cargar la promo Chomba Blanca:", e); }
+}
+function cartHasQualifyingItem(cart) { return cart.some(i => i.nombre !== PROMO_NOMBRE && !/^medias?\b/i.test(i.nombre || "")); }
+function cartHasPromoItem(cart) { return cart.some(i => i.nombre === PROMO_NOMBRE); }
+function promoActive(cart) { return cartHasQualifyingItem(cart) && cartHasPromoItem(cart); }
+// Precio "efectivo" de una línea (lista o transferencia según corresponda),
+// con el 30% aplicado a como mucho 1 unidad si es la línea de la promo.
+function itemEfectivo(base, i, cart) {
+  if (i.nombre !== PROMO_NOMBRE || !promoActive(cart)) return base;
+  const promoQty = Math.min(i.qty, 1);
+  const conDescuento = Math.round(base * (1 - PROMO_PCT / 100));
+  return Math.round((conDescuento * promoQty + base * (i.qty - promoQty)) / i.qty);
+}
+function itemListaEfectivo(i, cart) { return itemEfectivo(listaDe(i.precio, i.precioLista), i, cart); }
+function itemTransferEfectivo(i, cart) { return itemEfectivo(Number(i.precio) || 0, i, cart); }
+function agregarChombaPromo() {
+  const sel = document.getElementById("promo-talle");
+  const talle = sel?.value;
+  const t = (_chombaTalles || []).find(x => String(x.talle) === talle);
+  if (!t) return;
+  const cart = getCart();
+  const key = "chomba-blanca-promo-" + talle;
+  const existing = cart.find(i => i.key === key);
+  if (existing) existing.qty += 1;
+  else cart.push({ key, nombre: PROMO_NOMBRE, talle: t.talle, qty: 1, precio: t.precio, precioLista: t.precioLista });
+  saveCart(cart);
+  render();
+}
+
 function changeQty(key, d) {
   const cart = getCart();
   const item = cart.find(i => i.key === key);
@@ -212,8 +278,9 @@ function onMetodoPagoChange() {
     btn.classList.remove("nave-btn");
   }
   // Mostrar/ocultar descuento por transferencia y actualizar total
-  const subTransfer = getCart().reduce((s, i) => s + i.precio * i.qty, 0);
-  const subLista    = getCart().reduce((s, i) => s + listaDe(i.precio, i.precioLista) * i.qty, 0);
+  const cart = getCart();
+  const subTransfer = cart.reduce((s, i) => s + itemTransferEfectivo(i, cart) * i.qty, 0);
+  const subLista    = cart.reduce((s, i) => s + itemListaEfectivo(i, cart) * i.qty, 0);
   const descuentoRow = document.getElementById("descuento-row");
   const descuentoVal = document.getElementById("descuento-val");
   const totalDisplay = document.getElementById("total-display");
@@ -244,15 +311,19 @@ function render() {
     return;
   }
 
-  const subTransfer = cart.reduce((s, i) => s + i.precio * i.qty, 0);
-  const subLista    = cart.reduce((s, i) => s + listaDe(i.precio, i.precioLista) * i.qty, 0);
+  const subTransfer = cart.reduce((s, i) => s + itemTransferEfectivo(i, cart) * i.qty, 0);
+  const subLista    = cart.reduce((s, i) => s + itemListaEfectivo(i, cart) * i.qty, 0);
   const descuento   = subLista - subTransfer;
   const totalItems  = cart.reduce((s, i) => s + i.qty, 0);
+  const showPromoCard = cartHasQualifyingItem(cart) && !cartHasPromoItem(cart) && _chombaTalles && _chombaTalles.length;
+  const isPromoActive = promoActive(cart);
 
-  const itemsHtml = cart.map(i => `
+  const itemsHtml = cart.map(i => {
+    const isPromoLine = i.nombre === PROMO_NOMBRE && isPromoActive;
+    return `
     <div class="cart-item">
       <div class="item-info">
-        <p class="item-name">${i.nombre}</p>
+        <p class="item-name">${i.nombre}${isPromoLine ? ' <span style="color:#2e7d52;font-weight:800;font-size:11px">· 30% OFF</span>' : ''}</p>
         <p class="item-talle">Talle ${i.talle}</p>
       </div>
       <div class="qty-wrap">
@@ -260,11 +331,25 @@ function render() {
         <span class="qty-num">${i.qty}</span>
         <button class="qty-btn" onclick="changeQty('${i.key}',1)">+</button>
       </div>
-      <div class="item-price">${fmt(listaDe(i.precio, i.precioLista) * i.qty)}</div>
+      <div class="item-price">${fmt(itemListaEfectivo(i, cart) * i.qty)}</div>
       <button class="item-remove" onclick="removeItem('${i.key}')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
-    </div>`).join("");
+    </div>`;
+  }).join("");
+
+  const promoHtml = showPromoCard ? `
+      <div class="section-block" style="border-color:var(--dorado);background:linear-gradient(135deg,#fff,#fdf8ef)">
+        <p class="section-block-title" style="color:var(--dorado-700)">🎁 Oferta especial</p>
+        <p style="font-size:14px;font-weight:800;margin-bottom:4px">Sumá una Chomba Blanca con 30% OFF</p>
+        <p style="font-size:12.5px;color:var(--azul-400);margin-bottom:14px">Por tu compra, elegí el talle que quieras:</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <select id="promo-talle" style="flex:1;min-width:120px;border:1px solid var(--niebla-200);background:var(--crema);padding:11px 13px;border-radius:8px;font-family:var(--sans);font-size:14px;color:var(--azul-900)">
+            ${_chombaTalles.map(t => `<option value="${t.talle}">Talle ${t.talle}</option>`).join("")}
+          </select>
+          <button class="btn-outline" style="white-space:nowrap" onclick="agregarChombaPromo()">+ Agregar</button>
+        </div>
+      </div>` : "";
 
   grid.innerHTML = `
     <div class="left">
@@ -272,6 +357,7 @@ function render() {
         <p class="section-block-title">Artículos (${totalItems})</p>
         ${itemsHtml}
       </div>
+      ${promoHtml}
 
       <div class="section-block">
         <p class="section-block-title">Tus datos</p>
@@ -322,7 +408,7 @@ function render() {
 
     <div class="summary-panel">
       <p class="summary-title">Resumen del pedido</p>
-      ${cart.map(i => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${fmt(listaDe(i.precio, i.precioLista)*i.qty)}</span></div>`).join("")}
+      ${cart.map(i => `<div class="sum-row"><span>${i.nombre}${i.nombre===PROMO_NOMBRE&&isPromoActive?' (30% OFF)':''} x${i.qty}</span><span>${fmt(itemListaEfectivo(i, cart)*i.qty)}</span></div>`).join("")}
       <div class="sum-row" id="descuento-row" style="color:#2e7d52;font-weight:700;background:#eaf6ef;padding:9px 11px;border-radius:8px;margin:4px 0"><span>💸 Descuento por transferencia</span><span id="descuento-val">-${fmt(descuento)}</span></div>
       <div class="sum-row total"><span>Total</span><span id="total-display">${fmt(subTransfer)}</span></div>
 
@@ -433,8 +519,8 @@ async function irAPagar() {
   const tel      = document.getElementById("inp-tel").value.trim();
   const email    = document.getElementById("inp-email").value.trim();
   const cart        = getCart();
-  const subTransfer = cart.reduce((s, i) => s + i.precio * i.qty, 0);
-  const subLista    = cart.reduce((s, i) => s + listaDe(i.precio, i.precioLista) * i.qty, 0);
+  const subTransfer = cart.reduce((s, i) => s + itemTransferEfectivo(i, cart) * i.qty, 0);
+  const subLista    = cart.reduce((s, i) => s + itemListaEfectivo(i, cart) * i.qty, 0);
   const descuento   = subLista - subTransfer;
   const totalFinal  = metodo === "nave" ? subLista : subTransfer;
 
@@ -600,16 +686,17 @@ function copiar(texto, btn) {
 
 function enviarComprobante() {
   const cart = getCart();
-  const sub  = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+  const sub  = cart.reduce((s, i) => s + itemTransferEfectivo(i, cart) * i.qty, 0);
   const nombre   = document.getElementById("inp-nombre")?.value.trim() || "";
   const apellido = document.getElementById("inp-apellido")?.value.trim() || "";
   const idPedido = _savedOrderId || "—";
-  const items = cart.map(i => `• ${i.nombre} talle ${i.talle} x${i.qty}: ${fmt(i.precio * i.qty)}`).join("\n");
+  const items = cart.map(i => `• ${i.nombre} talle ${i.talle} x${i.qty}: ${fmt(itemTransferEfectivo(i, cart) * i.qty)}`).join("\n");
   const msg = `Hola NORD Uniformes! Acá va mi comprobante de pago 🧾\n\n*Pedido #${idPedido}*\n*Familia: ${apellido} - ${nombre}*\n\n${items}\n\n*Total transferido: ${fmt(sub)}*\n\nAlias: nord.uniformes\n\n¡Gracias! 🙌`;
   window.open(`https://wa.me/5491135057838?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
 render();
+loadChombaPromo().then(() => render());
 </script>
 </body>
 </html>

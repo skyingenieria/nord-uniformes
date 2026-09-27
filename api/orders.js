@@ -20,6 +20,12 @@ function makeAuth() {
 // para pagar menos. La rama de abajo (Sheets) queda intacta, sin usarse,
 // como red de seguridad: la usaba el /carrito viejo, archivado en
 // _archive/carrito-sheets.html.
+// Promo "Chomba Blanca" al 30% off (hasta 1 unidad) si el pedido incluye
+// otra prenda que no sea medias — evaluada acá contra el contenido real del
+// pedido, nunca contra un flag que mande el cliente (no se puede falsear).
+const CHOMBA_PROMO_NOMBRE = "Chomba Blanca";
+const CHOMBA_PROMO_PCT = 30;
+
 async function postOrderSupabase(req, res) {
   const { clienteId, items = [], envio = 0, descuento = 0, pago = "Transf. Banc." } = req.body;
   if (!clienteId) return res.status(400).json({ error: "Falta clienteId" });
@@ -43,16 +49,29 @@ async function postOrderSupabase(req, res) {
     const precioMap = Object.fromEntries((precios || []).map(p => [p.talle_id, p]));
     const costoMap = Object.fromEntries((costos || []).map(c => [c.talle_id, Number(c.costo) || 0]));
 
+    const nonMediaOther = items.some(it => it.nombre !== CHOMBA_PROMO_NOMBRE && !/^medias?\b/i.test(it.nombre || ""));
+
     const filas = [];
     for (const item of items) {
       const prendaId = prendaIdByNombre[item.nombre];
       const talleId = prendaId ? talleIdByProdTalle[`${prendaId}::${String(item.talle)}`] : null;
       if (!talleId) return res.status(400).json({ error: `No se encontró "${item.nombre}" talle ${item.talle} en el catálogo` });
       const pr = precioMap[talleId] || {};
-      const precioUnit = isCard ? (Number(pr.precio_lista) || 0) : (Number(pr.precio_transferencia) || 0);
+      const precioBase = isCard ? (Number(pr.precio_lista) || 0) : (Number(pr.precio_transferencia) || 0);
+      const cantidad = Number(item.qty) || 1;
+
+      let precioUnit = precioBase, descuentoPct = 0;
+      if (item.nombre === CHOMBA_PROMO_NOMBRE && nonMediaOther) {
+        const promoQty = Math.min(cantidad, 1);
+        const conDescuento = Math.round(precioBase * (1 - CHOMBA_PROMO_PCT / 100));
+        precioUnit = Math.round((conDescuento * promoQty + precioBase * (cantidad - promoQty)) / cantidad);
+        descuentoPct = precioBase > 0 ? Math.round((1 - precioUnit / precioBase) * 100) : 0;
+      }
+
       filas.push({
         talle_id: talleId, nombre_prenda: item.nombre, talle: String(item.talle),
-        cantidad: Number(item.qty) || 1, precio_unitario: precioUnit, costo_unitario: costoMap[talleId] || 0,
+        cantidad, precio_unitario: precioUnit, costo_unitario: costoMap[talleId] || 0,
+        descuento_pct: descuentoPct,
       });
     }
 
