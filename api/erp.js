@@ -716,7 +716,17 @@ async function postFacturarSupabase(req, res) {
     console.error("Factura emitida pero no registrada:", e.message);
   }
 
-  res.json({ ok: true, factura: facturaRow || { pedido_id: pedidoId, numero_comprobante: `${factura.ptoVta}-${factura.cbteNro}`, cae: factura.cae, importe: factura.importe, qr_url: qr }, registrado });
+  // Si no se pudo registrar en Supabase, mandamos igual todos los campos que
+  // hubiera tenido la fila -- así el frontend puede reintentar el INSERT él
+  // mismo (tiene cliente Supabase directo) sin perder el CAE ya emitido en
+  // ARCA, que no tiene forma de deshacerse.
+  const facturaFallback = {
+    pedido_id: pedidoId, cliente_id: clienteId, importe: factura.importe, tipo_receptor: tipoReceptor,
+    numero_comprobante: `${factura.ptoVta}-${factura.cbteNro}`, cae: factura.cae,
+    cae_vencimiento: fchToIso(factura.caeVto), fecha: fchToIso(factura.fecha) || new Date().toISOString().slice(0, 10),
+    ambiente: factura.env, qr_url: qr,
+  };
+  res.json({ ok: true, factura: facturaRow || facturaFallback, registrado });
 }
 
 // ── Guardar PDF de la factura en Google Drive (OAuth de la cuenta del usuario) ─

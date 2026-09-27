@@ -104,12 +104,11 @@
 
     y += headH + 12;
 
-    // ── Datos del cliente ──
-    const secH = 56;
+    // ── Datos del cliente ── (sin nombre propio: sólo condición/documento, por privacidad)
+    const secH = 40;
     setDraw(LINE); doc.setLineWidth(1);
     doc.roundedRect(x0, y, W, secH, 4, 4, "S");
     const rows = [
-      ["Cliente", data.cliente || "—", true],
       ["Condición / Documento", receptor(data.receptorTipo, data.receptorNro), false],
       ["Condición de venta", "Contado", false],
     ];
@@ -135,8 +134,8 @@
     doc.text("SUBTOTAL", cSub, y + 14, { align: "right" });
     y += 22;
 
-    let items = Array.isArray(data.items) && data.items.length ? data.items : null;
-    if (!items) items = [{ n: "Venta de indumentaria" + (data.id ? " — Pedido " + data.id : ""), t: "", q: 1, p: data.importe }];
+    // Sin detalle de prendas en el comprobante: un único concepto genérico por el total.
+    const items = [{ n: "Uniformes Escolares", t: "", q: 1, p: data.importe }];
     doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); setInk(INK);
     items.forEach(it => {
       const rowH = 24;

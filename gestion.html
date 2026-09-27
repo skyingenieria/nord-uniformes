@@ -62,7 +62,7 @@
 
   nav{position:fixed;bottom:0;left:0;right:0;z-index:30;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
     padding-bottom:env(safe-area-inset-bottom);background:#fff;border-top:1px solid var(--line);
-    display:grid;grid-template-columns:repeat(4,1fr);box-shadow:0 -2px 14px rgba(15,23,46,.06)}
+    display:grid;grid-template-columns:repeat(5,1fr);box-shadow:0 -2px 14px rgba(15,23,46,.06)}
   nav button{position:relative;background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:10.5px;font-weight:600;padding-top:8px;transition:color .15s}
   nav button .ic{font-size:20px;line-height:1;transition:transform .15s}
   nav button.active{color:var(--azul-900);font-weight:800}
@@ -165,9 +165,9 @@
   .oi-add select,.oi-add input{padding:8px 9px;border:1.5px solid var(--line);border-radius:8px;font-size:12.5px;font-family:inherit;background:#fff}
   .oi-add input{text-align:center}
   .oi-add button{white-space:nowrap}
-  .ga-add{grid-template-columns:1.1fr 100px 90px 1fr 1.2fr auto;border-top:none;padding-top:0}
+  .ga-add{grid-template-columns:100px 1.1fr 90px 1fr 1.2fr auto;border-top:none;padding-top:0}
   .ga-add input{text-align:left}
-  .eg-add{grid-template-columns:1fr 100px 1fr 76px 90px 1.2fr auto;border-top:none;padding-top:0}
+  .eg-add{grid-template-columns:100px 1fr 1fr 76px 90px 1.2fr auto;border-top:none;padding-top:0}
   .eg-add input{text-align:left}
   @media (max-width:480px){
     .oi-row{grid-template-columns:minmax(36px,1fr) 36px 54px 56px 38px 48px;column-gap:4px;padding:8px 0}
@@ -214,11 +214,23 @@
   .sheet-bg.open .sheet{transform:translateY(0)}
   .sheet-bg.center{align-items:center;padding:20px}
   .sheet-bg.center .sheet{border-radius:18px;max-height:85vh}
+  .sheet-bg.wide .sheet{max-width:880px}
+  @media (min-width:900px){ .sheet-bg.wide.center .sheet{max-height:88vh} }
   .sheet h3{margin:0 0 3px;font-size:19px}
   .sheet .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
   .grabber{width:40px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 14px}
   .sheet-topbar{position:sticky;top:0;height:0;z-index:5}
   .sheet-close{position:absolute;top:-6px;right:-4px;width:36px;height:36px;border:none;border-radius:50%;background:#eef1f6;color:var(--azul-900);font-size:17px;font-weight:700;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 4px rgba(15,23,46,.12)}
+
+  /* Confirmación propia (reemplaza confirm() nativo) -- overlay aparte del
+     sheet, así funciona igual si se dispara desde dentro de un sheet ya
+     abierto (ej. borrar un ítem del detalle de un pedido) sin pisarlo. */
+  .confirm-bg{position:fixed;inset:0;background:rgba(15,23,46,.55);z-index:95;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .15s;padding:20px}
+  .confirm-bg.open{opacity:1;pointer-events:auto}
+  .confirm-card{background:#fff;border-radius:16px;padding:22px 20px;max-width:340px;width:100%;box-shadow:0 20px 50px rgba(15,23,46,.3);text-align:center}
+  .confirm-msg{font-size:14.5px;line-height:1.5;color:var(--azul-900);margin:0 0 18px}
+  .confirm-actions{display:flex;gap:10px}
+  .confirm-actions .btn{flex:1;margin:0}
   .sheet-close:active{background:#e2e6ee}
 
   .toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 20px);transform:translateX(-50%) translateY(20px);
@@ -307,7 +319,7 @@
     <button data-tab="compras"        class="desk-only" onclick="go('compras')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>Compras</button>
     <button data-tab="precios"        class="desk-only" onclick="go('precios')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span>Precios</button>
     <button data-tab="contabilidad"   class="desk-only" onclick="go('contabilidad')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Contabilidad</button>
-    <button data-tab="gastos"         class="desk-only" onclick="go('gastos')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>Gastos</button>
+    <button data-tab="gastos"         onclick="go('gastos')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>Gastos</button>
     <button data-tab="egresos"        class="desk-only" onclick="go('egresos')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></span>Egresos</button>
     <button data-tab="configuracion"  class="desk-only" onclick="go('configuracion')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>Catálogo</button>
   </nav>
@@ -315,6 +327,15 @@
 
 <div class="sheet-bg" id="sheet-bg" onclick="if(event.target===this)closeSheet()">
   <div class="sheet" id="sheet"></div>
+</div>
+<div class="confirm-bg" id="confirm-bg" onclick="if(event.target===this)_resolveConfirm(false)">
+  <div class="confirm-card">
+    <p class="confirm-msg" id="confirm-msg"></p>
+    <div class="confirm-actions">
+      <button class="btn ghost" onclick="_resolveConfirm(false)">Cancelar</button>
+      <button class="btn" id="confirm-ok-btn" style="background:var(--red);border-color:var(--red)" onclick="_resolveConfirm(true)">Eliminar</button>
+    </div>
+  </div>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -341,6 +362,8 @@ const $ = (s,el=document)=>el.querySelector(s);
 const fmt = (n)=> "$" + Math.round(Number(n)||0).toLocaleString("es-AR");
 const esc = (s)=> String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const todayISO = ()=> new Date().toLocaleDateString("sv-SE",{timeZone:"America/Argentina/Buenos_Aires"});
+const MESES_LARGO = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const mesLabel = (ym)=>{ const m=String(ym||"").match(/^(\d{4})-(\d{2})$/); return m ? `${MESES_LARGO[Number(m[2])-1]} ${m[1]}` : String(ym||""); };
 const todayAR = ()=> new Date().toLocaleDateString("es-AR",{timeZone:"America/Argentina/Buenos_Aires"});
 // Orden de talle: numéricos de menor a mayor, luego XS/S/M/L/XL/XXL/XXXL, el resto alfabético.
 const SIZE_ORDER=['XS','S','M','L','XL','XXL','XXXL'];
@@ -637,11 +660,11 @@ async function orPersist(id, patch){
     const descEl=document.querySelector(`.pr-editable[data-id="${id}"][data-field="descuento_pct"]`);
     if(descEl) descEl.innerHTML = o.descuento_pct!=null?Math.round(o.descuento_pct)+"%":"—";
     DATA.pedidos=null; // el total del pedido pudo haber cambiado
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); }
 }
 async function orDeleteItem(id){
   const o=(DATA.ordenes||[]).find(x=>x.id===id); if(!o) return;
-  if(!confirm(`¿Eliminar "${o.nombre_prenda}" talle ${o.talle} del pedido ${o.pedidoNumero||""}?`)) return;
+  if(!(await confirmDialog(`¿Eliminar "${o.nombre_prenda}" talle ${o.talle} del pedido ${o.pedidoNumero||""}?`))) return;
   try{
     const { error } = await getClient().from("005_ordenes").delete().eq("id", id);
     if(error) throw error;
@@ -649,7 +672,7 @@ async function orDeleteItem(id){
     DATA.pedidos=null;
     const row=$("#or-row-"+id); if(row) row.remove();
     toast("Ítem eliminado");
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); }
 }
 async function openPedidoPorId(pedidoId){
   await getPedidos();
@@ -676,7 +699,33 @@ async function render(force){
   if(TAB==="configuracion") return viewConfiguracion(v,force);
 }
 function loading(v){ v.innerHTML='<div class="spinner"></div>'; }
-function errBox(v,e){ v.innerHTML=`<div class="empty">⚠️ ${esc(e.message)}<br><br><button class="btn ghost sm" onclick="render(true)">Reintentar</button></div>`; }
+// Traduce los errores más comunes de Postgres/Supabase a algo que Flor/Fede
+// puedan entender sin googlear -- si no reconoce el patrón, muestra el
+// mensaje original tal cual (mejor eso que nada).
+function friendlyError(e){
+  const msg = (e && e.message) || String(e||"");
+  let m;
+  if ((m = /duplicate key value violates unique constraint.*Key \(([^)]+)\)=\(([^)]+)\)/is.exec(msg))) {
+    return `Ya existe un registro con ${m[1].replace(/_/g," ")} = "${m[2]}" — no se puede repetir.`;
+  }
+  if (/duplicate key value violates unique constraint/i.test(msg)) {
+    return "Ya existe un registro igual a este — no se puede repetir.";
+  }
+  if ((m = /null value in column "([^"]+)"/i.exec(msg))) {
+    return `Falta completar el campo "${m[1].replace(/_/g," ")}".`;
+  }
+  if (/violates foreign key constraint/i.test(msg)) {
+    return "No se puede completar porque este registro está relacionado con otro (por ejemplo, tiene ventas o compras asociadas).";
+  }
+  if (/JWT expired|invalid JWT|not authenticated|refresh_token/i.test(msg)) {
+    return "Tu sesión venció — volvé a iniciar sesión.";
+  }
+  if (/Failed to fetch|NetworkError|network request failed/i.test(msg)) {
+    return "No se pudo conectar — revisá tu conexión a internet e intentá de nuevo.";
+  }
+  return msg;
+}
+function errBox(v,e){ v.innerHTML=`<div class="empty">⚠️ ${esc(friendlyError(e))}<br><br><button class="btn ghost sm" onclick="render(true)">Reintentar</button></div>`; }
 
 // ─────────────────────────────────────────────────────────────── INICIO
 async function fetchOrdenesDashboard(){
@@ -789,20 +838,14 @@ async function viewInicio(v,force){
         porProd[o.nombre_prenda].qty+=cant; porProd[o.nombre_prenda].ventas+=ventaTot;
       }
     });
-    const mesesUsd = Object.keys(porMesUsd).sort();
-    const MESES_LARGO=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+    const mesesUsd = Object.keys(porMesUsd).sort((a,b)=>b.localeCompare(a));
     const usdRows = mesesUsd.map(k=>{
-      const [y,m]=k.split("-"); const s=porMesUsd[k];
-      const label=`${MESES_LARGO[Number(m)-1]} ${y}`;
-      return `<div class="row"><div class="grow"><div class="name">${esc(label)}</div>
-          <div class="meta">${s.qty} prenda${s.qty!==1?"s":""} vendida${s.qty!==1?"s":""}${s.sinCotiz?` · ⚠ ${s.sinCotiz} sin cotización`:""}</div></div>
-        <div style="text-align:right"><div class="chip n">${fmtUsd(s.ventasUsd)}</div><div class="meta" style="margin-top:3px">Ganancia ${fmtUsd(s.gananciaUsd)}</div></div>
-      </div>`;
+      const s=porMesUsd[k];
+      return `<tr><td>${esc(mesLabel(k))}</td><td>${s.qty}${s.sinCotiz?` <span style="color:var(--amber)" title="${s.sinCotiz} sin cotización">⚠</span>`:""}</td>
+        <td style="font-weight:700">${fmtUsd(s.ventasUsd)}</td><td>${fmtUsd(s.gananciaUsd)}</td></tr>`;
     }).join("");
-    const stockValRows = stockVal.map(s=>`<div class="row"><div class="grow"><div class="name">${esc(s.nombre)}</div>
-        <div class="meta">${s.cantidad} en stock</div></div>
-      <div style="text-align:right"><div class="chip n">${fmt(s.ventaTotal)}</div><div class="meta" style="margin-top:3px">Costo ${fmt(s.costoTotal)}</div></div>
-    </div>`).join("");
+    const stockValRows = stockVal.map(s=>`<tr><td>${esc(s.nombre)}</td><td>${s.cantidad}</td>
+      <td>${fmt(s.costoTotal)}</td><td style="font-weight:700">${fmt(s.ventaTotal)}</td></tr>`).join("");
     const stockValTotal = stockVal.reduce((a,s)=>({cantidad:a.cantidad+s.cantidad, costoTotal:a.costoTotal+s.costoTotal, ventaTotal:a.ventaTotal+s.ventaTotal}), {cantidad:0,costoTotal:0,ventaTotal:0});
     const MESES=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
     const serie=[];
@@ -855,27 +898,25 @@ async function viewInicio(v,force){
         <div class="legend"><span><i style="background:var(--azul-900)"></i>Ventas</span><span><i style="background:var(--dorado)"></i>Ganancia</span></div>
       </div>
 
-      <div class="section-h">Top prendas vendidas</div>
-      <div class="card">${
-        topProductos.length ? topProductos.map(p=>`
-          <div class="row"><div class="grow"><div class="name">${esc(p.nombre)}</div><div class="meta">${fmt(p.ventas)} en ventas</div></div>
-          <span class="chip n">${p.qty} u.</span></div>`).join("")
-        : '<div class="empty">Sin datos todavía</div>'
-      }</div>
-
       <div class="section-h">Ventas y ganancia en USD por mes</div>
       <p style="font-size:11.5px;color:var(--muted);margin-top:-8px">Cada operación se convierte con la cotización del dólar blue promedio de su propio día (no un promedio del mes).</p>
-      <div class="card">${!usdReady ? '<div class="empty">⚠️ Falta correr la migración de 014_dolar_blue en Supabase</div>' : (usdRows || '<div class="empty">Sin datos todavía</div>')}</div>
+      ${!usdReady ? '<div class="card"><div class="empty">⚠️ Falta correr la migración de 014_dolar_blue en Supabase</div></div>' : (usdRows
+        ? `<div class="table-wrap"><table class="pr-table static"><thead><tr><th>Mes</th><th>Prendas</th><th>Venta</th><th>Ganancia</th></tr></thead><tbody>${usdRows}</tbody></table></div>`
+        : '<div class="card"><div class="empty">Sin datos todavía</div></div>')}
 
       <div class="section-h">Valorización de stock</div>
       <p style="font-size:11.5px;color:var(--muted);margin-top:-8px">Lo que tenemos en stock hoy, a costo de reposición y a precio de lista.</p>
-      <div class="card">${!stockReady ? '<div class="empty">⚠️ No se pudo calcular la valorización de stock</div>' : `
-        <div class="row" style="font-weight:800;border-bottom:1.5px solid var(--line);padding-bottom:10px;margin-bottom:2px">
-          <div class="grow"><div class="name">Total (${stockValTotal.cantidad} u.)</div></div>
-          <div style="text-align:right"><div class="chip n">${fmt(stockValTotal.ventaTotal)}</div><div class="meta" style="margin-top:3px">Costo ${fmt(stockValTotal.costoTotal)}</div></div>
-        </div>
-        ${stockValRows || '<div class="empty">Sin stock todavía</div>'}
-      `}</div>
+      ${!stockReady ? '<div class="card"><div class="empty">⚠️ No se pudo calcular la valorización de stock</div></div>' : (stockValRows
+        ? `<div class="table-wrap"><table class="pr-table static"><thead><tr><th>Prenda</th><th>Stock</th><th>Costo repos.</th><th>Precio lista</th></tr></thead>
+            <tbody>${stockValRows}<tr style="font-weight:800;border-top:1.5px solid var(--line)"><td>Total</td><td>${stockValTotal.cantidad}</td><td>${fmt(stockValTotal.costoTotal)}</td><td>${fmt(stockValTotal.ventaTotal)}</td></tr></tbody>
+          </table></div>`
+        : '<div class="card"><div class="empty">Sin stock todavía</div></div>')}
+
+      <div class="section-h">Top prendas vendidas</div>
+      <div class="table-wrap"><table class="pr-table static"><thead><tr><th>Prenda</th><th>Cantidad</th><th>Ventas</th></tr></thead><tbody>${
+        topProductos.length ? topProductos.map(p=>`<tr><td>${esc(p.nombre)}</td><td>${p.qty}</td><td style="font-weight:700">${fmt(p.ventas)}</td></tr>`).join("")
+        : `<tr><td colspan="3"><div class="empty">Sin datos todavía</div></td></tr>`
+      }</tbody></table></div>
 
       <div class="section-h" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
         <span>Tráfico del sitio (GA4)</span>
@@ -923,7 +964,7 @@ async function loadGA4(){
       </div>
       <div class="section-h">Páginas más vistas</div><div class="card"><div class="bars">${pageBars}</div></div>`;
   }catch(e){
-    box.innerHTML=`<div class="card"><div class="empty">No se pudo cargar el tráfico (GA4): ${esc(e.message)}</div></div>`;
+    box.innerHTML=`<div class="card"><div class="empty">No se pudo cargar el tráfico (GA4): ${esc(friendlyError(e))}</div></div>`;
   }
 }
 
@@ -941,16 +982,18 @@ async function viewStock(v,force){
     const draw=()=>{
       const q=inp.value.trim().toLowerCase(); window._catQ=inp.value;
       const list=(DATA.catalogo||[]).filter(p=>p.nombre.toLowerCase().includes(q));
-      $("#cat-list").innerHTML = list.length ? list.map(p=>{
-        const tot=p.talles.reduce((s,t)=>s+t.stock,0);
-        return `<div class="card" style="margin-bottom:12px;cursor:pointer" onclick='openPrendaStock(${JSON.stringify(p.id)})'>
-          <div class="row" style="padding:0 0 4px">
-            <div class="grow"><div class="name">${esc(p.nombre)}</div><div class="meta">desde ${fmt(p.precio)}</div></div>
-            <span class="chip ${tot<=0?'r':tot<=8?'a':'g'}">${tot} u.</span>
-          </div>
-          <div class="talles">${p.talles.map(t=>`<div class="talle ${talleClass(t.stock)}"><div class="t">${esc(t.talle)}</div><div class="s">${t.stock}</div></div>`).join("")}</div>
-        </div>`;
-      }).join("") : '<div class="empty">Sin resultados</div>';
+      $("#cat-list").innerHTML = list.length ? `<div class="table-wrap"><table class="pr-table static"><tbody>
+        ${list.map(p=>{
+          const tot=p.talles.reduce((s,t)=>s+t.stock,0);
+          return `<tr style="cursor:pointer" onclick='openPrendaStock(${JSON.stringify(p.id)})'>
+            <td style="white-space:normal;vertical-align:top">
+              <div style="font-weight:700">${esc(p.nombre)}</div>
+              <span class="chip ${tot<=0?'r':tot<=8?'a':'g'}" style="margin-top:4px">${tot} u.</span>
+            </td>
+            <td><div class="talles" style="margin:0">${p.talles.map(t=>`<div class="talle ${talleClass(t.stock)}"><div class="t">${esc(t.talle)}</div><div class="s">${t.stock}</div></div>`).join("")}</div></td>
+          </tr>`;
+        }).join("")}
+      </tbody></table></div>` : '<div class="empty">Sin resultados</div>';
     };
     inp.oninput=draw; draw();
   }catch(e){ errBox(v,e); }
@@ -1014,7 +1057,7 @@ async function crearPrenda(){
     DATA.catalogo=null; closeSheet(); toast("Prenda creada — agregale talles desde la ficha");
     await viewConfiguracion($("#view"), true);
     openPrenda(data.id);
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Crear prenda"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Crear prenda"; }
 }
 function openPrenda(prendaId){
   const p=(DATA.catalogo||[]).find(x=>x.id===prendaId); if(!p) return;
@@ -1057,7 +1100,7 @@ async function crearTalle(prendaId){
     if(costo) await c.from("011_costos_reposicion").insert({ talle_id:tal.id, costo, vigente_desde:hoy });
     DATA.catalogo=null; closeSheet(); toast("Talle creado");
     await getCatalogo(true); openPrenda(prendaId);
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Crear talle"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Crear talle"; }
 }
 function openEditarTalle(prendaId, talleId){
   const p=(DATA.catalogo||[]).find(x=>x.id===prendaId); const t=p.talles.find(x=>x.talleId===talleId); if(!t) return;
@@ -1076,6 +1119,7 @@ function openEditarTalle(prendaId, talleId){
       <div class="field"><label>Cantidad</label><input type="number" id="et-cant" value="1"></div>
       <div class="field"><label>Costo unitario</label><input type="number" id="et-costo"></div>
     </div>
+    <div class="field"><label>Estado</label><select id="et-estado"><option>Pedido</option><option>Señado</option><option selected>Entregado</option><option>Falta Bordado</option></select></div>
     <button class="btn" id="et-csave" onclick='registrarCompra(${JSON.stringify(talleId)})'>Registrar compra (suma stock)</button>`);
   getProveedores().then(ps=>{ const sel=$("#et-prov"); if(sel) ps.forEach(p=>sel.insertAdjacentHTML("beforeend",`<option value="${p.id}">${esc(p.nombre)}</option>`)); });
 }
@@ -1087,19 +1131,25 @@ async function guardarPrecio(talleId){
     const { error } = await getClient().from("010_precios").insert({ talle_id:talleId, precio_lista:plista, precio_transferencia:ptrans||Math.round(plista*0.9), vigente_desde:todayISO() });
     if(error) throw error;
     DATA.catalogo=null; closeSheet(); toast("Precio actualizado"); render(true);
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Guardar nuevo precio (desde hoy)"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Guardar nuevo precio (desde hoy)"; }
 }
 async function registrarCompra(talleId){
   const cantidad=+$("#et-cant").value||0, costo=+$("#et-costo").value||0, proveedorId=$("#et-prov").value||null;
+  const estado=$("#et-estado")?.value||"Entregado";
   if(!cantidad) return toast("Ingresá la cantidad",true);
   const btn=$("#et-csave"); btn.disabled=true; btn.textContent="Guardando…";
   try{
+    // Mismo criterio que el alta completa del tab Compras: siempre con
+    // "numero" (C-001...), para que esta compra aparezca agrupada bien en
+    // el resumen por compra en vez de quedar suelta bajo "—".
+    await getCompras();
+    const numero=nextCompraNumero();
     const { error } = await getClient().from("009_compras").insert({
-      fecha: todayISO(), proveedor_id: proveedorId, talle_id: talleId, cantidad, costo_unitario: costo, estado:"Entregado",
+      numero, fecha: todayISO(), proveedor_id: proveedorId, talle_id: talleId, cantidad, costo_unitario: costo, estado,
     });
     if(error) throw error;
-    DATA.catalogo=null; closeSheet(); toast("Compra registrada"); render(true);
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Registrar compra (suma stock)"; }
+    DATA.catalogo=null; DATA.compras=null; closeSheet(); toast(`Compra ${numero} registrada`); render(true);
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Registrar compra (suma stock)"; }
 }
 
 // ─────────────────────────────────────────────────────────────── VENDER
@@ -1214,7 +1264,7 @@ function chQty(idx,d){
   const subEl=$("#cart-sub-"+idx); if(subEl) subEl.textContent=fmt(unitPrice(i)*i.qty);
   drawTotals(); drawResults(window._venderQ||"");
 }
-function cartPrecioHtml(i){ return `<b>${fmt(unitPrice(i))}</b> c/u<div class="oi-lista">Lista ${fmt(basePrice(i))}</div>`; }
+function cartPrecioHtml(i){ return `<b>${fmt(basePrice(i))}</b> lista<div class="oi-lista">c/u ${fmt(unitPrice(i))}</div>`; }
 function setItemDesc(idx,val){
   const n=Math.min(100,Math.max(0,+val||0));
   const i=cart[idx]; if(!i) return;
@@ -1331,7 +1381,12 @@ async function registrarPedido(){
       descuento_pct: i.descPct||0,
     }));
     const { error: eI } = await c.from("005_ordenes").insert(items);
-    if(eI) throw eI;
+    if(eI){
+      // El pedido cabecera ya se creó pero sin ítems -- no dejarlo como
+      // fantasma de $0 en la lista de Pedidos, se borra de nuevo.
+      try{ await c.from("004_pedidos").delete().eq("id", pedido.id); }catch(delErr){}
+      throw eI;
+    }
 
     const total=cartTotal();
     let naveUrl="";
@@ -1365,7 +1420,7 @@ async function registrarPedido(){
     cart=[]; venta={cliente:null,descuento:0,envio:0,pago:"Tarjeta (Nave)"};
     DATA.pedidos=null; DATA.catalogo=null;
     updateCartBar();
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent=card?"Registrar y generar link":"Registrar pedido"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent=card?"Registrar y generar link":"Registrar pedido"; }
 }
 function buildResumen(numero,total,naveUrl){
   const items = cart.map(i=>`• ${i.nombre} T${i.talle} x${i.qty} — ${fmt(unitPrice(i)*i.qty)}`).join("\n");
@@ -1383,7 +1438,7 @@ function nuevoPedido(){ go("vender"); }
 
 // Cliente picker (buscar existente o crear nuevo)
 async function openCliente(){
-  openSheet(`<div class="grabber"></div><h3>Cliente</h3><p class="sub">Buscá uno existente o creá uno nuevo</p>
+  openCenterSheet(`<div class="grabber"></div><h3>Cliente</h3><p class="sub">Buscá uno existente o creá uno nuevo</p>
     <div class="seg"><button class="on" id="seg-buscar" onclick="cliSeg('buscar')">Buscar</button><button id="seg-nuevo" onclick="cliSeg('nuevo')">Nuevo</button></div>
     <div id="cli-body"><div class="spinner"></div></div>`);
   cliSeg("buscar");
@@ -1407,14 +1462,16 @@ async function cliSeg(mode){
     const inp=$("#cli-pick-q");
     const draw=()=>{
       const q=inp.value.trim().toLowerCase();
-      const list=clientes.filter(c=>(`${c.nombre} ${c.apellido||""} ${c.email||""}`).toLowerCase().includes(q)).slice(0,40);
+      const list=clientes.filter(c=>(`${c.nombre} ${c.apellido||""} ${c.email||""}`).toLowerCase().includes(q))
+        .sort((a,b)=>(Number(b.nro)||0)-(Number(a.nro)||0)).slice(0,40);
       $("#cli-pick-list").innerHTML=list.length?list.map(c=>`
-        <div class="row" onclick='pickCliente(${JSON.stringify(c).replace(/'/g,"&#39;")})' style="cursor:pointer">
-          <div class="grow"><div class="name">${esc(c.nombre)} ${esc(c.apellido||"")}</div><div class="meta">${esc(c.codigo||"")}${c.email?" · "+esc(c.email):""}</div></div>
-          <span style="color:var(--dorado);font-size:20px">›</span></div>`).join(""):'<div class="empty">Sin resultados</div>';
+        <div class="row" onclick='pickCliente(${JSON.stringify(c).replace(/'/g,"&#39;")})' style="cursor:pointer;gap:8px">
+          <span class="chip n" style="flex-shrink:0">${esc(c.codigo||"")}</span>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${esc(c.nombre)} ${esc(c.apellido||"")}</span>
+          <span style="color:var(--muted);font-size:12px;flex-shrink:0;white-space:nowrap">${esc(c.telefono||"")}</span></div>`).join(""):'<div class="empty">Sin resultados</div>';
     };
     inp.oninput=draw; draw();
-  }catch(e){ body.innerHTML=`<div class="empty">${esc(e.message)}</div>`; }
+  }catch(e){ body.innerHTML=`<div class="empty">${esc(friendlyError(e))}</div>`; }
 }
 function pickCliente(c){ venta.cliente=c; closeSheet(); if(TAB==="vender"){ renderCliente(); drawCheckout(); } }
 async function crearClienteYSeleccionar(){
@@ -1428,10 +1485,11 @@ async function crearClienteYSeleccionar(){
       const { data: existing } = await c.from("003_clientes").select("*").eq("email", email).maybeSingle();
       if(existing){ DATA.clientes=null; pickCliente(existing); toast("Cliente ya existía"); return; }
     }
-    const { data, error } = await c.from("003_clientes").insert({ colegio:"WS", nombre, apellido, email: email||null, telefono }).select().single();
+    await getClientes();
+    const { data, error } = await c.from("003_clientes").insert({ colegio:"WS", nro: nextClienteNro(), nombre, apellido, email: email||null, telefono }).select().single();
     if(error) throw error;
     DATA.clientes=null; pickCliente(data); toast("Cliente creado");
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Crear cliente"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Crear cliente"; }
 }
 
 // ─────────────────────────────────────────────────────────────── PEDIDOS
@@ -1450,24 +1508,24 @@ async function viewPedidos(v,force){
         <button class="${f==='debe'?'on':''}" onclick="window._pedFilter='debe';render()">Deben</button>
         <button class="${f==='entregar'?'on':''}" onclick="window._pedFilter='entregar';render()">A entregar</button>
       </div>
-      ${list.length?list.map(p=>`
-        <div class="card" style="margin-bottom:10px;cursor:pointer" onclick='openPedido(${JSON.stringify(p.id)})'>
-          <div class="row" style="padding:0 0 8px"><div class="grow">
-            <div class="name">${esc(p.numero)} · ${esc(p.clienteNombre)}</div>
-            <div class="meta">${p.cant} prenda${p.cant!==1?'s':''} · Total ${fmt(p.total_venta)}</div>
-          </div><span style="color:var(--dorado);font-size:20px">›</span></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <span class="chip ${Number(p.saldo)>0.5?'r':'g'}">${Number(p.saldo)>0.5?"Debe "+fmt(p.saldo):"Pagado"}</span>
-            <span class="chip ${isEnt(p.estado_envio)?'g':'a'}">${esc(p.estado_envio||"Sin entregar")}</span>
-            ${p.factura ? `<span class="chip g">🧾 Facturado</span>` : `<span class="chip n">Sin facturar</span>`}
-            ${p.notas ? `<span class="chip n">📝 Nota</span>` : ""}
-          </div>
-        </div>`).join(""):'<div class="empty">No hay pedidos acá</div>'}`;
+      ${list.length?`<div class="table-wrap"><table class="pr-table"><thead><tr>
+          <th>Pedido</th><th>Cliente</th><th>Prendas</th><th>Total</th><th>Estado</th><th>Entrega</th><th>Factura</th>
+        </tr></thead><tbody>
+        ${list.map(p=>`<tr onclick='openPedido(${JSON.stringify(p.id)})'>
+            <td>${esc(p.numero)}${p.notas?' 📝':''}</td>
+            <td>${esc(p.clienteNombre)}</td>
+            <td>${p.cant}</td>
+            <td style="font-weight:700">${fmt(p.total_venta)}</td>
+            <td><span class="chip ${Number(p.saldo)>0.5?'r':'g'}">${Number(p.saldo)>0.5?"Debe "+fmt(p.saldo):"Pagado"}</span></td>
+            <td><span class="chip ${isEnt(p.estado_envio)?'g':'a'}">${esc(p.estado_envio||"Sin entregar")}</span></td>
+            <td>${p.factura ? `<span class="chip g">🧾</span>` : `<span class="chip n">—</span>`}</td>
+          </tr>`).join("")}
+        </tbody></table></div>`:'<div class="empty">No hay pedidos acá</div>'}`;
   }catch(e){ errBox(v,e); }
 }
 async function openPedido(pedidoId){
   const p=(DATA.pedidos||[]).find(x=>x.id===pedidoId); if(!p) return;
-  openSheet(`<div class="grabber"></div><h3>${esc(p.numero)}</h3><p class="sub">${esc(p.clienteNombre)}</p><div class="spinner"></div>`);
+  openWideSheet(`<div class="grabber"></div><h3>${esc(p.numero)}</h3><p class="sub">${esc(p.clienteNombre)}</p><div class="spinner"></div>`);
   const [{ data: items }] = await Promise.all([
     getClient().from("005_ordenes").select("*").eq("pedido_id", pedidoId),
     getCatalogo(),
@@ -1482,7 +1540,7 @@ async function openPedido(pedidoId){
   const envs=["Retiro Habitat","Envío a domicilio"];
   if(p.envio && !envs.includes(p.envio)) envs.unshift(p.envio);
   const itemsHtml=oiItemsContainerHtml();
-  openSheet(`<div class="grabber"></div><h3>${esc(p.numero)}</h3><p class="sub">${esc(p.clienteNombre)} · ${esc(p.forma_pago||"")}</p>
+  openWideSheet(`<div class="grabber"></div><h3>${esc(p.numero)}</h3><p class="sub">${esc(p.clienteNombre)} · ${esc(p.forma_pago||"")}</p>
 
     <div class="section-h" style="margin-top:0;display:flex;justify-content:space-between;align-items:center;gap:8px">
       <span>Prendas</span>
@@ -1572,7 +1630,7 @@ function oiRowHtml(it,idx){
     <div class="oi-nombre" title="${esc(it.nombre_prenda)}">${esc(it.nombre_prenda)}</div>
     ${talleHtml}
     ${qtyHtml}
-    <div class="oi-precio" id="oi-precio-${idx}"><b>${fmt(it.precio_unitario)}</b> c/u<div class="oi-lista">Lista ${fmt(lista)}</div></div>
+    <div class="oi-precio" id="oi-precio-${idx}"><b>${fmt(lista)}</b> lista<div class="oi-lista">c/u ${fmt(it.precio_unitario)}</div></div>
     ${descHtml}
     <span class="oi-subtotal" id="oi-sub-${idx}">${fmt(it.cantidad*it.precio_unitario)}</span>
     ${delHtml}
@@ -1624,18 +1682,18 @@ async function oiAddItem(){
     const el=$("#oi-items"); if(el) el.innerHTML=oiItemsContainerHtml();
     oiRecalcTotals();
     toast("Prenda agregada");
-  }catch(e){ toast(e.message,true); if(btn){ btn.disabled=false; btn.textContent="+ Agregar"; } }
+  }catch(e){ toast(friendlyError(e),true); if(btn){ btn.disabled=false; btn.textContent="+ Agregar"; } }
 }
 async function oiDeleteItem(idx){
   const it=window._pedItems[idx]; if(!it) return;
-  if(!confirm(`¿Eliminar "${it.nombre_prenda}" talle ${it.talle} del pedido?`)) return;
+  if(!(await confirmDialog(`¿Eliminar "${it.nombre_prenda}" talle ${it.talle} del pedido?`))) return;
   try{
     const { error } = await getClient().from("005_ordenes").delete().eq("id", it.id);
     if(error) throw error;
     window._pedItems.splice(idx,1);
     const el=$("#oi-items"); if(el) el.innerHTML=oiItemsContainerHtml();
     oiRecalcTotals();
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); }
 }
 function oiRecalcTotals(){
   const p=window._pedCurrent; if(!p) return;
@@ -1658,10 +1716,10 @@ async function oiPersist(idx){
       const prenda=window._pedCatMap[it.nombre_prenda];
       const curTalle=prenda?prenda.talles.find(t=>t.talleId===it.talle_id):null;
       const lista=oiListaFor(curTalle)||it.precio_unitario;
-      precEl.innerHTML=`<b>${fmt(it.precio_unitario)}</b> c/u<div class="oi-lista">Lista ${fmt(lista)}</div>`;
+      precEl.innerHTML=`<b>${fmt(lista)}</b> lista<div class="oi-lista">c/u ${fmt(it.precio_unitario)}</div>`;
     }
     oiRecalcTotals();
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); }
 }
 function oiChangeQty(idx,delta){
   const it=window._pedItems[idx]; if(!it) return;
@@ -1722,7 +1780,40 @@ async function facturarPedido(pedidoId){
     })});
     const d=await r.json();
     if(!r.ok || d.error) throw new Error(d.error||"No se pudo facturar");
-    toast(d.yaFacturado?"El pedido ya estaba facturado":"Factura emitida");
+    if(d.yaFacturado){
+      toast("El pedido ya estaba facturado");
+    } else if(d.registrado===false){
+      // La factura YA se emitió en ARCA con CAE real (eso no se puede deshacer)
+      // pero no se pudo guardar la fila en 007_facturas -- si eso queda así,
+      // el pedido se ve "sin facturar" y alguien puede volver a tocar
+      // "Emitir Factura C" y emitir una SEGUNDA factura real por el mismo
+      // pedido. Se reintenta guardar la fila una vez más acá mismo antes de
+      // avisar nada.
+      let guardada=false;
+      try{
+        const { error } = await getClient().from("007_facturas").insert(d.factura);
+        guardada = !error;
+      }catch(e){ guardada=false; }
+      if(guardada){
+        toast("Factura emitida");
+      } else {
+        const cae=d.factura?.cae||"—", comp=d.factura?.numero_comprobante||"—";
+        // Se deja constancia en la nota del pedido para no perder el CAE aunque
+        // se recargue la página -- es lo único persistente que queda si el
+        // insert directo también falló.
+        try{
+          const notaActual=p.notas||"";
+          const notaCae=`⚠ Factura C emitida en ARCA (CAE ${cae}, comprobante ${comp}) pero NO se pudo registrar en el sistema. NO volver a emitir para este pedido — avisar a Fede.`;
+          await getClient().from("004_pedidos").update({ notas: notaActual?`${notaActual}\n\n${notaCae}`:notaCae }).eq("id", pedidoId);
+        }catch(e){}
+        toast(`⚠ Factura emitida en ARCA (CAE ${cae}) pero no se pudo registrar. NO reintentes — avisale a Fede con este CAE.`, true);
+        btn.textContent="⚠ Facturada sin registrar"; // se queda deshabilitado a propósito
+        DATA.pedidos=null; DATA.facturas=null; await getPedidos(true);
+        return;
+      }
+    } else {
+      toast("Factura emitida");
+    }
     DATA.pedidos=null; DATA.facturas=null;
     await getPedidos(true);
     if(window._sheetPedidoId===pedidoId) openPedido(pedidoId);
@@ -1733,7 +1824,7 @@ async function facturarPedido(pedidoId){
         if(r.ok && window._sheetPedidoId===pedidoId){ const w=$("#fa-drive-wrap"); if(w) w.innerHTML=faDriveHtml(pFresh.factura); }
       });
     }
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Emitir Factura C"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Emitir Factura C"; }
 }
 async function subirFacturaDriveUI(pedidoId){
   const btn=$("#fa-drive-btn"); if(btn){ btn.disabled=true; btn.textContent="Subiendo…"; }
@@ -1755,27 +1846,27 @@ async function ensurePdfLib(){
   if(!window.NORD_FACTURA_PDF) await loadScript("/factura-pdf.js");
 }
 function blobToBase64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(blob); }); }
-function buildFacturaDataGestion(factura, pedido, itemsOverride){
+function buildFacturaDataGestion(factura, pedido){
+  // El comprobante no muestra detalle de prendas ni nombre del cliente (ver factura-pdf.js):
+  // solo importa el total y los datos fiscales del QR/factura.
   let fi={}; try{ fi=NORD_FACTURA.parseQr(factura.qr_url); }catch(e){}
-  const items = itemsOverride || ((window._pedCurrent && window._pedCurrent.id===pedido.id && window._pedItems)
-    ? window._pedItems.map(i=>({n:i.nombre_prenda, t:i.talle, q:i.cantidad, p:i.precio_unitario})) : null);
   return {
     cuit: fi.cuit, ptoVta: fi.ptoVta, nroCmp: fi.nroCmp, tipoCmp: fi.tipoCmp||11,
     fechaISO: fi.fecha, cae: fi.codAut!=null?fi.codAut:factura.cae,
     caeVto: String(factura.cae_vencimiento||"").replace(/-/g,""),
     importe: fi.importe!=null?fi.importe:factura.importe,
     receptorTipo: fi.tipoDocRec, receptorNro: fi.nroDocRec,
-    cliente: pedido.clienteNombre, id: pedido.numero, items, ambiente: factura.ambiente||"", qrUrl: factura.qr_url,
+    id: pedido.numero, ambiente: factura.ambiente||"", qrUrl: factura.qr_url,
   };
 }
 // Genera el PDF y lo sube a Drive vía /api/erp (action=drive-factura, autorizado con el
 // mismo token de Supabase Auth). Devuelve {ok, link, error} — nunca lanza ni bloquea el
 // flujo principal de facturación, que ya quedó guardado en 007_facturas de todas formas.
-async function subirFacturaDrive(factura, pedido, itemsOverride){
+async function subirFacturaDrive(factura, pedido){
   try{
     if(!factura.qr_url) return { ok:false, error:"La factura no tiene QR" };
     await ensurePdfLib();
-    const data=buildFacturaDataGestion(factura, pedido, itemsOverride);
+    const data=buildFacturaDataGestion(factura, pedido);
     const { blob, filename } = NORD_FACTURA_PDF.generate(data);
     const b64 = await blobToBase64(blob);
     const token = await getAccessToken(); if(!token) return { ok:false, error:"Sesión inválida" };
@@ -1790,8 +1881,7 @@ async function subirFacturaDrive(factura, pedido, itemsOverride){
 }
 // Las facturas emitidas antes de que existiera drive_link (o cuando falló la
 // subida automática) no tienen link — Contabilidad ofrece subirla ahí mismo,
-// sin tener que abrir el pedido. Junta los items de 005_ordenes al vuelo
-// porque acá no hay ningún pedido "abierto" (window._pedItems) del que tirar.
+// sin tener que abrir el pedido.
 function faContabilidadDriveHtml(f){
   return f.drive_link
     ? `<a href="${esc(f.drive_link)}" target="_blank" rel="noopener">Ver en Drive</a>`
@@ -1801,12 +1891,8 @@ async function subirFacturaDriveDesdeContabilidad(facturaId){
   const f=(DATA.facturas||[]).find(x=>x.id===facturaId); if(!f) return;
   const btn=$("#fa-drive-btn-"+CSS.escape(facturaId)); if(btn){ btn.disabled=true; btn.textContent="Subiendo…"; }
   try{
-    const { data: ordenes, error } = await getClient().from("005_ordenes")
-      .select("nombre_prenda,talle,cantidad,precio_unitario").eq("pedido_id", f.pedido_id);
-    if(error) throw error;
-    const items=(ordenes||[]).map(o=>({n:o.nombre_prenda, t:o.talle, q:o.cantidad, p:o.precio_unitario}));
-    const pedidoLike={ id:f.pedido_id, numero:f.pedidoNumero, clienteNombre:f.clienteNombre };
-    const r = await subirFacturaDrive(f, pedidoLike, items);
+    const pedidoLike={ id:f.pedido_id, numero:f.pedidoNumero };
+    const r = await subirFacturaDrive(f, pedidoLike);
     if(r.ok){
       toast(r.yaExistia?"Ya estaba en Drive":"Factura guardada en Drive");
       const cell=$("#fa-drivecell-"+CSS.escape(facturaId)); if(cell) cell.innerHTML=faContabilidadDriveHtml(f);
@@ -1814,11 +1900,11 @@ async function subirFacturaDriveDesdeContabilidad(facturaId){
       toast(r.error||"No se pudo subir a Drive", true);
       if(btn){ btn.disabled=false; btn.textContent="Subir a Drive"; }
     }
-  }catch(e){ toast(e.message,true); if(btn){ btn.disabled=false; btn.textContent="Subir a Drive"; } }
+  }catch(e){ toast(friendlyError(e),true); if(btn){ btn.disabled=false; btn.textContent="Subir a Drive"; } }
 }
 async function eliminarPedido(pedidoId){
   const p=(DATA.pedidos||[]).find(x=>x.id===pedidoId);
-  if(!confirm(`¿Eliminar el pedido ${p?p.numero:''}? No se puede deshacer.`)) return;
+  if(!(await confirmDialog(`¿Eliminar el pedido ${p?p.numero:''}? No se puede deshacer.`))) return;
   const btn=$("#del-pedido"); btn.disabled=true; btn.textContent="Eliminando…";
   try{
     const c=getClient();
@@ -1827,7 +1913,7 @@ async function eliminarPedido(pedidoId){
     const { error } = await c.from("004_pedidos").delete().eq("id", pedidoId);
     if(error) throw error;
     DATA.pedidos=null; closeSheet(); toast("Pedido eliminado"); render(true);
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="🗑 Eliminar pedido"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="🗑 Eliminar pedido"; }
 }
 async function guardarNotaPedido(pedidoId){
   const btn=$("#pd-nota-save"); btn.disabled=true; btn.textContent="Guardando…";
@@ -1838,7 +1924,7 @@ async function guardarNotaPedido(pedidoId){
     const p=(DATA.pedidos||[]).find(x=>x.id===pedidoId); if(p) p.notas=notas;
     if(window._pedCurrent && window._pedCurrent.id===pedidoId) window._pedCurrent.notas=notas;
     toast("Nota guardada");
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); }
   btn.disabled=false; btn.textContent="Guardar nota";
 }
 async function savePago(pedidoId){
@@ -1850,7 +1936,7 @@ async function savePago(pedidoId){
     });
     if(error) throw error;
     closeSheet(); toast("Pago registrado"); DATA.pedidos=null; render(true);
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Registrar pago"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Registrar pago"; }
 }
 async function saveEntrega(pedidoId){
   const btn=$("#en-save"); btn.disabled=true; btn.textContent="Guardando…";
@@ -1860,14 +1946,14 @@ async function saveEntrega(pedidoId){
     }).eq("id", pedidoId);
     if(error) throw error;
     closeSheet(); toast("Entrega actualizada"); DATA.pedidos=null; render(true);
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Guardar entrega"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Guardar entrega"; }
 }
 
 // ─────────────────────────────────────────────────────────────── CLIENTES
 async function viewClientes(v,force){
   try{
     if(force||!DATA.clientes){ loading(v); await getClientes(true); }
-    window._cliSort = window._cliSort||{field:"nombre",dir:1};
+    window._cliSort = window._cliSort||{field:"codigo",dir:-1};
     v.innerHTML=`
       <div class="view-title">Clientes <span style="font-size:15px;color:var(--muted);font-weight:600">· ${(DATA.clientes||[]).length}</span></div>
       <button class="btn gold" style="margin-bottom:14px" onclick="openNuevoClienteAdmin()">+ Nuevo cliente</button>
@@ -1879,6 +1965,7 @@ async function viewClientes(v,force){
           <th data-field="apellido">Apellido</th>
           <th data-field="email">Email</th>
           <th data-field="telefono">WhatsApp</th>
+          <th></th>
         </tr></thead>
         <tbody id="cli-tbody"></tbody>
       </table></div>`;
@@ -1901,8 +1988,9 @@ function drawClientes(){
     .sort((a,b)=> field==="codigo" ? ((Number(a.nro)||0)-(Number(b.nro)||0))*dir : String(a[field]||"").localeCompare(String(b[field]||""),"es")*dir);
   el.innerHTML = list.length ? list.map(c=>`<tr style="cursor:pointer" onclick='openEditarCliente(${JSON.stringify(c.id)})'>
       <td>${c.codigo?`<span class="chip n">${esc(c.codigo)}</span>`:"—"}</td>
-      <td>${esc(c.nombre)}</td><td>${esc(c.apellido||"—")}</td><td>${esc(c.email||"—")}</td><td>${esc(c.telefono||"—")}</td></tr>`).join("")
-    : `<tr><td colspan="5"><div class="empty">Sin clientes</div></td></tr>`;
+      <td>${esc(c.nombre)}</td><td>${esc(c.apellido||"—")}</td><td>${esc(c.email||"—")}</td><td>${esc(c.telefono||"—")}</td>
+      <td><button type="button" class="oi-del" title="Eliminar" onclick='event.stopPropagation(); eliminarClienteAdmin(${JSON.stringify(c.id)})'>✕</button></td></tr>`).join("")
+    : `<tr><td colspan="6"><div class="empty">Sin clientes</div></td></tr>`;
   const table=$("#cli-table"); if(!table) return;
   table.querySelectorAll("th[data-field]").forEach(th=>{
     th.classList.toggle("sorted", th.dataset.field===field);
@@ -1923,12 +2011,13 @@ async function crearClienteAdmin(){
   const telefono=$("#nc-tel").value.trim(); if(!telefono) return toast("El WhatsApp es obligatorio",true);
   const btn=$("#nc-save"); btn.disabled=true; btn.textContent="Creando…";
   try{
+    await getClientes();
     const { error } = await getClient().from("003_clientes").insert({
-      colegio:"WS", nombre, apellido:$("#nc-ape").value.trim(), email:$("#nc-mail").value.trim()||null, telefono:$("#nc-tel").value.trim(),
+      colegio:"WS", nro: nextClienteNro(), nombre, apellido:$("#nc-ape").value.trim(), email:$("#nc-mail").value.trim()||null, telefono:$("#nc-tel").value.trim(),
     });
     if(error) throw error;
     DATA.clientes=null; closeSheet(); toast("Cliente creado"); render(true);
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Crear cliente"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Crear cliente"; }
 }
 function openEditarCliente(id){
   const c=(DATA.clientes||[]).find(x=>x.id===id); if(!c) return;
@@ -1939,6 +2028,26 @@ function openEditarCliente(id){
     <div class="field"><label>WhatsApp</label><input id="ec-tel" value="${esc(c.telefono||"")}"></div>
     <button class="btn" id="ec-save" onclick='guardarCliente(${JSON.stringify(id)})'>Guardar cambios</button>`);
 }
+// El código de cliente (WSxx) sale de 003_clientes.nro (default nextval de una
+// secuencia). Para que un cliente borrado "libere" su número en vez de perderlo
+// para siempre, calculamos acá el menor número libre y lo mandamos explícito en
+// el insert (nro admite valor explícito, la secuencia es sólo el default).
+function nextClienteNro(){
+  const usados = new Set((DATA.clientes||[]).map(c=>Number(c.nro)||0));
+  let n=1; while(usados.has(n)) n++;
+  return n;
+}
+async function eliminarClienteAdmin(id){
+  const c=(DATA.clientes||[]).find(x=>x.id===id); if(!c) return;
+  if(!(await confirmDialog(`¿Eliminar al cliente "${c.nombre} ${c.apellido||""}" (${c.codigo||""})?`))) return;
+  try{
+    const { error } = await getClient().from("003_clientes").delete().eq("id", id);
+    if(error) throw error;
+    DATA.clientes=(DATA.clientes||[]).filter(x=>x.id!==id);
+    toast("Cliente eliminado");
+    drawClientes();
+  }catch(e){ toast(friendlyError(e),true); }
+}
 async function guardarCliente(id){
   const btn=$("#ec-save"); btn.disabled=true; btn.textContent="Guardando…";
   try{
@@ -1948,7 +2057,7 @@ async function guardarCliente(id){
     }).eq("id", id);
     if(error) throw error;
     DATA.clientes=null; closeSheet(); toast("Cliente actualizado"); render(true);
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Guardar cambios"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Guardar cambios"; }
 }
 
 // ─────────────────────────────────────────────────────────────── PROVEEDORES
@@ -1960,7 +2069,7 @@ async function viewProveedores(v,force){
       <div class="field"><label>Nuevo proveedor</label>
         <div style="display:flex;gap:8px">
           <input id="pv-nombre" placeholder="Nombre" style="flex:1;padding:12px 13px;border:1.5px solid var(--line);border-radius:12px">
-          <button class="btn sm gold" onclick="crearProveedor()">Agregar</button>
+          <button class="btn sm gold" id="pv-add-btn" onclick="crearProveedor()">Agregar</button>
         </div>
       </div>
       <div class="card" id="pv-list"></div>`;
@@ -1974,11 +2083,12 @@ function drawProveedores(){
 }
 async function crearProveedor(){
   const nombre=$("#pv-nombre").value.trim(); if(!nombre) return toast("Ingresá un nombre",true);
+  const btn=$("#pv-add-btn"); if(btn){ btn.disabled=true; btn.textContent="Agregando…"; }
   try{
     const { error } = await getClient().from("008_proveedores").insert({ nombre });
     if(error) throw error;
     DATA.proveedores=null; $("#pv-nombre").value=""; toast("Proveedor agregado"); render(true);
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); if(btn){ btn.disabled=false; btn.textContent="Agregar"; } }
 }
 
 // ─────────────────────────────────────────────────────────────── COMPRAS
@@ -2126,7 +2236,7 @@ async function coChangeEstado(compraId, estado){
     if(error) throw error;
     const co=(DATA.compras||[]).find(x=>x.id===compraId); if(co) co.estado=estado;
     toast("Estado actualizado");
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); }
 }
 async function coChangeProveedor(compraId, proveedorId){
   try{
@@ -2135,7 +2245,7 @@ async function coChangeProveedor(compraId, proveedorId){
     const co=(DATA.compras||[]).find(x=>x.id===compraId);
     if(co){ co.proveedor_id=proveedorId||null; co.proveedorNombre=(DATA.proveedores||[]).find(p=>p.id===proveedorId)?.nombre||""; }
     toast("Proveedor actualizado");
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); }
 }
 async function coChangeTalleId(compraId, talleId){
   try{
@@ -2149,7 +2259,7 @@ async function coChangeTalleId(compraId, talleId){
       const row=$("#co-row-"+CSS.escape(compraId)); if(row) row.outerHTML=coRowHtml(co);
     }
     toast("Prenda/talle actualizado");
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); }
 }
 function coChangePrenda(compraId, prendaId){
   const p=(DATA.catalogo||[]).find(x=>x.id===prendaId);
@@ -2191,7 +2301,7 @@ async function coSaveCell(id, field, value, moveNext){
     const subEl=$("#co-sub-"+CSS.escape(id)); if(subEl) subEl.textContent=fmt((Number(co.cantidad)||0)*(Number(co.costo_unitario)||0));
     if(moveNext) coFocusNext(id, field);
   }catch(e){
-    toast(e.message,true);
+    toast(friendlyError(e),true);
     if(span) span.innerHTML=display(co[field]);
   }
 }
@@ -2282,7 +2392,7 @@ async function crearCompra(){
     const { error } = await getClient().from("009_compras").insert(rows);
     if(error) throw error;
     DATA.compras=null; DATA.catalogo=null; closeSheet(); toast(`Compra ${numero} registrada`); render(true);
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Registrar compra"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Registrar compra"; }
 }
 
 // ─────────────────────────────────────────────────────────────── PRECIOS Y COSTOS
@@ -2423,7 +2533,7 @@ async function prSaveCell(talleId, field, value, moveNext){
     const row=$("#pr-row-"+CSS.escape(talleId)); if(row) row.outerHTML=prRowHtml(r);
     if(moveNext) prFocusNext(talleId, field);
   }catch(e){
-    toast(e.message,true);
+    toast(friendlyError(e),true);
     if(span) span.innerHTML=fmt(r[field]);
   }
 }
@@ -2472,7 +2582,7 @@ async function prBulkApply(){
     toast(`Precio actualizado en ${rows.length} talle${rows.length!==1?"s":""}`);
     $("#pr-bulk-pct").value="";
     drawPrecios();
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); }
   btn.disabled=false; btn.textContent="Aplicar aumento";
 }
 function openSimularPrecio(talleId){
@@ -2524,7 +2634,7 @@ async function aplicarPrecio(talleId){
     const { error } = await getClient().from("010_precios").insert({ talle_id:talleId, precio_lista:nuevoLista, precio_transferencia:nuevoTrans||Math.round(nuevoLista*0.9), vigente_desde:todayISO() });
     if(error) throw error;
     DATA.preciosCostos=null; DATA.catalogo=null; closeSheet(); toast("Precio actualizado"); render(true);
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Aplicar nuevo precio (desde hoy)"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Aplicar nuevo precio (desde hoy)"; }
 }
 async function aplicarCosto(talleId){
   const costo=parseMiles($("#sp-costo").value); if(!costo) return toast("Ingresá el costo",true);
@@ -2533,7 +2643,7 @@ async function aplicarCosto(talleId){
     const { error } = await getClient().from("011_costos_reposicion").insert({ talle_id:talleId, costo, vigente_desde:todayISO() });
     if(error) throw error;
     DATA.preciosCostos=null; closeSheet(); toast("Costo actualizado"); render(true);
-  }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="Guardar nuevo costo (desde hoy)"; }
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Guardar nuevo costo (desde hoy)"; }
 }
 
 // ─────────────────────────────────────────────────────────────── CONTABILIDAD
@@ -2563,12 +2673,26 @@ async function viewContabilidad(v,force){
     const totalFacturado=list0.reduce((s,f)=>s+(Number(f.importe)||0),0);
     const hoy=new Date(); const ym=hoy.toISOString().slice(0,7);
     const totalMes=list0.filter(f=>String(f.fecha||"").slice(0,7)===ym).reduce((s,f)=>s+(Number(f.importe)||0),0);
+    const porMes={};
+    list0.forEach(f=>{
+      const m=String(f.fecha||"").slice(0,7); if(!m) return;
+      (porMes[m]=porMes[m]||{n:0,total:0}); porMes[m].n++; porMes[m].total+=Number(f.importe)||0;
+    });
+    const mesesOrdenados=Object.keys(porMes).sort((a,b)=>b.localeCompare(a));
+    const pivotHtml = mesesOrdenados.length ? `
+      <div class="table-wrap" style="margin-bottom:14px"><table class="pr-table static">
+        <thead><tr><th>Mes</th><th>Facturas</th><th>Total</th></tr></thead>
+        <tbody>${mesesOrdenados.map(m=>`<tr><td>${mesLabel(m)}</td><td>${porMes[m].n}</td><td style="font-weight:700">${fmt(porMes[m].total)}</td></tr>`).join("")}</tbody>
+      </table></div>` : "";
     v.innerHTML=`
       <div class="view-title">Contabilidad</div>
       <div class="two" style="margin-bottom:14px">
         <div class="card" style="text-align:center;padding:16px"><div style="font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase">Total facturado</div><div style="font-size:22px;font-weight:800;margin-top:4px">${fmt(totalFacturado)}</div></div>
         <div class="card" style="text-align:center;padding:16px"><div style="font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase">Facturado este mes</div><div style="font-size:22px;font-weight:800;margin-top:4px">${fmt(totalMes)}</div></div>
       </div>
+      <div class="section-h">Facturación por mes</div>
+      ${pivotHtml}
+      <div class="section-h">Detalle de facturas</div>
       <p style="font-size:12.5px;color:var(--muted);margin-top:-6px">${list0.length} factura${list0.length!==1?"s":""} emitida${list0.length!==1?"s":""}. Tocá los encabezados para ordenar.</p>
       <div class="search"><span class="mag">🔎</span><input id="fa-q" placeholder="Buscar cliente o N° de pedido…" value="${esc(window._faQ)}"></div>
       <div class="table-wrap"><table class="pr-table static" id="fa-table">
@@ -2632,7 +2756,7 @@ async function viewGastos(v,force){
     const totalHist=list0.reduce((s,g)=>s+(Number(g.monto)||0),0);
     const ym=todayISO().slice(0,7);
     const totalMes=list0.filter(g=>String(g.fecha||"").slice(0,7)===ym).reduce((s,g)=>s+(Number(g.monto)||0),0);
-    const catOpts=GASTO_CATEGORIAS.map(c=>`<option value="${esc(c)}">`).join("");
+    const catOpts=GASTO_CATEGORIAS.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
     v.innerHTML=`
       <div class="view-title">Gastos</div>
       <div class="two" style="margin-bottom:14px">
@@ -2642,9 +2766,8 @@ async function viewGastos(v,force){
       <div class="card" style="margin-bottom:14px">
         <div class="section-h" style="margin-top:0">+ Nuevo gasto</div>
         <div class="oi-add ga-add" id="ga-add-row">
-          <input type="text" id="ga-cat" list="ga-cat-list" placeholder="Categoría (ej. Logística)">
-          <datalist id="ga-cat-list">${catOpts}</datalist>
           <input type="text" id="ga-fecha" value="${todayISO()}">
+          <select id="ga-cat">${catOpts}</select>
           <input type="text" inputmode="numeric" id="ga-monto" placeholder="Monto">
           <input type="text" id="ga-prov" placeholder="Proveedor (opcional)">
           <input type="text" id="ga-desc" placeholder="Descripción (opcional)">
@@ -2696,10 +2819,15 @@ function gaDisplay(g,field){
   if(field==="monto") return fmt(g.monto);
   return esc(g[field] || ((field==="proveedor"||field==="descripcion")?"—":""));
 }
+function gaCategoriaSelectHtml(g){
+  const cats = GASTO_CATEGORIAS.includes(g.categoria) || !g.categoria ? GASTO_CATEGORIAS : [g.categoria, ...GASTO_CATEGORIAS];
+  return `<select onchange="gaSaveCell('${g.id}','categoria',this.value)">${cats.map(c=>
+    `<option value="${esc(c)}" ${c===g.categoria?"selected":""}>${esc(c)}</option>`).join("")}</select>`;
+}
 function gaRowHtml(g){
   return `<tr id="ga-row-${g.id}">
     <td class="pr-editable" data-id="${g.id}" data-field="fecha" data-type="text" onclick="gaEditCell(this)">${esc(g.fecha||"")}</td>
-    <td class="pr-editable" data-id="${g.id}" data-field="categoria" data-type="text" onclick="gaEditCell(this)">${gaDisplay(g,"categoria")}</td>
+    <td>${gaCategoriaSelectHtml(g)}</td>
     <td class="pr-editable" data-id="${g.id}" data-field="monto" data-type="num" onclick="gaEditCell(this)">${gaDisplay(g,"monto")}</td>
     <td class="pr-editable" data-id="${g.id}" data-field="proveedor" data-type="text" onclick="gaEditCell(this)">${gaDisplay(g,"proveedor")}</td>
     <td class="pr-editable" data-id="${g.id}" data-field="descripcion" data-type="text" onclick="gaEditCell(this)">${gaDisplay(g,"descripcion")}</td>
@@ -2738,7 +2866,7 @@ async function gaSaveCell(id, field, value){
     if(error) throw error;
     Object.assign(g, patch);
     if(td) td.innerHTML=gaDisplay(g,field);
-  }catch(e){ toast(e.message,true); if(td) td.innerHTML=gaDisplay(g,field); }
+  }catch(e){ toast(friendlyError(e),true); if(td) td.innerHTML=gaDisplay(g,field); }
 }
 async function gaAddGasto(){
   const categoria=$("#ga-cat").value.trim();
@@ -2756,26 +2884,26 @@ async function gaAddGasto(){
     }).select().single();
     if(error) throw error;
     DATA.gastos=[data, ...(DATA.gastos||[])];
-    $("#ga-cat").value=""; $("#ga-monto").value=""; $("#ga-prov").value=""; $("#ga-desc").value=""; $("#ga-fecha").value=todayISO();
+    $("#ga-monto").value=""; $("#ga-prov").value=""; $("#ga-desc").value=""; $("#ga-fecha").value=todayISO();
     const tbody=$("#ga-tbody");
     if(tbody){
       if(tbody.querySelector(".empty")) tbody.innerHTML="";
       tbody.insertAdjacentHTML("afterbegin", gaRowHtml(data));
     }
     toast("Gasto registrado");
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); }
   finally{ if(btn){ btn.disabled=false; btn.textContent="+ Agregar"; } }
 }
 async function gaDeleteGasto(id){
   const g=(DATA.gastos||[]).find(x=>x.id===id); if(!g) return;
-  if(!confirm(`¿Eliminar el gasto "${g.categoria}" de ${fmt(g.monto)}?`)) return;
+  if(!(await confirmDialog(`¿Eliminar el gasto "${g.categoria}" de ${fmt(g.monto)}?`))) return;
   try{
     const { error } = await getClient().from("013_gastos").delete().eq("id", id);
     if(error) throw error;
     DATA.gastos=(DATA.gastos||[]).filter(x=>x.id!==id);
     const row=$("#ga-row-"+id); if(row) row.remove();
     toast("Gasto eliminado");
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); }
 }
 
 // ─────────────────────────────────────────────────────────────── EGRESOS
@@ -2802,8 +2930,8 @@ async function viewEgresos(v,force){
       <div class="card" style="margin-bottom:14px">
         <div class="section-h" style="margin-top:0">+ Nuevo egreso</div>
         <div class="oi-add eg-add" id="eg-add-row">
-          <input type="text" id="eg-pagado" placeholder="Pagado por (Flor/Fede/...)">
           <input type="text" id="eg-fecha" value="${todayISO()}">
+          <input type="text" id="eg-pagado" placeholder="Pagado por (Flor/Fede/...)">
           <input type="text" id="eg-prov" placeholder="Proveedor (opcional)">
           <select id="eg-moneda">${EGRESO_MONEDAS.map(m=>`<option value="${m}">${m}</option>`).join("")}</select>
           <input type="text" inputmode="numeric" id="eg-monto" placeholder="Monto">
@@ -2906,7 +3034,7 @@ async function egSaveCell(id, field, value){
     if(error) throw error;
     Object.assign(g, patch);
     if(td) td.innerHTML=egDisplay(g,field);
-  }catch(e){ toast(e.message,true); if(td) td.innerHTML=egDisplay(g,field); }
+  }catch(e){ toast(friendlyError(e),true); if(td) td.innerHTML=egDisplay(g,field); }
 }
 async function egAddEgreso(){
   const pagado_por=$("#eg-pagado").value.trim();
@@ -2932,26 +3060,42 @@ async function egAddEgreso(){
       tbody.insertAdjacentHTML("afterbegin", egRowHtml(data));
     }
     toast("Egreso registrado");
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); }
   finally{ if(btn){ btn.disabled=false; btn.textContent="+ Agregar"; } }
 }
 async function egDeleteEgreso(id){
   const g=(DATA.egresos||[]).find(x=>x.id===id); if(!g) return;
-  if(!confirm(`¿Eliminar el egreso de "${g.pagado_por}" por ${fmt(g.monto_total)}?`)) return;
+  if(!(await confirmDialog(`¿Eliminar el egreso de "${g.pagado_por}" por ${fmt(g.monto_total)}?`))) return;
   try{
     const { error } = await getClient().from("015_egresos").delete().eq("id", id);
     if(error) throw error;
     DATA.egresos=(DATA.egresos||[]).filter(x=>x.id!==id);
     const row=$("#eg-row-"+id); if(row) row.remove();
     toast("Egreso eliminado");
-  }catch(e){ toast(e.message,true); }
+  }catch(e){ toast(friendlyError(e),true); }
 }
 
 // ─────────────────────────────────────────────────────────────── SHEET
 function openSheet(html){ $("#sheet").innerHTML='<div class="sheet-topbar"><button class="sheet-close" onclick="closeSheet()" aria-label="Cerrar">✕</button></div>'+html; $("#sheet-bg").classList.add("open"); sheetOpen=true; updateBack(); }
 // Variante centrada/más arriba (no bottom-sheet) para modales que necesitan más foco, ej. Registrar compra.
 function openCenterSheet(html){ $("#sheet-bg").classList.add("center"); openSheet(html); }
-function closeSheet(){ $("#sheet-bg").classList.remove("open","center"); sheetOpen=false; updateBack(); }
+function openWideSheet(html){ $("#sheet-bg").classList.add("wide"); openSheet(html); }
+function closeSheet(){ $("#sheet-bg").classList.remove("open","center","wide"); sheetOpen=false; updateBack(); }
+
+// ─────────────────────────────────────────────────────────────── CONFIRM
+let _confirmResolve=null;
+function confirmDialog(message, confirmLabel){
+  return new Promise(resolve=>{
+    _confirmResolve=resolve;
+    $("#confirm-msg").textContent=message;
+    const okBtn=$("#confirm-ok-btn"); if(okBtn) okBtn.textContent=confirmLabel||"Eliminar";
+    $("#confirm-bg").classList.add("open");
+  });
+}
+function _resolveConfirm(v){
+  $("#confirm-bg").classList.remove("open");
+  if(_confirmResolve){ const r=_confirmResolve; _confirmResolve=null; r(v); }
+}
 
 // ─────────────────────────────────────────────────────────────── INIT
 window.addEventListener("popstate",()=>{
