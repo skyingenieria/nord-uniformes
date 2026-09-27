@@ -188,7 +188,7 @@
     #mobile-search-bar.open { display: flex; align-items: center; gap: 10px; }
     #mobile-search-bar input {
       flex: 1; border: 1px solid var(--niebla-200); border-radius: 8px;
-      padding: 9px 13px; font-family: var(--sans); font-size: 14px;
+      padding: 9px 13px; font-family: var(--sans); font-size: 16px;
       color: var(--azul-900); background: white; outline: none;
     }
     #mobile-search-bar input:focus { border-color: var(--azul); }
@@ -791,7 +791,7 @@
     .avisame-content p { font-size: 13px; color: var(--azul-600); margin-bottom: 20px; }
     .avisame-field { margin-bottom: 12px; }
     .avisame-field label { display: block; font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--azul-400); margin-bottom: 5px; }
-    .avisame-field input { width: 100%; border: 1px solid var(--niebla-200); background: white; padding: 11px 13px; font-family: var(--sans); font-size: 14px; color: var(--azul-900); outline: none; border-radius: 8px; transition: border-color .15s; }
+    .avisame-field input { width: 100%; border: 1px solid var(--niebla-200); background: white; padding: 11px 13px; font-family: var(--sans); font-size: 16px; color: var(--azul-900); outline: none; border-radius: 8px; transition: border-color .15s; }
     .avisame-field input:focus { border-color: var(--azul); }
     .btn-avisame-submit { width: 100%; background: var(--azul-900); color: white; border: none; padding: 14px; font-family: var(--sans); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; border-radius: 8px; margin-top: 8px; transition: background .2s; }
     .btn-avisame-submit:hover { background: var(--azul); }
@@ -1064,6 +1064,9 @@
 
       /* Promo banner */
       .promo-banner { font-size: 11px; padding: 7px 16px; }
+
+      /* Botones +/- del carrito: target táctil más grande (26px quedaba chico para el dedo) */
+      .drawer-qty-btn { width: 34px; height: 34px; font-size: 17px; }
 
       /* Footer */
       .footer-inner { flex-direction: column; gap: 24px; }

@@ -88,6 +88,10 @@
   .bar-item .bv{min-width:74px;text-align:right;color:var(--muted);font-weight:700}
   .daily{display:flex;align-items:flex-end;gap:2px;height:84px;margin-top:4px}
   .daily .db{flex:1;background:var(--dorado);border-radius:3px 3px 0 0;min-height:2px;opacity:.9}
+  .chart-cap{font-size:12.5px;color:var(--muted);text-align:center;margin-top:10px;min-height:16px}
+  .legend{display:flex;justify-content:center;gap:16px;margin-top:8px;font-size:12px;color:var(--muted);font-weight:600}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px}
 
   .section-h{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:22px 2px 10px}
 
@@ -196,13 +200,21 @@
   table.pr-table th .arrow{margin-left:4px;font-size:9px}
   table.pr-table td{padding:10px 12px;border-bottom:1px solid var(--line)}
   table.pr-table tbody tr{cursor:pointer}
-  table.pr-table tbody tr:hover{background:#fbf9f4}
   table.pr-table tbody tr:last-child td{border-bottom:none}
   table.pr-table.static tbody tr{cursor:default}
-  table.pr-table.static tbody tr:hover{background:transparent}
   table.pr-table td select{padding:5px 7px;border:1.5px solid var(--line);border-radius:7px;font-size:12px;background:#fff;cursor:pointer}
+  /* Anchos fijos (colgroup) para que los títulos nunca se desfacen de los datos,
+     sin importar cuánto texto libre traiga una fila (proveedor/comentario/descripción). */
+  #ga-table, #eg-table{table-layout:fixed}
+  #ga-table td, #ga-table th, #eg-table td, #eg-table th{white-space:normal;word-break:break-word}
   .pr-editable{cursor:pointer;display:inline-block;padding:3px 6px;border-radius:6px;border:1px solid transparent;min-width:70px;box-sizing:border-box}
-  .pr-editable:hover{background:#fbf9f4;border-color:var(--line)}
+  /* :hover sólo con mouse real -- en touch (mobile) el :hover queda "pegado" tras
+     tocar y scrollear, mostrando cajas fantasma en celdas que no se tocaron. */
+  @media (hover:hover){
+    table.pr-table tbody tr:hover{background:#fbf9f4}
+    table.pr-table.static tbody tr:hover{background:transparent}
+    .pr-editable:hover{background:#fbf9f4;border-color:var(--line)}
+  }
   .pr-editable input{width:100%;min-width:64px;padding:2px 5px;border:1.5px solid var(--dorado);border-radius:6px;font-size:13px;box-sizing:border-box;font-family:inherit;line-height:1.4}
   .tot-line{display:flex;justify-content:space-between;padding:5px 0;font-size:14px}
   .tot-line.big{font-size:19px;font-weight:800;border-top:1.5px solid var(--line);margin-top:6px;padding-top:12px}
@@ -812,10 +824,10 @@ async function viewInicio(v,force){
     });
 
     // Ventas/ganancia por mes (últimos 12) + top prendas, a partir de las órdenes
-    const porMes = {};    // "YYYY-MM" -> {ventas, ganancia}
+    const porMes = {};    // "YYYY-MM" -> {ventas, ganancia, qty}
     const porMesUsd = {}; // "YYYY-MM" -> {qty, ventasUsd, gananciaUsd, sinCotiz}
     const porProd = {};   // nombre -> {qty, ventas}
-    let ventasMes=0, gananciaMes=0, ventasAnio=0, gananciaAnio=0;
+    let ventasMes=0, gananciaMes=0, ventasAnio=0, gananciaAnio=0, cantMes=0, cantAnio=0;
     ordenes.forEach(o=>{
       const fechaCompleta = o.pedido && o.pedido.created_at ? o.pedido.created_at.slice(0,10) : null;
       const fecha = fechaCompleta ? fechaCompleta.slice(0,7) : null;
@@ -823,10 +835,10 @@ async function viewInicio(v,force){
       const ventaTot = cant*(Number(o.precio_unitario)||0);
       const gananciaTot = cant*((Number(o.precio_unitario)||0)-(Number(o.costo_unitario)||0));
       if(fecha){
-        if(!porMes[fecha]) porMes[fecha]={ventas:0,ganancia:0};
-        porMes[fecha].ventas+=ventaTot; porMes[fecha].ganancia+=gananciaTot;
-        if(fecha.startsWith(anioActual)){ ventasAnio+=ventaTot; gananciaAnio+=gananciaTot; }
-        if(fecha===mesActual){ ventasMes+=ventaTot; gananciaMes+=gananciaTot; }
+        if(!porMes[fecha]) porMes[fecha]={ventas:0,ganancia:0,qty:0};
+        porMes[fecha].ventas+=ventaTot; porMes[fecha].ganancia+=gananciaTot; porMes[fecha].qty+=cant;
+        if(fecha.startsWith(anioActual)){ ventasAnio+=ventaTot; gananciaAnio+=gananciaTot; cantAnio+=cant; }
+        if(fecha===mesActual){ ventasMes+=ventaTot; gananciaMes+=gananciaTot; cantMes+=cant; }
         if(!porMesUsd[fecha]) porMesUsd[fecha]={qty:0,ventasUsd:0,gananciaUsd:0,sinCotiz:0};
         porMesUsd[fecha].qty+=cant;
         const rate = fechaCompleta && dolarMap[fechaCompleta];
@@ -838,12 +850,14 @@ async function viewInicio(v,force){
         porProd[o.nombre_prenda].qty+=cant; porProd[o.nombre_prenda].ventas+=ventaTot;
       }
     });
-    const mesesUsd = Object.keys(porMesUsd).sort((a,b)=>b.localeCompare(a));
+    const mesesUsd = Object.keys(porMesUsd).sort((a,b)=>a.localeCompare(b));
     const usdRows = mesesUsd.map(k=>{
       const s=porMesUsd[k];
       return `<tr><td>${esc(mesLabel(k))}</td><td>${s.qty}${s.sinCotiz?` <span style="color:var(--amber)" title="${s.sinCotiz} sin cotización">⚠</span>`:""}</td>
         <td style="font-weight:700">${fmtUsd(s.ventasUsd)}</td><td>${fmtUsd(s.gananciaUsd)}</td></tr>`;
     }).join("");
+    const usdTotal = mesesUsd.reduce((a,k)=>({qty:a.qty+porMesUsd[k].qty, ventasUsd:a.ventasUsd+porMesUsd[k].ventasUsd, gananciaUsd:a.gananciaUsd+porMesUsd[k].gananciaUsd}), {qty:0,ventasUsd:0,gananciaUsd:0});
+    const usdTotalRow = mesesUsd.length ? `<tr style="font-weight:800;border-top:1.5px solid var(--line)"><td>Total</td><td>${usdTotal.qty}</td><td>${fmtUsd(usdTotal.ventasUsd)}</td><td>${fmtUsd(usdTotal.gananciaUsd)}</td></tr>` : "";
     const stockValRows = stockVal.map(s=>`<tr><td>${esc(s.nombre)}</td><td>${s.cantidad}</td>
       <td>${fmt(s.costoTotal)}</td><td style="font-weight:700">${fmt(s.ventaTotal)}</td></tr>`).join("");
     const stockValTotal = stockVal.reduce((a,s)=>({cantidad:a.cantidad+s.cantidad, costoTotal:a.costoTotal+s.costoTotal, ventaTotal:a.ventaTotal+s.ventaTotal}), {cantidad:0,costoTotal:0,ventaTotal:0});
@@ -852,8 +866,8 @@ async function viewInicio(v,force){
     for(let i=11;i>=0;i--){
       const d=new Date(now.getFullYear(), now.getMonth()-i, 1);
       const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
-      const s=porMes[k]||{ventas:0,ganancia:0};
-      serie.push({label:`${MESES[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`, ventas:Math.round(s.ventas), ganancia:Math.round(s.ganancia)});
+      const s=porMes[k]||{ventas:0,ganancia:0,qty:0};
+      serie.push({label:`${MESES[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`, ventas:Math.round(s.ventas), ganancia:Math.round(s.ganancia), qty:s.qty});
     }
     const maxV=Math.max(1,...serie.map(s=>s.ventas));
     const bars=serie.map((s,i)=>`<div class="bar" data-i="${i}" style="height:${Math.max(Math.round((s.ventas/maxV)*100),2)}%" title="${esc(s.label)}"></div>`).join("");
@@ -864,15 +878,12 @@ async function viewInicio(v,force){
     const margenAnio = ventasAnio>0 ? (gananciaAnio/ventasAnio*100) : null;
 
     v.innerHTML = `
-      <div class="section-h" style="margin-top:0">Este mes</div>
-      <div class="kpi-grid">
-        <div class="kpi hl"><div class="lbl">Ventas del mes</div><div class="val">${fmt(ventasMes)}</div></div>
-        <div class="kpi gold"><div class="lbl">Ganancia del mes</div><div class="val">${fmt(gananciaMes)}</div><div class="sub">Margen ${margenMes!=null?margenMes.toFixed(0)+"%":"—"}</div></div>
-      </div>
-      <div class="section-h">Año calendario ${esc(anioActual)}</div>
-      <div class="kpi-grid">
-        <div class="kpi hl"><div class="lbl">Ventas del año</div><div class="val">${fmt(ventasAnio)}</div></div>
+      <div class="section-h" style="margin-top:0">Año ${esc(anioActual)} y mes en curso</div>
+      <div class="kpi-grid grid4">
+        <div class="kpi hl"><div class="lbl">Ventas del año</div><div class="val">${fmt(ventasAnio)}</div><div class="sub">${cantAnio} prenda${cantAnio!==1?"s":""}</div></div>
         <div class="kpi gold"><div class="lbl">Ganancia del año</div><div class="val">${fmt(gananciaAnio)}</div><div class="sub">Margen ${margenAnio!=null?margenAnio.toFixed(0)+"%":"—"}</div></div>
+        <div class="kpi hl"><div class="lbl">Ventas del mes</div><div class="val">${fmt(ventasMes)}</div><div class="sub">${cantMes} prenda${cantMes!==1?"s":""}</div></div>
+        <div class="kpi gold"><div class="lbl">Ganancia del mes</div><div class="val">${fmt(gananciaMes)}</div><div class="sub">Margen ${margenMes!=null?margenMes.toFixed(0)+"%":"—"}</div></div>
       </div>
       <div class="kpi-grid" style="margin-top:12px">
         <div class="kpi" onclick="window._pedFilter='debe';go('pedidos')">
@@ -895,13 +906,13 @@ async function viewInicio(v,force){
         </svg>
         <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);margin-top:8px">${labels}</div>
         <div class="chart-cap" id="chart-cap">Tocá una barra para ver el detalle</div>
-        <div class="legend"><span><i style="background:var(--azul-900)"></i>Ventas</span><span><i style="background:var(--dorado)"></i>Ganancia</span></div>
+        <div class="legend"><span><i style="background:var(--azul-900)"></i> Ventas</span><span><i style="background:var(--dorado)"></i> Ganancia</span></div>
       </div>
 
       <div class="section-h">Ventas y ganancia en USD por mes</div>
       <p style="font-size:11.5px;color:var(--muted);margin-top:-8px">Cada operación se convierte con la cotización del dólar blue promedio de su propio día (no un promedio del mes).</p>
       ${!usdReady ? '<div class="card"><div class="empty">⚠️ Falta correr la migración de 014_dolar_blue en Supabase</div></div>' : (usdRows
-        ? `<div class="table-wrap"><table class="pr-table static"><thead><tr><th>Mes</th><th>Prendas</th><th>Venta</th><th>Ganancia</th></tr></thead><tbody>${usdRows}</tbody></table></div>`
+        ? `<div class="table-wrap"><table class="pr-table static"><thead><tr><th>Mes</th><th>Prendas</th><th>Venta</th><th>Ganancia</th></tr></thead><tbody>${usdRows}${usdTotalRow}</tbody></table></div>`
         : '<div class="card"><div class="empty">Sin datos todavía</div></div>')}
 
       <div class="section-h">Valorización de stock</div>
@@ -926,7 +937,7 @@ async function viewInicio(v,force){
 
     document.querySelectorAll("#bars .bar").forEach(b=>{
       b.style.flex="1"; b.style.background="var(--azul-900)"; b.style.borderRadius="4px 4px 0 0"; b.style.minHeight="2px"; b.style.opacity=".9";
-      b.onclick=()=>{ const s=serie[+b.dataset.i]; $("#chart-cap").innerHTML=`<b>${esc(s.label)}</b> · Ventas ${fmt(s.ventas)} · Ganancia ${fmt(s.ganancia)}`;
+      b.onclick=()=>{ const s=serie[+b.dataset.i]; $("#chart-cap").innerHTML=`<b>${esc(s.label)}</b> · Ventas ${fmt(s.ventas)} · Ganancia ${fmt(s.ganancia)} · ${s.qty} prenda${s.qty!==1?"s":""}`;
         document.querySelectorAll("#bars .bar").forEach(x=>x.style.opacity=".35"); b.style.opacity="1"; };
     });
   }catch(e){ errBox(v,e); }
@@ -2777,6 +2788,7 @@ async function viewGastos(v,force){
       <p style="font-size:12.5px;color:var(--muted);margin-top:-6px">${list0.length} gasto${list0.length!==1?"s":""} registrado${list0.length!==1?"s":""}. Todas las celdas son editables.</p>
       <div class="search"><span class="mag">🔎</span><input id="ga-q" placeholder="Buscar categoría, proveedor o descripción…" value="${esc(window._gaQ)}"></div>
       <div class="table-wrap"><table class="pr-table" id="ga-table">
+        <colgroup><col style="width:11%"><col style="width:16%"><col style="width:11%"><col style="width:17%"><col style="width:39%"><col style="width:6%"></colgroup>
         <thead><tr>
           <th data-field="fecha">Fecha</th>
           <th data-field="categoria">Categoría</th>
@@ -2942,6 +2954,7 @@ async function viewEgresos(v,force){
       <p style="font-size:12.5px;color:var(--muted);margin-top:-6px">${list0.length} egreso${list0.length!==1?"s":""} registrado${list0.length!==1?"s":""}. Todas las celdas son editables.</p>
       <div class="search"><span class="mag">🔎</span><input id="eg-q" placeholder="Buscar proveedor, compra o comentario…" value="${esc(window._egQ)}"></div>
       <div class="table-wrap"><table class="pr-table" id="eg-table">
+        <colgroup><col style="width:9%"><col style="width:12%"><col style="width:13%"><col style="width:9%"><col style="width:7%"><col style="width:9%"><col style="width:10%"><col style="width:26%"><col style="width:5%"></colgroup>
         <thead><tr>
           <th data-field="fecha">Fecha</th>
           <th data-field="pagado_por">Pagado por</th>
