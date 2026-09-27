@@ -159,9 +159,17 @@
   .oi-row .oi-transf-btn{border:1.5px solid var(--line);background:#fff;color:var(--azul-900);border-radius:8px;padding:5px 6px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap}
   .oi-row .oi-transf-btn:active{background:#eef1f6}
   .oi-row .oi-ro{font-size:12.5px;font-weight:700;color:var(--azul-900);background:#f4f1ea;border-radius:8px;padding:6px 9px;text-align:center;white-space:nowrap}
+  .oi-row.editing{grid-template-columns:minmax(56px,1fr) 54px 74px 78px 58px 68px 24px}
+  .oi-row .oi-del{border:none;background:transparent;color:#b23b3b;font-size:17px;font-weight:800;cursor:pointer;padding:2px 4px;line-height:1;justify-self:end}
+  .oi-row .oi-del:active{opacity:.6}
+  .oi-add{display:grid;grid-template-columns:minmax(0,1.4fr) 78px 58px auto;gap:8px;align-items:center;padding:12px 0 4px;border-top:1px dashed var(--line);margin-top:6px}
+  .oi-add select,.oi-add input{padding:8px 9px;border:1.5px solid var(--line);border-radius:8px;font-size:12.5px;font-family:inherit;background:#fff}
+  .oi-add input{text-align:center}
+  .oi-add button{white-space:nowrap}
   @media (max-width:480px){
     .oi-row{grid-template-columns:minmax(36px,1fr) 36px 54px 56px 38px 48px;column-gap:4px;padding:8px 0}
     .oi-row.has-transf{grid-template-columns:minmax(36px,1fr) 36px 54px 56px 38px 32px 48px}
+    .oi-row.editing{grid-template-columns:minmax(28px,1fr) 36px 54px 56px 38px 48px 20px}
     .oi-row .oi-nombre{font-size:10px}
     .oi-row .oi-lista{display:none}
     .oi-row .oi-precio{font-size:9.5px}
@@ -173,6 +181,8 @@
     .oi-row .oi-transf-btn::before{content:"T%";font-size:9.5px}
     .oi-row .oi-subtotal{font-size:11px}
     .oi-row .oi-ro{font-size:10px;padding:4px 4px}
+    .oi-row .oi-del{font-size:15px}
+    .oi-add{grid-template-columns:1fr;gap:6px}
   }
   .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff;border-radius:14px;border:1px solid var(--line)}
   table.pr-table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
@@ -188,9 +198,9 @@
   table.pr-table.static tbody tr{cursor:default}
   table.pr-table.static tbody tr:hover{background:transparent}
   table.pr-table td select{padding:5px 7px;border:1.5px solid var(--line);border-radius:7px;font-size:12px;background:#fff;cursor:pointer}
-  .pr-editable{cursor:pointer;display:inline-block;padding:3px 6px;border-radius:6px;border:1px solid transparent}
+  .pr-editable{cursor:pointer;display:inline-block;padding:3px 6px;border-radius:6px;border:1px solid transparent;min-width:70px;box-sizing:border-box}
   .pr-editable:hover{background:#fbf9f4;border-color:var(--line)}
-  .pr-editable input{width:80px;padding:5px 6px;border:1.5px solid var(--dorado);border-radius:6px;font-size:13px;text-align:right}
+  .pr-editable input{width:100%;min-width:64px;padding:2px 5px;border:1.5px solid var(--dorado);border-radius:6px;font-size:13px;box-sizing:border-box;font-family:inherit;line-height:1.4}
   .tot-line{display:flex;justify-content:space-between;padding:5px 0;font-size:14px}
   .tot-line.big{font-size:19px;font-weight:800;border-top:1.5px solid var(--line);margin-top:6px;padding-top:12px}
   .tot-line .disc{color:var(--green)}
@@ -467,7 +477,7 @@ async function fetchOrdenes(){
   const c = getClient();
   const [{ data: ordenes, error: e1 }, { data: pedidos, error: e2 }, { data: clientes, error: e3 }] = await Promise.all([
     c.from("005_ordenes").select("*").order("id",{ascending:false}).limit(500),
-    c.from("004_pedidos").select("id,numero,created_at,cliente_id"),
+    c.from("004_pedidos").select("id,numero,created_at,cliente_id,forma_pago"),
     c.from("003_clientes").select("id,nombre,apellido"),
   ]);
   if(e1) throw e1; if(e2) throw e2; if(e3) throw e3;
@@ -477,18 +487,21 @@ async function fetchOrdenes(){
     const ped = pedMap[o.pedido_id] || {};
     const cli = cliMap[ped.cliente_id] || {};
     return { ...o, pedidoNumero: ped.numero||"", fecha: ped.created_at?ped.created_at.slice(0,10):"",
-      clienteNombre: `${cli.nombre||""} ${cli.apellido||""}`.trim() };
+      clienteNombre: `${cli.nombre||""} ${cli.apellido||""}`.trim(), formaPago: ped.forma_pago||"" };
   });
 }
+function orIsCard(o){ return /nave|tarjeta/i.test(o.formaPago||""); }
 async function getOrdenes(force){ if(force||!DATA.ordenes) DATA.ordenes = await fetchOrdenes(); return DATA.ordenes; }
 async function viewOrdenes(v,force){
   try{
-    if(force||!DATA.ordenes){ loading(v); await getOrdenes(true); }
+    if(force||!DATA.ordenes){ loading(v); await Promise.all([getOrdenes(true), getCatalogo(force)]); }
+    else await getCatalogo();
+    window._orCatMap = Object.fromEntries((DATA.catalogo||[]).map(pr=>[pr.nombre,pr]));
     window._orQ = window._orQ||"";
     window._orSort = window._orSort||{field:"fecha",dir:-1};
     v.innerHTML=`
       <div class="view-title">Órdenes</div>
-      <p style="font-size:12.5px;color:var(--muted);margin-top:-8px">Detalle línea por línea de todo lo vendido (últimas 500). Tocá una fila para abrir el pedido.</p>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-8px">Detalle línea por línea de todo lo vendido (últimas 500). Talle, cantidad y descuento son editables directo; tocá el número de pedido para abrirlo.</p>
       <div class="search"><span class="mag">🔎</span><input id="or-q" placeholder="Buscar prenda, pedido o cliente…" value="${esc(window._orQ)}"></div>
       <div class="table-wrap"><table class="pr-table" id="or-table">
         <thead><tr>
@@ -501,6 +514,7 @@ async function viewOrdenes(v,force){
           <th data-field="precio_unitario">Precio u.</th>
           <th data-field="descuento_pct">Desc.</th>
           <th>Subtotal</th>
+          <th></th>
         </tr></thead>
         <tbody id="or-tbody"></tbody>
       </table></div>`;
@@ -515,18 +529,19 @@ async function viewOrdenes(v,force){
       });
       $("#or-tbody").innerHTML=list.length?list.map(o=>{
         const subtotal=(Number(o.cantidad)||0)*(Number(o.precio_unitario)||0);
-        return `<tr style="cursor:pointer" onclick='openPedidoPorId(${JSON.stringify(o.pedido_id)})'>
+        return `<tr id="or-row-${o.id}">
           <td>${esc(o.fecha||"")}</td>
-          <td>${o.pedidoNumero?`<span class="chip n">${esc(o.pedidoNumero)}</span>`:"—"}</td>
+          <td>${o.pedidoNumero?`<span class="chip n" style="cursor:pointer" onclick='openPedidoPorId(${JSON.stringify(o.pedido_id)})'>${esc(o.pedidoNumero)}</span>`:"—"}</td>
           <td>${esc(o.clienteNombre||"—")}</td>
           <td>${esc(o.nombre_prenda||"")}</td>
-          <td>T${esc(o.talle||"")}</td>
-          <td>${o.cantidad}</td>
-          <td>${fmt(o.precio_unitario)}</td>
-          <td>${o.descuento_pct!=null?Math.round(o.descuento_pct)+"%":"—"}</td>
-          <td style="font-weight:700">${fmt(subtotal)}</td>
+          <td>${orTalleSelectHtml(o)}</td>
+          <td class="pr-editable" data-id="${o.id}" data-field="cantidad" onclick="orEditCell(this)">${o.cantidad}</td>
+          <td id="or-precio-${o.id}">${fmt(o.precio_unitario)}</td>
+          <td class="pr-editable" data-id="${o.id}" data-field="descuento_pct" onclick="orEditCell(this)">${o.descuento_pct!=null?Math.round(o.descuento_pct)+"%":"—"}</td>
+          <td id="or-sub-${o.id}" style="font-weight:700">${fmt(subtotal)}</td>
+          <td><button type="button" class="oi-del" title="Eliminar" onclick='orDeleteItem(${JSON.stringify(o.id)})'>✕</button></td>
         </tr>`;
-      }).join("") : `<tr><td colspan="9"><div class="empty">Sin órdenes todavía</div></td></tr>`;
+      }).join("") : `<tr><td colspan="10"><div class="empty">Sin órdenes todavía</div></td></tr>`;
       $("#or-table").querySelectorAll("th[data-field]").forEach(th=>{
         th.classList.toggle("sorted", th.dataset.field===field);
         th.querySelectorAll(".arrow").forEach(a=>a.remove());
@@ -543,6 +558,94 @@ async function viewOrdenes(v,force){
     });
     draw();
   }catch(e){ errBox(v,e); }
+}
+function orTalleSelectHtml(o){
+  const prenda=window._orCatMap[o.nombre_prenda];
+  const talles=prenda?prenda.talles:[];
+  if(!talles.length) return `T${esc(o.talle||"")}`;
+  return `<select onchange='orChangeTalle(${JSON.stringify(o.id)}, this.value)'>${talles.map(t=>
+    `<option value="${t.talleId}" ${t.talleId===o.talle_id?"selected":""}>${esc(t.talle)}</option>`).join("")}</select>`;
+}
+async function orChangeTalle(id, talleId){
+  const o=(DATA.ordenes||[]).find(x=>x.id===id); if(!o) return;
+  const prenda=window._orCatMap[o.nombre_prenda]; if(!prenda) return;
+  const nuevoTalle=prenda.talles.find(t=>t.talleId===talleId); if(!nuevoTalle) return;
+  if(talleId===o.talle_id) return;
+  const viejoTalle=prenda.talles.find(t=>t.talleId===o.talle_id);
+  const isCard=orIsCard(o);
+  const baseViejo=oiBaseFor(viejoTalle, isCard);
+  const descPct = o.descuento_pct!=null ? Math.round(o.descuento_pct)
+    : (baseViejo>0 ? Math.max(0, Math.round((1-o.precio_unitario/baseViejo)*100)) : 0);
+  const baseNuevo=oiBaseFor(nuevoTalle, isCard);
+  const nuevoPrecio=Math.round(baseNuevo*(1-descPct/100));
+  let costo=o.costo_unitario;
+  try{
+    const { data:c } = await getClient().from("103_costo_vigente").select("costo").eq("talle_id",talleId).maybeSingle();
+    if(c) costo=Number(c.costo)||0;
+  }catch(e){}
+  await orPersist(id, { talle_id:talleId, talle:nuevoTalle.talle, precio_unitario:nuevoPrecio, costo_unitario:costo, descuento_pct:descPct });
+}
+function orEditCell(td){
+  if(td.querySelector("input")) return;
+  const id=td.dataset.id, field=td.dataset.field;
+  const o=(DATA.ordenes||[]).find(x=>x.id===id); if(!o) return;
+  const cur = field==="descuento_pct" ? (o.descuento_pct!=null?Math.round(o.descuento_pct):0) : o[field];
+  const display = field==="descuento_pct" ? (o.descuento_pct!=null?Math.round(o.descuento_pct)+"%":"—") : String(o[field]);
+  td.innerHTML=`<input type="text" inputmode="numeric" value="${cur}">`;
+  const input=td.querySelector("input");
+  input.focus(); input.select();
+  let done=false;
+  const cancel=()=>{ if(done) return; done=true; td.innerHTML=display; };
+  const commit=()=>{ if(done) return; done=true; orSaveCell(id, field, +input.value||0); };
+  input.addEventListener("keydown", e=>{
+    if(e.key==="Enter"){ e.preventDefault(); commit(); }
+    else if(e.key==="Escape"){ e.preventDefault(); cancel(); }
+  });
+  input.addEventListener("blur", commit);
+}
+async function orSaveCell(id, field, value){
+  const o=(DATA.ordenes||[]).find(x=>x.id===id); if(!o) return;
+  const td=document.querySelector(`.pr-editable[data-id="${id}"][data-field="${field}"]`);
+  if(field==="cantidad"){
+    const cantidad=Math.max(1, Math.round(value));
+    if(cantidad===o.cantidad){ if(td) td.innerHTML=o.cantidad; return; }
+    await orPersist(id, { cantidad });
+  } else {
+    const prenda=window._orCatMap[o.nombre_prenda];
+    const talleObj=prenda?prenda.talles.find(t=>t.talleId===o.talle_id):null;
+    const base=oiBaseFor(talleObj, orIsCard(o));
+    const d=Math.min(100,Math.max(0,value));
+    if(o.descuento_pct!=null && Math.round(o.descuento_pct)===d){ if(td) td.innerHTML=d+"%"; return; }
+    const precio_unitario = base>0 ? Math.round(base*(1-d/100)) : o.precio_unitario;
+    await orPersist(id, { descuento_pct:d, precio_unitario });
+  }
+}
+async function orPersist(id, patch){
+  const o=(DATA.ordenes||[]).find(x=>x.id===id); if(!o) return;
+  try{
+    const { error } = await getClient().from("005_ordenes").update(patch).eq("id", id);
+    if(error) throw error;
+    Object.assign(o, patch);
+    const precEl=$("#or-precio-"+id); if(precEl) precEl.textContent=fmt(o.precio_unitario);
+    const subEl=$("#or-sub-"+id); if(subEl) subEl.textContent=fmt((Number(o.cantidad)||0)*(Number(o.precio_unitario)||0));
+    const cantEl=document.querySelector(`.pr-editable[data-id="${id}"][data-field="cantidad"]`);
+    if(cantEl) cantEl.innerHTML=o.cantidad;
+    const descEl=document.querySelector(`.pr-editable[data-id="${id}"][data-field="descuento_pct"]`);
+    if(descEl) descEl.innerHTML = o.descuento_pct!=null?Math.round(o.descuento_pct)+"%":"—";
+    DATA.pedidos=null; // el total del pedido pudo haber cambiado
+  }catch(e){ toast(e.message,true); }
+}
+async function orDeleteItem(id){
+  const o=(DATA.ordenes||[]).find(x=>x.id===id); if(!o) return;
+  if(!confirm(`¿Eliminar "${o.nombre_prenda}" talle ${o.talle} del pedido ${o.pedidoNumero||""}?`)) return;
+  try{
+    const { error } = await getClient().from("005_ordenes").delete().eq("id", id);
+    if(error) throw error;
+    DATA.ordenes = (DATA.ordenes||[]).filter(x=>x.id!==id);
+    DATA.pedidos=null;
+    const row=$("#or-row-"+id); if(row) row.remove();
+    toast("Ítem eliminado");
+  }catch(e){ toast(e.message,true); }
 }
 async function openPedidoPorId(pedidoId){
   await getPedidos();
@@ -1279,7 +1382,7 @@ async function openPedido(pedidoId){
   if(p.estado_envio && !opts.includes(p.estado_envio)) opts.unshift(p.estado_envio);
   const envs=["Retiro Habitat","Envío a domicilio"];
   if(p.envio && !envs.includes(p.envio)) envs.unshift(p.envio);
-  const itemsHtml=window._pedItems.map((it,idx)=>oiRowHtml(it,idx)).join("") || '<div class="empty">Sin ítems</div>';
+  const itemsHtml=oiItemsContainerHtml();
   openSheet(`<div class="grabber"></div><h3>${esc(p.numero)}</h3><p class="sub">${esc(p.clienteNombre)} · ${esc(p.forma_pago||"")}</p>
 
     <div class="section-h" style="margin-top:0;display:flex;justify-content:space-between;align-items:center;gap:8px">
@@ -1339,20 +1442,23 @@ function oiListaFor(talleObj){
 function oiIsCard(){ return /nave|tarjeta/i.test(window._pedCurrent?.forma_pago||""); }
 // Precio después del medio de pago (Transf./Efectivo bajan solos a transferencia,
 // Tarjeta se queda en lista) — es la base del % de descuento promo, igual que en Vender.
-function oiBaseFor(talleObj){
+// isCard es explícito (no siempre viene de window._pedCurrent) para poder
+// reusar esto también desde la tabla de Órdenes, donde cada fila es de un
+// pedido distinto.
+function oiBaseFor(talleObj, isCard){
   if(!talleObj) return 0;
-  return oiIsCard() ? oiListaFor(talleObj) : talleObj.precio;
+  return isCard ? oiListaFor(talleObj) : talleObj.precio;
 }
 function oiToggleEdit(){
   window._pedEditMode = !window._pedEditMode;
   const btn=$("#oi-edit-toggle"); if(btn) btn.textContent = window._pedEditMode ? "✓ Listo" : "✏️ Editar prendas";
-  const el=$("#oi-items"); if(el) el.innerHTML = window._pedItems.map((it,idx)=>oiRowHtml(it,idx)).join("") || '<div class="empty">Sin ítems</div>';
+  const el=$("#oi-items"); if(el) el.innerHTML = oiItemsContainerHtml();
 }
 function oiRowHtml(it,idx){
   const prenda=window._pedCatMap[it.nombre_prenda];
   const talles=prenda?prenda.talles:[];
   const curTalle=talles.find(t=>t.talleId===it.talle_id);
-  const base=oiBaseFor(curTalle) || it.precio_unitario;
+  const base=oiBaseFor(curTalle, oiIsCard()) || it.precio_unitario;
   const lista=oiListaFor(curTalle) || base;
   // Se usa el % guardado al momento de vender; si es una fila vieja de antes de que
   // existiera esa columna (null), se lo estima contra el precio vigente de hoy.
@@ -1370,14 +1476,77 @@ function oiRowHtml(it,idx){
   const descHtml = editing
     ? `<div class="oi-desc-wrap"><input type="text" inputmode="numeric" id="oi-desc-${idx}" value="${descPct}" onchange="oiChangeDesc(${idx}, this.value)"><span>%</span></div>`
     : `<span class="oi-ro">${descPct}%</span>`;
-  return `<div class="row oi-row" id="oi-row-${idx}">
+  const delHtml = editing
+    ? `<button type="button" class="oi-del" title="Eliminar prenda" onclick="oiDeleteItem(${idx})">✕</button>`
+    : "";
+  return `<div class="row oi-row${editing?" editing":""}" id="oi-row-${idx}">
     <div class="oi-nombre" title="${esc(it.nombre_prenda)}">${esc(it.nombre_prenda)}</div>
     ${talleHtml}
     ${qtyHtml}
     <div class="oi-precio" id="oi-precio-${idx}"><b>${fmt(it.precio_unitario)}</b> c/u<div class="oi-lista">Lista ${fmt(lista)}</div></div>
     ${descHtml}
     <span class="oi-subtotal" id="oi-sub-${idx}">${fmt(it.cantidad*it.precio_unitario)}</span>
+    ${delHtml}
   </div>`;
+}
+// Ítems + (si está en modo edición) el mini-form de "+ Agregar prenda" al pie.
+function oiItemsContainerHtml(){
+  const itemsHtml = window._pedItems.map((it,idx)=>oiRowHtml(it,idx)).join("") || '<div class="empty">Sin ítems</div>';
+  return itemsHtml + (window._pedEditMode ? oiAddFormHtml() : "");
+}
+function oiAddFormHtml(){
+  const prendas = Object.values(window._pedCatMap||{}).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const prendaOpts = prendas.map(p=>`<option value="${esc(p.nombre)}">${esc(p.nombre)}</option>`).join("");
+  const first = prendas[0];
+  const talleOpts = first ? first.talles.map(t=>`<option value="${t.talleId}">${esc(t.talle)}</option>`).join("") : "";
+  return `<div class="oi-add" id="oi-add-row">
+    <select id="oi-add-prenda" onchange="oiAddFillTalles()">${prendaOpts || '<option value="">Sin prendas</option>'}</select>
+    <select id="oi-add-talle">${talleOpts}</select>
+    <input type="number" min="1" step="1" id="oi-add-qty" value="1">
+    <button type="button" class="btn ghost sm" onclick="oiAddItem()">+ Agregar</button>
+  </div>`;
+}
+function oiAddFillTalles(){
+  const nombre=$("#oi-add-prenda")?.value;
+  const prenda=window._pedCatMap[nombre];
+  const sel=$("#oi-add-talle"); if(!sel) return;
+  sel.innerHTML = prenda ? prenda.talles.map(t=>`<option value="${t.talleId}">${esc(t.talle)}</option>`).join("") : "";
+}
+async function oiAddItem(){
+  const nombre=$("#oi-add-prenda")?.value;
+  const talleId=$("#oi-add-talle")?.value;
+  const qty=Math.max(1, Math.round(+($("#oi-add-qty")?.value)||1));
+  const prenda=window._pedCatMap[nombre]; if(!prenda) return;
+  const talleObj=prenda.talles.find(t=>t.talleId===talleId); if(!talleObj){ toast("Elegí un talle",true); return; }
+  const btn=document.querySelector("#oi-add-row button"); if(btn){ btn.disabled=true; btn.textContent="Agregando…"; }
+  try{
+    const base=oiBaseFor(talleObj, oiIsCard()) || 0;
+    let costo=0;
+    try{
+      const { data: c } = await getClient().from("103_costo_vigente").select("costo").eq("talle_id",talleId).maybeSingle();
+      costo = Number(c?.costo)||0;
+    }catch(e){}
+    const { data: nuevo, error } = await getClient().from("005_ordenes").insert({
+      pedido_id: window._pedCurrent.id, talle_id: talleId, nombre_prenda: nombre, talle: talleObj.talle,
+      cantidad: qty, precio_unitario: base, costo_unitario: costo, descuento_pct: 0,
+    }).select().single();
+    if(error) throw error;
+    window._pedItems.push(nuevo);
+    const el=$("#oi-items"); if(el) el.innerHTML=oiItemsContainerHtml();
+    oiRecalcTotals();
+    toast("Prenda agregada");
+  }catch(e){ toast(e.message,true); if(btn){ btn.disabled=false; btn.textContent="+ Agregar"; } }
+}
+async function oiDeleteItem(idx){
+  const it=window._pedItems[idx]; if(!it) return;
+  if(!confirm(`¿Eliminar "${it.nombre_prenda}" talle ${it.talle} del pedido?`)) return;
+  try{
+    const { error } = await getClient().from("005_ordenes").delete().eq("id", it.id);
+    if(error) throw error;
+    window._pedItems.splice(idx,1);
+    const el=$("#oi-items"); if(el) el.innerHTML=oiItemsContainerHtml();
+    oiRecalcTotals();
+  }catch(e){ toast(e.message,true); }
 }
 function oiRecalcTotals(){
   const p=window._pedCurrent; if(!p) return;
@@ -1415,7 +1584,7 @@ function oiChangeDesc(idx,val){
   const it=window._pedItems[idx]; if(!it) return;
   const prenda=window._pedCatMap[it.nombre_prenda];
   const curTalle=prenda?prenda.talles.find(t=>t.talleId===it.talle_id):null;
-  const base=oiBaseFor(curTalle);
+  const base=oiBaseFor(curTalle, oiIsCard());
   const d=Math.min(100,Math.max(0,+val||0));
   const el=$("#oi-desc-"+idx); if(el) el.value=d;
   if(base>0) it.precio_unitario=Math.round(base*(1-d/100));
@@ -1427,9 +1596,9 @@ async function oiChangeTalle(idx,talleId){
   const prenda=window._pedCatMap[it.nombre_prenda]; if(!prenda) return;
   const nuevoTalle=prenda.talles.find(t=>t.talleId===talleId); if(!nuevoTalle) return;
   const viejoTalle=prenda.talles.find(t=>t.talleId===it.talle_id);
-  const baseViejo=oiBaseFor(viejoTalle);
+  const baseViejo=oiBaseFor(viejoTalle, oiIsCard());
   const descPct = baseViejo>0 ? Math.max(0, Math.round((1-it.precio_unitario/baseViejo)*100)) : 0;
-  const baseNuevo=oiBaseFor(nuevoTalle);
+  const baseNuevo=oiBaseFor(nuevoTalle, oiIsCard());
   it.talle_id=talleId; it.talle=nuevoTalle.talle; it.precio_unitario=Math.round(baseNuevo*(1-descPct/100));
   it.descuento_pct=descPct;
   try{
@@ -1497,10 +1666,10 @@ async function ensurePdfLib(){
   if(!window.NORD_FACTURA_PDF) await loadScript("/factura-pdf.js");
 }
 function blobToBase64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(blob); }); }
-function buildFacturaDataGestion(factura, pedido){
+function buildFacturaDataGestion(factura, pedido, itemsOverride){
   let fi={}; try{ fi=NORD_FACTURA.parseQr(factura.qr_url); }catch(e){}
-  const items=(window._pedCurrent && window._pedCurrent.id===pedido.id && window._pedItems)
-    ? window._pedItems.map(i=>({n:i.nombre_prenda, t:i.talle, q:i.cantidad, p:i.precio_unitario})) : null;
+  const items = itemsOverride || ((window._pedCurrent && window._pedCurrent.id===pedido.id && window._pedItems)
+    ? window._pedItems.map(i=>({n:i.nombre_prenda, t:i.talle, q:i.cantidad, p:i.precio_unitario})) : null);
   return {
     cuit: fi.cuit, ptoVta: fi.ptoVta, nroCmp: fi.nroCmp, tipoCmp: fi.tipoCmp||11,
     fechaISO: fi.fecha, cae: fi.codAut!=null?fi.codAut:factura.cae,
@@ -1513,11 +1682,11 @@ function buildFacturaDataGestion(factura, pedido){
 // Genera el PDF y lo sube a Drive vía /api/erp (action=drive-factura, autorizado con el
 // mismo token de Supabase Auth). Devuelve {ok, link, error} — nunca lanza ni bloquea el
 // flujo principal de facturación, que ya quedó guardado en 007_facturas de todas formas.
-async function subirFacturaDrive(factura, pedido){
+async function subirFacturaDrive(factura, pedido, itemsOverride){
   try{
     if(!factura.qr_url) return { ok:false, error:"La factura no tiene QR" };
     await ensurePdfLib();
-    const data=buildFacturaDataGestion(factura, pedido);
+    const data=buildFacturaDataGestion(factura, pedido, itemsOverride);
     const { blob, filename } = NORD_FACTURA_PDF.generate(data);
     const b64 = await blobToBase64(blob);
     const token = await getAccessToken(); if(!token) return { ok:false, error:"Sesión inválida" };
@@ -1529,6 +1698,34 @@ async function subirFacturaDrive(factura, pedido){
     DATA.pedidos=null; DATA.facturas=null;
     return { ok:true, link:d.link, yaExistia:d.yaExistia };
   }catch(e){ return { ok:false, error:e.message }; }
+}
+// Las facturas emitidas antes de que existiera drive_link (o cuando falló la
+// subida automática) no tienen link — Contabilidad ofrece subirla ahí mismo,
+// sin tener que abrir el pedido. Junta los items de 005_ordenes al vuelo
+// porque acá no hay ningún pedido "abierto" (window._pedItems) del que tirar.
+function faContabilidadDriveHtml(f){
+  return f.drive_link
+    ? `<a href="${esc(f.drive_link)}" target="_blank" rel="noopener">Ver en Drive</a>`
+    : `<button class="btn ghost sm" id="fa-drive-btn-${f.id}" onclick='subirFacturaDriveDesdeContabilidad(${JSON.stringify(f.id)})'>Subir a Drive</button>`;
+}
+async function subirFacturaDriveDesdeContabilidad(facturaId){
+  const f=(DATA.facturas||[]).find(x=>x.id===facturaId); if(!f) return;
+  const btn=$("#fa-drive-btn-"+CSS.escape(facturaId)); if(btn){ btn.disabled=true; btn.textContent="Subiendo…"; }
+  try{
+    const { data: ordenes, error } = await getClient().from("005_ordenes")
+      .select("nombre_prenda,talle,cantidad,precio_unitario").eq("pedido_id", f.pedido_id);
+    if(error) throw error;
+    const items=(ordenes||[]).map(o=>({n:o.nombre_prenda, t:o.talle, q:o.cantidad, p:o.precio_unitario}));
+    const pedidoLike={ id:f.pedido_id, numero:f.pedidoNumero, clienteNombre:f.clienteNombre };
+    const r = await subirFacturaDrive(f, pedidoLike, items);
+    if(r.ok){
+      toast(r.yaExistia?"Ya estaba en Drive":"Factura guardada en Drive");
+      const cell=$("#fa-drivecell-"+CSS.escape(facturaId)); if(cell) cell.innerHTML=faContabilidadDriveHtml(f);
+    } else {
+      toast(r.error||"No se pudo subir a Drive", true);
+      if(btn){ btn.disabled=false; btn.textContent="Subir a Drive"; }
+    }
+  }catch(e){ toast(e.message,true); if(btn){ btn.disabled=false; btn.textContent="Subir a Drive"; } }
 }
 async function eliminarPedido(pedidoId){
   const p=(DATA.pedidos||[]).find(x=>x.id===pedidoId);
@@ -1719,14 +1916,24 @@ function coProveedorOptions(selectedId){
   return `<option value="">Sin especificar</option>` + (DATA.proveedores||[]).map(p=>
     `<option value="${p.id}" ${p.id===selectedId?"selected":""}>${esc(p.nombre)}</option>`).join("");
 }
+function coFindPrendaByTalleId(talleId){ return (DATA.catalogo||[]).find(p=>p.talles.some(t=>t.talleId===talleId)); }
+function coPrendaTalleHtml(co){
+  // Las 5 compras viejas de talles discontinuados (talle_id null, sólo
+  // sku_original) no tienen de dónde cascadear — quedan como texto fijo.
+  if(!co.talle_id) return `<td>${esc(co.prenda||co.sku_original||"—")}</td><td>—</td>`;
+  const curPrenda=coFindPrendaByTalleId(co.talle_id);
+  const prendaOpts=(DATA.catalogo||[]).map(p=>`<option value="${p.id}" ${curPrenda&&p.id===curPrenda.id?"selected":""}>${esc(p.nombre)}</option>`).join("");
+  const talleOpts=curPrenda?curPrenda.talles.map(t=>`<option value="${t.talleId}" ${t.talleId===co.talle_id?"selected":""}>${esc(t.talle)}</option>`).join(""):"";
+  return `<td><select onchange='coChangePrenda(${JSON.stringify(co.id)}, this.value)'>${prendaOpts}</select></td>
+    <td><select onchange='coChangeTalleId(${JSON.stringify(co.id)}, this.value)'>${talleOpts}</select></td>`;
+}
 function coRowHtml(co){
   const subtotal=(Number(co.cantidad)||0)*(Number(co.costo_unitario)||0);
   return `<tr id="co-row-${co.id}">
-    <td>${co.numero?`<span class="chip n">${esc(co.numero)}</span>`:"—"}</td>
-    <td>${esc(co.fecha||"")}</td>
+    <td><span class="pr-editable" data-id="${co.id}" data-field="numero" data-type="text" onclick="coEditCell(this)">${esc(co.numero||"")}</span></td>
+    <td><span class="pr-editable" data-id="${co.id}" data-field="fecha" data-type="text" onclick="coEditCell(this)">${esc(co.fecha||"")}</span></td>
     <td><select onchange='coChangeProveedor(${JSON.stringify(co.id)}, this.value)'>${coProveedorOptions(co.proveedor_id)}</select></td>
-    <td>${esc(co.prenda||co.sku_original||"—")}</td>
-    <td>${co.talleNombre?"T"+esc(co.talleNombre):"—"}</td>
+    ${coPrendaTalleHtml(co)}
     <td><span class="pr-editable" data-id="${co.id}" data-field="cantidad" onclick="coEditCell(this)">${co.cantidad}</span></td>
     <td><span class="pr-editable" data-id="${co.id}" data-field="costo_unitario" onclick="coEditCell(this)">${fmt(co.costo_unitario)}</span></td>
     <td style="font-weight:700" id="co-sub-${co.id}">${fmt(subtotal)}</td>
@@ -1740,8 +1947,8 @@ function coRowHtml(co){
 }
 async function viewCompras(v,force){
   try{
-    if(force||!DATA.compras){ loading(v); await Promise.all([getCompras(true), getProveedores(force)]); }
-    else await getProveedores();
+    if(force||!DATA.compras){ loading(v); await Promise.all([getCompras(true), getProveedores(force), getCatalogo(force)]); }
+    else await Promise.all([getProveedores(), getCatalogo()]);
     window._coQ = window._coQ||"";
     window._coSort = window._coSort||{field:"numero",dir:1};
     const list0=DATA.compras||[];
@@ -1774,7 +1981,7 @@ async function viewCompras(v,force){
       </table></div>
 
       <div class="section-h">Detalle de compras</div>
-      <p style="font-size:12.5px;color:var(--muted);margin-top:-8px">Tocá cantidad o costo para editar directo (Enter guarda y baja a la fila siguiente).</p>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-8px">Toda la fila es editable: N° compra, fecha, proveedor, prenda/talle, cantidad y costo son directo (Enter guarda y baja a la fila siguiente).</p>
       <div class="search"><span class="mag">🔎</span><input id="co-q" placeholder="Buscar prenda o proveedor…" value="${esc(window._coQ)}"></div>
       <div class="table-wrap"><table class="pr-table static" id="co-table">
         <thead><tr>
@@ -1841,37 +2048,62 @@ async function coChangeProveedor(compraId, proveedorId){
     toast("Proveedor actualizado");
   }catch(e){ toast(e.message,true); }
 }
-// ── Edición inline tipo Excel (Cantidad/Costo u.) ─────────────────────────────
+async function coChangeTalleId(compraId, talleId){
+  try{
+    const { error } = await getClient().from("009_compras").update({ talle_id: talleId }).eq("id", compraId);
+    if(error) throw error;
+    const co=(DATA.compras||[]).find(x=>x.id===compraId);
+    if(co){
+      co.talle_id=talleId;
+      const p=coFindPrendaByTalleId(talleId), t=p?p.talles.find(x=>x.talleId===talleId):null;
+      co.prenda=p?p.nombre:co.prenda; co.talleNombre=t?t.talle:co.talleNombre;
+      const row=$("#co-row-"+CSS.escape(compraId)); if(row) row.outerHTML=coRowHtml(co);
+    }
+    toast("Prenda/talle actualizado");
+  }catch(e){ toast(e.message,true); }
+}
+function coChangePrenda(compraId, prendaId){
+  const p=(DATA.catalogo||[]).find(x=>x.id===prendaId);
+  const firstTalle=p&&p.talles[0]?p.talles[0].talleId:null;
+  if(!firstTalle) return toast("Esa prenda no tiene talles cargados",true);
+  coChangeTalleId(compraId, firstTalle);
+}
+// ── Edición inline tipo Excel (N° compra, fecha, cantidad, costo u.) ──────────
 function coEditCell(span){
   if(span.querySelector("input")) return;
-  const id=span.dataset.id, field=span.dataset.field;
+  const id=span.dataset.id, field=span.dataset.field, isText=span.dataset.type==="text";
   const co=(DATA.compras||[]).find(x=>x.id===id); if(!co) return;
   const cur=co[field];
-  span.innerHTML=`<input type="text" inputmode="numeric" value="${fmtMiles(cur)}">`;
+  const display=(v)=> field==="costo_unitario"?fmt(v):esc(v||"");
+  span.innerHTML=`<input type="text" ${isText?"":'inputmode="numeric"'} value="${esc(isText?(cur||""):fmtMiles(cur))}">`;
   const input=span.querySelector("input");
   input.focus(); input.select();
   let done=false;
-  const cancel=()=>{ if(done) return; done=true; span.innerHTML=field==="costo_unitario"?fmt(cur):cur; };
+  const parse=(raw)=> isText?raw.trim():parseMiles(raw);
+  const cancel=()=>{ if(done) return; done=true; span.innerHTML=display(cur); };
   input.addEventListener("keydown", e=>{
-    if(e.key==="Enter"){ e.preventDefault(); if(done) return; done=true; coSaveCell(id, field, parseMiles(input.value), true); }
+    if(e.key==="Enter"){ e.preventDefault(); if(done) return; done=true; coSaveCell(id, field, parse(input.value), true); }
     else if(e.key==="Escape"){ e.preventDefault(); cancel(); }
   });
-  input.addEventListener("blur", ()=>{ if(done) return; done=true; coSaveCell(id, field, parseMiles(input.value), false); });
+  input.addEventListener("blur", ()=>{ if(done) return; done=true; coSaveCell(id, field, parse(input.value), false); });
 }
 async function coSaveCell(id, field, value, moveNext){
   const co=(DATA.compras||[]).find(x=>x.id===id); if(!co) return;
   const span=document.querySelector(`.pr-editable[data-id="${id}"][data-field="${field}"]`);
+  const display=(v)=> field==="costo_unitario"?fmt(v):esc(v||"");
+  if(value===co[field]){ if(span) span.innerHTML=display(co[field]); if(moveNext) coFocusNext(id, field); return; }
   try{
     if(field==="cantidad" && !value) throw new Error("Ingresá una cantidad válida");
+    if(field==="numero" && !value) throw new Error("El N° de compra no puede quedar vacío");
     const { error } = await getClient().from("009_compras").update({ [field]: value }).eq("id", id);
     if(error) throw error;
     co[field]=value;
-    if(span) span.innerHTML = field==="costo_unitario"?fmt(value):value;
+    if(span) span.innerHTML=display(value);
     const subEl=$("#co-sub-"+CSS.escape(id)); if(subEl) subEl.textContent=fmt((Number(co.cantidad)||0)*(Number(co.costo_unitario)||0));
     if(moveNext) coFocusNext(id, field);
   }catch(e){
     toast(e.message,true);
-    if(span) span.innerHTML = field==="costo_unitario"?fmt(co[field]):co[field];
+    if(span) span.innerHTML=display(co[field]);
   }
 }
 function coFocusNext(id, field){
@@ -2075,6 +2307,14 @@ function prEditCell(span){
 async function prSaveCell(talleId, field, value, moveNext){
   const r=(DATA.preciosCostos||[]).find(x=>x.talleId===talleId); if(!r) return;
   const span=document.querySelector(`.pr-editable[data-talle="${talleId}"][data-field="${field}"]`);
+  // Si no se tocó el valor no insertamos nada — 010_precios/011_costos_reposicion
+  // son histórico append-only, y reinsertar el mismo valor de hoy pisa la fila
+  // que ya existía para (talle, hoy) y tira "duplicate value".
+  if(value===r[field]){
+    if(span) span.innerHTML=fmt(r[field]);
+    if(moveNext) prFocusNext(talleId, field);
+    return;
+  }
   try{
     if(field==="costo"){
       if(!value) throw new Error("Ingresá un costo válido");
@@ -2266,7 +2506,7 @@ async function viewContabilidad(v,force){
       $("#fa-tbody").innerHTML=list.length?list.map(f=>`<tr>
           <td>${esc(f.fecha||"")}</td><td>${esc(f.numero_comprobante||"")}</td><td>${esc(f.pedidoNumero||"—")}</td>
           <td>${esc(f.clienteNombre||"—")}</td><td>${esc(f.tipo_receptor||"")}</td><td style="font-weight:700">${fmt(f.importe)}</td>
-          <td>${f.drive_link?`<a href="${esc(f.drive_link)}" target="_blank" rel="noopener">Ver en Drive</a>`:'<span style="color:var(--muted)">—</span>'}</td></tr>`).join("")
+          <td id="fa-drivecell-${f.id}">${faContabilidadDriveHtml(f)}</td></tr>`).join("")
         : `<tr><td colspan="7"><div class="empty">Sin facturas todavía</div></td></tr>`;
       $("#fa-table").querySelectorAll("th").forEach(th=>{
         th.classList.toggle("sorted", th.dataset.field===field);
