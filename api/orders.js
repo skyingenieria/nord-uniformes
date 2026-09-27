@@ -1,4 +1,5 @@
 const { google } = require("googleapis");
+const { supabase } = require("./_supabase");
 
 function makeAuth() {
   return new google.auth.GoogleAuth({
@@ -11,6 +12,66 @@ function makeAuth() {
   });
 }
 
+// carrito-beta.html manda backend:"supabase" — crea el pedido en
+// 004_pedidos/005_ordenes en vez de en la hoja 'Ordenes'. Los precios NO se
+// confían del cliente: se resuelven de nuevo server-side contra
+// 102_precio_vigente/103_costo_vigente por (nombre, talle), así nadie puede
+// manipular el carrito en el navegador para pagar menos. El resto de esta
+// acción (el flujo de /carrito con Sheets) sigue exactamente igual.
+async function postOrderSupabase(req, res) {
+  const { clienteId, items = [], envio = 0, descuento = 0, pago = "Transf. Banc." } = req.body;
+  if (!clienteId) return res.status(400).json({ error: "Falta clienteId" });
+  if (!items.length) return res.status(400).json({ error: "El pedido no tiene items" });
+
+  try {
+    const sb = supabase();
+    const isCard = /nave|tarjeta/i.test(pago);
+
+    const [{ data: prendas, error: e1 }, { data: talles, error: e2 }, { data: precios, error: e3 }, { data: costos, error: e4 }] = await Promise.all([
+      sb.from("001_prendas").select("id,nombre"),
+      sb.from("002_talles").select("id,product_id,talle"),
+      sb.from("102_precio_vigente").select("talle_id,precio_lista,precio_transferencia"),
+      sb.from("103_costo_vigente").select("talle_id,costo"),
+    ]);
+    if (e1) throw e1; if (e2) throw e2; if (e3) throw e3; if (e4) throw e4;
+
+    const prendaIdByNombre = Object.fromEntries((prendas || []).map(p => [p.nombre, p.id]));
+    const talleIdByProdTalle = {};
+    (talles || []).forEach(t => { talleIdByProdTalle[`${t.product_id}::${String(t.talle)}`] = t.id; });
+    const precioMap = Object.fromEntries((precios || []).map(p => [p.talle_id, p]));
+    const costoMap = Object.fromEntries((costos || []).map(c => [c.talle_id, Number(c.costo) || 0]));
+
+    const filas = [];
+    for (const item of items) {
+      const prendaId = prendaIdByNombre[item.nombre];
+      const talleId = prendaId ? talleIdByProdTalle[`${prendaId}::${String(item.talle)}`] : null;
+      if (!talleId) return res.status(400).json({ error: `No se encontró "${item.nombre}" talle ${item.talle} en el catálogo` });
+      const pr = precioMap[talleId] || {};
+      const precioUnit = isCard ? (Number(pr.precio_lista) || 0) : (Number(pr.precio_transferencia) || 0);
+      filas.push({
+        talle_id: talleId, nombre_prenda: item.nombre, talle: String(item.talle),
+        cantidad: Number(item.qty) || 1, precio_unitario: precioUnit, costo_unitario: costoMap[talleId] || 0,
+      });
+    }
+
+    const { data: pedido, error: ePedido } = await sb.from("004_pedidos").insert({
+      colegio: "WS", cliente_id: clienteId, forma_pago: pago,
+      cargo_envio: Number(envio) || 0, descuento: Number(descuento) || 0, envio: "retiro",
+    }).select().single();
+    if (ePedido) throw ePedido;
+
+    const { error: eItems } = await sb.from("005_ordenes").insert(
+      filas.map(f => ({ ...f, pedido_id: pedido.id }))
+    );
+    if (eItems) throw eItems;
+
+    res.status(200).json({ id: pedido.id, numero: pedido.numero, idPedido: pedido.numero, itemsGuardados: filas.length, success: true });
+  } catch (err) {
+    console.error("Error guardando orden (Supabase):", err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -18,6 +79,7 @@ module.exports = async (req, res) => {
 
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Metodo no permitido" });
+  if (req.body && req.body.backend === "supabase") return await postOrderSupabase(req, res);
 
   try {
     const {

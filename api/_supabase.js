@@ -3,7 +3,11 @@
 // funciones de Vercel Hobby (mismo criterio que api/nave/_auth.js).
 //
 // Usa la service_role key: solo se llama desde el backend (nunca se expone
-// al browser), así que ignora RLS y tiene acceso total a las tablas.
+// al browser), así que ignora RLS y tiene acceso total a las tablas. Hace
+// falta cargar SUPABASE_SERVICE_ROLE_KEY en Vercel para que esto funcione
+// (SUPABASE_URL no es secreta — ya viaja hardcodeada en gestion.html/
+// wellspringbeta.html — así que si no está en las env vars se usa ese
+// mismo valor como default).
 
 const { createClient } = require("@supabase/supabase-js");
 
@@ -11,34 +15,17 @@ let client = null;
 
 function supabase() {
   if (!client) {
-    const url = process.env.SUPABASE_URL;
+    const url = process.env.SUPABASE_URL || "https://piaagjddrrcbijienvll.supabase.co";
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) {
-      throw new Error("Faltan SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY en las variables de entorno");
+    if (!key) {
+      throw new Error("Falta SUPABASE_SERVICE_ROLE_KEY en las variables de entorno de Vercel");
     }
     client = createClient(url, key, { auth: { persistSession: false } });
   }
   return client;
 }
 
-// Descuenta stock al confirmar una venta. Resuelve la SKU por
-// (colegio, nombre, talle) y descuenta vía RPC atómica (ver decrement_stock
-// en supabase/schema.sql). Best-effort: nunca debe bloquear una venta.
-async function decrementStock(colegio, nombre, talle, qty) {
-  try {
-    const sb = supabase();
-    const { data: prod, error: prodErr } = await sb
-      .from("products").select("id")
-      .eq("colegio", colegio).eq("nombre", nombre).maybeSingle();
-    if (prodErr || !prod) return;
-    const { data: variant, error: varErr } = await sb
-      .from("product_variants").select("sku")
-      .eq("product_id", prod.id).eq("talle", String(talle)).maybeSingle();
-    if (varErr || !variant) return;
-    await sb.rpc("decrement_stock", { p_sku: variant.sku, p_qty: Number(qty) || 1 });
-  } catch (e) {
-    console.error("No se pudo descontar stock en Supabase:", e.message);
-  }
-}
+// No hace falta descontar stock a mano: 101_stock_actual se recalcula solo
+// (compras - ordenes) apenas se inserta en 005_ordenes. Ver CLAUDE.md.
 
-module.exports = { supabase, decrementStock };
+module.exports = { supabase };

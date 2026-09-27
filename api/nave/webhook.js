@@ -4,6 +4,7 @@
 
 const { google } = require("googleapis");
 const getAccessToken = require("./_auth");
+const { supabase } = require("../_supabase");
 
 function makeAuth() {
   return new google.auth.GoogleAuth({
@@ -22,6 +23,29 @@ async function getPaymentStatus(payment_check_url, token) {
   });
   if (!r.ok) throw new Error(`Failed to check payment: ${r.status}`);
   return r.json();
+}
+
+// carrito-beta.html (Supabase) manda el id del pedido (uuid) como orderId a
+// Nave en vez del "YY-NN" de Sheets — así nunca compiten por el mismo
+// espacio de IDs. Si external_payment_id tiene forma de uuid, es un pedido
+// de Supabase: se registra el pago en 006_pagos y se actualiza estado_pago
+// en 004_pedidos, en vez de tocar la hoja 'Ordenes'.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function actualizarPagoSupabase(pedidoId, sheetStatus) {
+  const sb = supabase();
+  if (sheetStatus === "confirmada") {
+    const { data: pedido, error: eP } = await sb.from("104_pedidos_con_saldo").select("total_venta").eq("id", pedidoId).maybeSingle();
+    if (eP) throw eP;
+    if (pedido) {
+      await sb.from("006_pagos").insert({
+        pedido_id: pedidoId, monto: pedido.total_venta, forma_pago: "Tarjeta (Nave)", fecha: new Date().toISOString().slice(0, 10),
+      });
+    }
+    await sb.from("004_pedidos").update({ estado_pago: "Confirmada" }).eq("id", pedidoId);
+  } else if (sheetStatus === "cancelada") {
+    await sb.from("004_pedidos").update({ estado_pago: "Cancelada" }).eq("id", pedidoId);
+  }
 }
 
 module.exports = async (req, res) => {
@@ -43,6 +67,14 @@ module.exports = async (req, res) => {
     let sheetStatus = "pendiente";
     if (status === "APPROVED") sheetStatus = "confirmada";
     else if (status === "REJECTED" || status === "CANCELLED") sheetStatus = "cancelada";
+
+    // 2b. Pedido de Supabase (carrito-beta.html) en vez de Sheets: se detecta
+    // porque el orderId que le pasamos a Nave fue un uuid, no un "YY-NN".
+    if (UUID_RE.test(String(external_payment_id || ""))) {
+      await actualizarPagoSupabase(external_payment_id, sheetStatus);
+      console.log(`Pedido Supabase ${external_payment_id}: estado_pago -> ${sheetStatus}`);
+      return res.status(200).json({ received: true });
+    }
 
     // 3. Actualizar estado en Sheets
     const sheets = google.sheets({ version: "v4", auth: makeAuth() });

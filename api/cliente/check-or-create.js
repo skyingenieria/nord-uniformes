@@ -16,6 +16,7 @@
 // Devuelve: { codigo, nro, nombre, apellido, email, telefono, esNuevo }
 
 const { google } = require("googleapis");
+const { supabase } = require("../_supabase");
 
 function makeAuth() {
   return new google.auth.GoogleAuth({
@@ -28,6 +29,38 @@ function makeAuth() {
   });
 }
 
+// carrito-beta.html (catálogo/ventas en Supabase) manda backend:"supabase" —
+// busca/crea en 003_clientes en vez de la hoja 'Clientes'. Todo lo demás de
+// esta acción (el flujo de /carrito con Sheets) sigue exactamente igual.
+async function checkOrCreateSupabase(req, res) {
+  const { nombre, apellido, email, telefono } = req.body;
+  if (!nombre || !email) return res.status(400).json({ error: "Faltan datos requeridos (nombre, email)" });
+  try {
+    const sb = supabase();
+    const emailTrim = String(email).trim();
+    const { data: existing } = await sb.from("003_clientes").select("*").eq("email", emailTrim).maybeSingle();
+    if (existing) {
+      return res.json({
+        id: existing.id, codigo: existing.codigo, nro: existing.nro,
+        nombre: existing.nombre, apellido: existing.apellido || "", colegio: existing.colegio || "WS",
+        email: existing.email || "", telefono: existing.telefono || "", esNuevo: false,
+      });
+    }
+    const { data: created, error } = await sb.from("003_clientes").insert({
+      colegio: "WS", nombre, apellido: apellido || "", email: emailTrim, telefono: telefono || "",
+    }).select().single();
+    if (error) throw error;
+    res.json({
+      id: created.id, codigo: created.codigo, nro: created.nro,
+      nombre: created.nombre, apellido: created.apellido || "", colegio: created.colegio || "WS",
+      email: created.email || "", telefono: created.telefono || "", esNuevo: true,
+    });
+  } catch (err) {
+    console.error("Error check-or-create (Supabase):", err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -35,6 +68,7 @@ module.exports = async (req, res) => {
 
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Metodo no permitido" });
+  if (req.body && req.body.backend === "supabase") return await checkOrCreateSupabase(req, res);
 
   try {
     const { nombre, apellido, email, telefono } = req.body;
