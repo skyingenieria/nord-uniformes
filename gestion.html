@@ -216,13 +216,14 @@
     header{padding:16px 28px}
     nav{top:0;bottom:0;left:0;right:auto;height:100vh;width:var(--sidebar);
         grid-template-columns:1fr;grid-auto-rows:min-content;align-content:start;gap:3px;
-        border-top:none;border-right:1px solid var(--line);padding:16px 12px;box-shadow:none;overflow-y:auto}
+        border-top:none;border-right:1px solid #E4E5E8;padding:16px 12px;box-shadow:none;overflow-y:auto;
+        background:#F2F3F5}
     nav::before{content:"NORD GESTIÓN";display:block;font-weight:800;font-size:14px;color:var(--azul-900);padding:6px 12px 16px;letter-spacing:.03em}
     .desk-only{display:flex}
     nav button{flex-direction:row;justify-content:flex-start;gap:12px;font-size:13.5px;font-weight:700;
         text-transform:none;letter-spacing:0;padding:11px 14px;border-radius:11px;color:var(--muted)}
-    nav button .ic{font-size:18px;transition:none}
-    nav button.active{background:var(--crema);color:var(--azul-900);font-weight:800}
+    nav button .ic{transition:none;display:inline-flex;color:inherit}
+    nav button.active{background:#fff;color:var(--azul-900);font-weight:800;box-shadow:0 1px 3px rgba(15,23,46,.1)}
     nav button.active::before{display:none}
     nav button.active .ic{transform:none}
     #view{max-width:1160px;padding:26px 30px 44px}
@@ -275,16 +276,17 @@
   </div>
 
   <nav>
-    <button data-tab="inicio"     class="active" onclick="go('inicio')"><span class="ic">🏠</span>Dashboard</button>
-    <button data-tab="stock"      onclick="go('stock')"><span class="ic">📦</span>Stock</button>
-    <button data-tab="vender"     onclick="go('vender')"><span class="ic">🛒</span>Vender</button>
-    <button data-tab="pedidos"    onclick="go('pedidos')"><span class="ic">🧾</span>Pedidos</button>
-    <button data-tab="clientes"       class="desk-only" onclick="go('clientes')"><span class="ic">👥</span>Clientes</button>
-    <button data-tab="proveedores"    class="desk-only" onclick="go('proveedores')"><span class="ic">🏭</span>Proveedores</button>
-    <button data-tab="compras"        class="desk-only" onclick="go('compras')"><span class="ic">📥</span>Compras</button>
-    <button data-tab="precios"        class="desk-only" onclick="go('precios')"><span class="ic">💲</span>Precios</button>
-    <button data-tab="contabilidad"   class="desk-only" onclick="go('contabilidad')"><span class="ic">📊</span>Contabilidad</button>
-    <button data-tab="configuracion"  class="desk-only" onclick="go('configuracion')"><span class="ic">🗂️</span>Catálogo</button>
+    <button data-tab="inicio"     class="active" onclick="go('inicio')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7"/><path d="M9 22V12h6v10"/><path d="M5 10v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10"/></svg></span>Dashboard</button>
+    <button data-tab="stock"      onclick="go('stock')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>Stock</button>
+    <button data-tab="vender"     onclick="go('vender')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></span>Vender</button>
+    <button data-tab="pedidos"    onclick="go('pedidos')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>Pedidos</button>
+    <button data-tab="ordenes"        class="desk-only" onclick="go('ordenes')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>Órdenes</button>
+    <button data-tab="clientes"       class="desk-only" onclick="go('clientes')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Clientes</button>
+    <button data-tab="proveedores"    class="desk-only" onclick="go('proveedores')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>Proveedores</button>
+    <button data-tab="compras"        class="desk-only" onclick="go('compras')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>Compras</button>
+    <button data-tab="precios"        class="desk-only" onclick="go('precios')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span>Precios</button>
+    <button data-tab="contabilidad"   class="desk-only" onclick="go('contabilidad')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Contabilidad</button>
+    <button data-tab="configuracion"  class="desk-only" onclick="go('configuracion')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>Catálogo</button>
   </nav>
 </div>
 
@@ -308,7 +310,7 @@ let PROFILE = null;   // { id, nombre, rol }
 let TAB = "inicio";
 let navStack = [];
 let sheetOpen = false;
-const DATA = { catalogo:null, clientes:null, pedidos:null, proveedores:null, compras:null, preciosCostos:null, facturas:null };
+const DATA = { catalogo:null, clientes:null, pedidos:null, ordenes:null, proveedores:null, compras:null, preciosCostos:null, facturas:null };
 let cart = [];
 let venta = { cliente:null, descuento:0, envio:0, pago:"Tarjeta (Nave)" };
 
@@ -317,6 +319,15 @@ const fmt = (n)=> "$" + Math.round(Number(n)||0).toLocaleString("es-AR");
 const esc = (s)=> String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const todayISO = ()=> new Date().toLocaleDateString("sv-SE",{timeZone:"America/Argentina/Buenos_Aires"});
 const todayAR = ()=> new Date().toLocaleDateString("es-AR",{timeZone:"America/Argentina/Buenos_Aires"});
+// Orden de talle: numéricos de menor a mayor, luego XS/S/M/L/XL/XXL/XXXL, el resto alfabético.
+const SIZE_ORDER=['XS','S','M','L','XL','XXL','XXXL'];
+function compareTalle(ta,tb){
+  const na=Number(ta), nb=Number(tb);
+  const aNum=!isNaN(na)&&String(ta).trim()!=="", bNum=!isNaN(nb)&&String(tb).trim()!=="";
+  if(aNum&&bNum) return na-nb; if(aNum) return -1; if(bNum) return 1;
+  const ai=SIZE_ORDER.indexOf(String(ta).toUpperCase()), bi=SIZE_ORDER.indexOf(String(tb).toUpperCase());
+  if(ai!==-1&&bi!==-1) return ai-bi; return String(ta).localeCompare(String(tb));
+}
 
 function toast(msg, err){ const t=$("#toast"); t.textContent=msg; t.className="toast show"+(err?" err":""); setTimeout(()=>t.className="toast",2600); }
 
@@ -347,7 +358,7 @@ function showApp(){
 }
 
 // ─────────────────────────────────────────────────────────────── NAV
-const TITLES = {inicio:"Dashboard", stock:"Stock", vender:"Vender", pedidos:"Pedidos", clientes:"Clientes",
+const TITLES = {inicio:"Dashboard", stock:"Stock", vender:"Vender", pedidos:"Pedidos", ordenes:"Órdenes", clientes:"Clientes",
   proveedores:"Proveedores", compras:"Compras", precios:"Precios y costos", contabilidad:"Contabilidad", configuracion:"Catálogo"};
 function go(tab,opts){
   opts=opts||{};
@@ -443,6 +454,95 @@ async function fetchPedidos(){
 }
 async function getPedidos(force){ if(force||!DATA.pedidos) DATA.pedidos = await fetchPedidos(); return DATA.pedidos; }
 
+// ─────────────────────────────────────────────────────────────── ÓRDENES (detalle de venta, línea por línea)
+async function fetchOrdenes(){
+  const c = getClient();
+  const [{ data: ordenes, error: e1 }, { data: pedidos, error: e2 }, { data: clientes, error: e3 }] = await Promise.all([
+    c.from("005_ordenes").select("*").order("id",{ascending:false}).limit(500),
+    c.from("004_pedidos").select("id,numero,created_at,cliente_id"),
+    c.from("003_clientes").select("id,nombre,apellido"),
+  ]);
+  if(e1) throw e1; if(e2) throw e2; if(e3) throw e3;
+  const pedMap = Object.fromEntries((pedidos||[]).map(p=>[p.id,p]));
+  const cliMap = Object.fromEntries((clientes||[]).map(c2=>[c2.id,c2]));
+  return (ordenes||[]).map(o=>{
+    const ped = pedMap[o.pedido_id] || {};
+    const cli = cliMap[ped.cliente_id] || {};
+    return { ...o, pedidoNumero: ped.numero||"", fecha: ped.created_at?ped.created_at.slice(0,10):"",
+      clienteNombre: `${cli.nombre||""} ${cli.apellido||""}`.trim() };
+  });
+}
+async function getOrdenes(force){ if(force||!DATA.ordenes) DATA.ordenes = await fetchOrdenes(); return DATA.ordenes; }
+async function viewOrdenes(v,force){
+  try{
+    if(force||!DATA.ordenes){ loading(v); await getOrdenes(true); }
+    window._orQ = window._orQ||"";
+    window._orSort = window._orSort||{field:"fecha",dir:-1};
+    v.innerHTML=`
+      <div class="view-title">Órdenes</div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-8px">Detalle línea por línea de todo lo vendido (últimas 500). Tocá una fila para abrir el pedido.</p>
+      <div class="search"><span class="mag">🔎</span><input id="or-q" placeholder="Buscar prenda, pedido o cliente…" value="${esc(window._orQ)}"></div>
+      <div class="table-wrap"><table class="pr-table" id="or-table">
+        <thead><tr>
+          <th data-field="fecha">Fecha</th>
+          <th data-field="pedidoNumero">Pedido</th>
+          <th data-field="clienteNombre">Cliente</th>
+          <th data-field="nombre_prenda">Prenda</th>
+          <th data-field="talle">Talle</th>
+          <th data-field="cantidad">Cant.</th>
+          <th data-field="precio_unitario">Precio u.</th>
+          <th data-field="descuento_pct">Desc.</th>
+          <th>Subtotal</th>
+        </tr></thead>
+        <tbody id="or-tbody"></tbody>
+      </table></div>`;
+    const inp=$("#or-q");
+    const draw=()=>{
+      const q=inp.value.trim().toLowerCase(); window._orQ=inp.value;
+      const {field,dir}=window._orSort;
+      const list=(DATA.ordenes||[]).filter(o=>!q||`${o.nombre_prenda||""} ${o.pedidoNumero||""} ${o.clienteNombre||""}`.toLowerCase().includes(q)).sort((a,b)=>{
+        const av=a[field], bv=b[field];
+        if(typeof av==="string"||typeof bv==="string") return String(av||"").localeCompare(String(bv||""),"es")*dir;
+        return ((av??-Infinity)-(bv??-Infinity))*dir;
+      });
+      $("#or-tbody").innerHTML=list.length?list.map(o=>{
+        const subtotal=(Number(o.cantidad)||0)*(Number(o.precio_unitario)||0);
+        return `<tr style="cursor:pointer" onclick='openPedidoPorId(${JSON.stringify(o.pedido_id)})'>
+          <td>${esc(o.fecha||"")}</td>
+          <td>${o.pedidoNumero?`<span class="chip n">${esc(o.pedidoNumero)}</span>`:"—"}</td>
+          <td>${esc(o.clienteNombre||"—")}</td>
+          <td>${esc(o.nombre_prenda||"")}</td>
+          <td>T${esc(o.talle||"")}</td>
+          <td>${o.cantidad}</td>
+          <td>${fmt(o.precio_unitario)}</td>
+          <td>${o.descuento_pct!=null?Math.round(o.descuento_pct)+"%":"—"}</td>
+          <td style="font-weight:700">${fmt(subtotal)}</td>
+        </tr>`;
+      }).join("") : `<tr><td colspan="9"><div class="empty">Sin órdenes todavía</div></td></tr>`;
+      $("#or-table").querySelectorAll("th[data-field]").forEach(th=>{
+        th.classList.toggle("sorted", th.dataset.field===field);
+        th.querySelectorAll(".arrow").forEach(a=>a.remove());
+        if(th.dataset.field===field) th.insertAdjacentHTML("beforeend", `<span class="arrow">${dir>0?"▲":"▼"}</span>`);
+      });
+    };
+    inp.oninput=draw;
+    $("#or-table").querySelectorAll("th[data-field]").forEach(th=>{
+      th.onclick=()=>{
+        const f=th.dataset.field;
+        if(window._orSort.field===f) window._orSort.dir*=-1; else window._orSort={field:f,dir:f==="fecha"?-1:1};
+        draw();
+      };
+    });
+    draw();
+  }catch(e){ errBox(v,e); }
+}
+async function openPedidoPorId(pedidoId){
+  await getPedidos();
+  if(!(DATA.pedidos||[]).find(x=>x.id===pedidoId)){ toast("No se encontró el pedido",true); return; }
+  go("pedidos",{push:true});
+  openPedido(pedidoId);
+}
+
 // ─────────────────────────────────────────────────────────────── RENDER ROUTER
 async function render(force){
   const v = $("#view");
@@ -450,6 +550,7 @@ async function render(force){
   if(TAB==="stock")         return viewStock(v,force);
   if(TAB==="vender")        return viewVender(v,force);
   if(TAB==="pedidos")       return viewPedidos(v,force);
+  if(TAB==="ordenes")       return viewOrdenes(v,force);
   if(TAB==="clientes")      return viewClientes(v,force);
   if(TAB==="proveedores")   return viewProveedores(v,force);
   if(TAB==="compras")       return viewCompras(v,force);
@@ -975,6 +1076,7 @@ async function registrarPedido(){
     const items = cart.map(i=>({
       pedido_id: pedido.id, talle_id: i.talleId, nombre_prenda: i.nombre, talle: i.talle,
       cantidad: i.qty, precio_unitario: unitPrice(i), costo_unitario: costoMap[i.talleId]||0,
+      descuento_pct: i.descPct||0,
     }));
     const { error: eI } = await c.from("005_ordenes").insert(items);
     if(eI) throw eI;
@@ -1106,6 +1208,7 @@ async function viewPedidos(v,force){
             <span class="chip ${Number(p.saldo)>0.5?'r':'g'}">${Number(p.saldo)>0.5?"Debe "+fmt(p.saldo):"Pagado"}</span>
             <span class="chip ${isEnt(p.estado_envio)?'g':'a'}">${esc(p.estado_envio||"Sin entregar")}</span>
             ${p.factura ? `<span class="chip g">🧾 Facturado</span>` : `<span class="chip n">Sin facturar</span>`}
+            ${p.notas ? `<span class="chip n">📝 Nota</span>` : ""}
           </div>
         </div>`).join(""):'<div class="empty">No hay pedidos acá</div>'}`;
   }catch(e){ errBox(v,e); }
@@ -1135,6 +1238,10 @@ async function openPedido(pedidoId){
     </div>
     <div class="card" id="oi-items">${itemsHtml}</div>
     <div id="oi-totals">${oiTotalsHtml(p)}</div>
+
+    <div class="section-h" style="margin:20px 2px 8px">📝 Nota interna</div>
+    <div class="field"><textarea id="pd-nota" rows="3" placeholder="Anotá algo sobre este pedido…" style="width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:12px;outline:none;background:#fff;font-family:inherit;font-size:14px;resize:vertical">${esc(p.notas||"")}</textarea></div>
+    <button class="btn ghost" id="pd-nota-save" onclick='guardarNotaPedido(${JSON.stringify(p.id)})'>Guardar nota</button>
 
     <div class="section-h" style="margin:20px 2px 8px">💵 Registrar pago</div>
     <div class="field"><label>Monto que recibís ($)</label><input type="text" inputmode="numeric" id="pg-monto" value="${fmtMiles(Math.max(0,Math.round(p.saldo)))}" placeholder="0" oninput="milesOnInput(this)"></div>
@@ -1197,7 +1304,10 @@ function oiRowHtml(it,idx){
   const curTalle=talles.find(t=>t.talleId===it.talle_id);
   const base=oiBaseFor(curTalle) || it.precio_unitario;
   const lista=oiListaFor(curTalle) || base;
-  const descPct = base>0 ? Math.max(0, Math.round((1-it.precio_unitario/base)*100)) : 0;
+  // Se usa el % guardado al momento de vender; si es una fila vieja de antes de que
+  // existiera esa columna (null), se lo estima contra el precio vigente de hoy.
+  const descPct = it.descuento_pct!=null ? Math.round(it.descuento_pct)
+    : (base>0 ? Math.max(0, Math.round((1-it.precio_unitario/base)*100)) : 0);
   const editing=!!window._pedEditMode;
   const talleHtml = editing
     ? `<select class="oi-talle" onchange="oiChangeTalle(${idx}, this.value)">${talles.length
@@ -1231,6 +1341,7 @@ async function oiPersist(idx){
   try{
     const { error } = await getClient().from("005_ordenes").update({
       talle_id: it.talle_id, talle: it.talle, cantidad: it.cantidad, precio_unitario: it.precio_unitario, costo_unitario: it.costo_unitario,
+      descuento_pct: it.descuento_pct,
     }).eq("id", it.id);
     if(error) throw error;
     const subEl=$("#oi-sub-"+idx); if(subEl) subEl.textContent=fmt(it.cantidad*it.precio_unitario);
@@ -1258,6 +1369,7 @@ function oiChangeDesc(idx,val){
   const d=Math.min(100,Math.max(0,+val||0));
   const el=$("#oi-desc-"+idx); if(el) el.value=d;
   if(base>0) it.precio_unitario=Math.round(base*(1-d/100));
+  it.descuento_pct=d;
   oiPersist(idx);
 }
 async function oiChangeTalle(idx,talleId){
@@ -1269,6 +1381,7 @@ async function oiChangeTalle(idx,talleId){
   const descPct = baseViejo>0 ? Math.max(0, Math.round((1-it.precio_unitario/baseViejo)*100)) : 0;
   const baseNuevo=oiBaseFor(nuevoTalle);
   it.talle_id=talleId; it.talle=nuevoTalle.talle; it.precio_unitario=Math.round(baseNuevo*(1-descPct/100));
+  it.descuento_pct=descPct;
   try{
     const { data: costo } = await getClient().from("103_costo_vigente").select("costo").eq("talle_id",talleId).maybeSingle();
     if(costo) it.costo_unitario=Number(costo.costo)||0;
@@ -1379,6 +1492,18 @@ async function eliminarPedido(pedidoId){
     if(error) throw error;
     DATA.pedidos=null; closeSheet(); toast("Pedido eliminado"); render(true);
   }catch(e){ toast(e.message,true); btn.disabled=false; btn.textContent="🗑 Eliminar pedido"; }
+}
+async function guardarNotaPedido(pedidoId){
+  const btn=$("#pd-nota-save"); btn.disabled=true; btn.textContent="Guardando…";
+  try{
+    const notas=$("#pd-nota").value;
+    const { error } = await getClient().from("004_pedidos").update({ notas }).eq("id", pedidoId);
+    if(error) throw error;
+    const p=(DATA.pedidos||[]).find(x=>x.id===pedidoId); if(p) p.notas=notas;
+    if(window._pedCurrent && window._pedCurrent.id===pedidoId) window._pedCurrent.notas=notas;
+    toast("Nota guardada");
+  }catch(e){ toast(e.message,true); }
+  btn.disabled=false; btn.textContent="Guardar nota";
 }
 async function savePago(pedidoId){
   const monto=parseMiles($("#pg-monto").value); if(!monto||monto<=0) return toast("Ingresá el monto",true);
@@ -1539,11 +1664,36 @@ async function fetchCompras(){
   });
 }
 async function getCompras(force){ if(force||!DATA.compras) DATA.compras = await fetchCompras(); return DATA.compras; }
+function coNumeroKey(numero){ const m=/^C-(\d+)$/.exec(numero||""); return m?parseInt(m[1],10):0; }
+function coProveedorOptions(selectedId){
+  return `<option value="">Sin especificar</option>` + (DATA.proveedores||[]).map(p=>
+    `<option value="${p.id}" ${p.id===selectedId?"selected":""}>${esc(p.nombre)}</option>`).join("");
+}
+function coRowHtml(co){
+  const subtotal=(Number(co.cantidad)||0)*(Number(co.costo_unitario)||0);
+  return `<tr id="co-row-${co.id}">
+    <td>${co.numero?`<span class="chip n">${esc(co.numero)}</span>`:"—"}</td>
+    <td>${esc(co.fecha||"")}</td>
+    <td><select onchange='coChangeProveedor(${JSON.stringify(co.id)}, this.value)'>${coProveedorOptions(co.proveedor_id)}</select></td>
+    <td>${esc(co.prenda||co.sku_original||"—")}</td>
+    <td>${co.talleNombre?"T"+esc(co.talleNombre):"—"}</td>
+    <td><span class="pr-editable" data-id="${co.id}" data-field="cantidad" onclick="coEditCell(this)">${co.cantidad}</span></td>
+    <td><span class="pr-editable" data-id="${co.id}" data-field="costo_unitario" onclick="coEditCell(this)">${fmt(co.costo_unitario)}</span></td>
+    <td style="font-weight:700" id="co-sub-${co.id}">${fmt(subtotal)}</td>
+    <td><select onchange='coChangeEstado(${JSON.stringify(co.id)}, this.value)'>
+      <option ${co.estado==="Pedido"?"selected":""}>Pedido</option>
+      <option ${co.estado==="Señado"?"selected":""}>Señado</option>
+      <option ${co.estado==="Entregado"?"selected":""}>Entregado</option>
+      <option ${co.estado==="Falta Bordado"?"selected":""}>Falta Bordado</option>
+    </select></td>
+  </tr>`;
+}
 async function viewCompras(v,force){
   try{
-    if(force||!DATA.compras){ loading(v); await getCompras(true); }
+    if(force||!DATA.compras){ loading(v); await Promise.all([getCompras(true), getProveedores(force)]); }
+    else await getProveedores();
     window._coQ = window._coQ||"";
-    window._coSort = window._coSort||{field:"fecha",dir:-1};
+    window._coSort = window._coSort||{field:"numero",dir:1};
     const list0=DATA.compras||[];
     const totalComprado=list0.reduce((s,co)=>s+(Number(co.cantidad)||0)*(Number(co.costo_unitario)||0),0);
 
@@ -1574,14 +1724,15 @@ async function viewCompras(v,force){
       </table></div>
 
       <div class="section-h">Detalle de compras</div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-8px">Tocá cantidad o costo para editar directo (Enter guarda y baja a la fila siguiente).</p>
       <div class="search"><span class="mag">🔎</span><input id="co-q" placeholder="Buscar prenda o proveedor…" value="${esc(window._coQ)}"></div>
       <div class="table-wrap"><table class="pr-table static" id="co-table">
         <thead><tr>
           <th data-field="numero">N° Compra</th>
           <th data-field="fecha">Fecha</th>
+          <th data-field="proveedorNombre">Proveedor</th>
           <th data-field="prenda">Prenda</th>
           <th data-field="talleNombre">Talle</th>
-          <th data-field="proveedorNombre">Proveedor</th>
           <th data-field="cantidad">Cant.</th>
           <th data-field="costo_unitario">Costo u.</th>
           <th>Subtotal</th>
@@ -1595,29 +1746,17 @@ async function viewCompras(v,force){
       const q=inp.value.trim().toLowerCase(); window._coQ=inp.value;
       const {field,dir}=window._coSort;
       const list=list0.filter(co=>!q||`${co.prenda||co.sku_original||""} ${co.proveedorNombre||""}`.toLowerCase().includes(q)).sort((a,b)=>{
+        if(field==="numero"){
+          return (coNumeroKey(a.numero)-coNumeroKey(b.numero))*dir
+            || String(a.prenda||a.sku_original||"").localeCompare(String(b.prenda||b.sku_original||""),"es")
+            || compareTalle(a.talleNombre,b.talleNombre);
+        }
         const av=a[field], bv=b[field];
         if(typeof av==="string"||typeof bv==="string") return String(av||"").localeCompare(String(bv||""),"es")*dir;
         return ((av??-Infinity)-(bv??-Infinity))*dir;
       });
-      $("#co-tbody").innerHTML=list.length?list.map(co=>{
-        const subtotal=(Number(co.cantidad)||0)*(Number(co.costo_unitario)||0);
-        return `<tr>
-          <td>${co.numero?`<span class="chip n">${esc(co.numero)}</span>`:"—"}</td>
-          <td>${esc(co.fecha||"")}</td>
-          <td>${esc(co.prenda||co.sku_original||"—")}</td>
-          <td>${co.talleNombre?"T"+esc(co.talleNombre):"—"}</td>
-          <td>${esc(co.proveedorNombre||"—")}</td>
-          <td>${co.cantidad}</td>
-          <td>${fmt(co.costo_unitario)}</td>
-          <td style="font-weight:700">${fmt(subtotal)}</td>
-          <td><select onchange='coChangeEstado(${JSON.stringify(co.id)}, this.value)'>
-            <option ${co.estado==="Pedido"?"selected":""}>Pedido</option>
-            <option ${co.estado==="Señado"?"selected":""}>Señado</option>
-            <option ${co.estado==="Entregado"?"selected":""}>Entregado</option>
-            <option ${co.estado==="Falta Bordado"?"selected":""}>Falta Bordado</option>
-          </select></td>
-        </tr>`;
-      }).join("") : `<tr><td colspan="9"><div class="empty">Sin resultados</div></td></tr>`;
+      window._coList=list;
+      $("#co-tbody").innerHTML=list.length?list.map(co=>coRowHtml(co)).join("") : `<tr><td colspan="9"><div class="empty">Sin resultados</div></td></tr>`;
       $("#co-table").querySelectorAll("th[data-field]").forEach(th=>{
         th.classList.toggle("sorted", th.dataset.field===field);
         th.querySelectorAll(".arrow").forEach(a=>a.remove());
@@ -1642,6 +1781,56 @@ async function coChangeEstado(compraId, estado){
     const co=(DATA.compras||[]).find(x=>x.id===compraId); if(co) co.estado=estado;
     toast("Estado actualizado");
   }catch(e){ toast(e.message,true); }
+}
+async function coChangeProveedor(compraId, proveedorId){
+  try{
+    const { error } = await getClient().from("009_compras").update({ proveedor_id: proveedorId||null }).eq("id", compraId);
+    if(error) throw error;
+    const co=(DATA.compras||[]).find(x=>x.id===compraId);
+    if(co){ co.proveedor_id=proveedorId||null; co.proveedorNombre=(DATA.proveedores||[]).find(p=>p.id===proveedorId)?.nombre||""; }
+    toast("Proveedor actualizado");
+  }catch(e){ toast(e.message,true); }
+}
+// ── Edición inline tipo Excel (Cantidad/Costo u.) ─────────────────────────────
+function coEditCell(span){
+  if(span.querySelector("input")) return;
+  const id=span.dataset.id, field=span.dataset.field;
+  const co=(DATA.compras||[]).find(x=>x.id===id); if(!co) return;
+  const cur=co[field];
+  span.innerHTML=`<input type="text" inputmode="numeric" value="${fmtMiles(cur)}">`;
+  const input=span.querySelector("input");
+  input.focus(); input.select();
+  let done=false;
+  const cancel=()=>{ if(done) return; done=true; span.innerHTML=field==="costo_unitario"?fmt(cur):cur; };
+  input.addEventListener("keydown", e=>{
+    if(e.key==="Enter"){ e.preventDefault(); if(done) return; done=true; coSaveCell(id, field, parseMiles(input.value), true); }
+    else if(e.key==="Escape"){ e.preventDefault(); cancel(); }
+  });
+  input.addEventListener("blur", ()=>{ if(done) return; done=true; coSaveCell(id, field, parseMiles(input.value), false); });
+}
+async function coSaveCell(id, field, value, moveNext){
+  const co=(DATA.compras||[]).find(x=>x.id===id); if(!co) return;
+  const span=document.querySelector(`.pr-editable[data-id="${id}"][data-field="${field}"]`);
+  try{
+    if(field==="cantidad" && !value) throw new Error("Ingresá una cantidad válida");
+    const { error } = await getClient().from("009_compras").update({ [field]: value }).eq("id", id);
+    if(error) throw error;
+    co[field]=value;
+    if(span) span.innerHTML = field==="costo_unitario"?fmt(value):value;
+    const subEl=$("#co-sub-"+CSS.escape(id)); if(subEl) subEl.textContent=fmt((Number(co.cantidad)||0)*(Number(co.costo_unitario)||0));
+    if(moveNext) coFocusNext(id, field);
+  }catch(e){
+    toast(e.message,true);
+    if(span) span.innerHTML = field==="costo_unitario"?fmt(co[field]):co[field];
+  }
+}
+function coFocusNext(id, field){
+  const list=window._coList||[];
+  const idx=list.findIndex(x=>x.id===id);
+  if(idx<0 || idx>=list.length-1) return;
+  const next=list[idx+1];
+  const span=document.querySelector(`.pr-editable[data-id="${next.id}"][data-field="${field}"]`);
+  if(span) coEditCell(span);
 }
 function nextCompraNumero(){
   const nums=(DATA.compras||[]).map(co=>{ const m=/^C-(\d+)$/.exec(co.numero||""); return m?parseInt(m[1],10):0; });
@@ -1742,7 +1931,7 @@ async function fetchPreciosCostos(){
     const precio=Number(pr.precio_transferencia)||0, costo=Number(co.costo)||0;
     return { talleId:t.id, nombre:prendaNombre[t.product_id]||"", talle:t.talle, sku:t.sku,
       precioLista:Number(pr.precio_lista)||0, precio, costo, margen: precio>0?((precio-costo)/precio*100):null };
-  }).sort((a,b)=> a.nombre.localeCompare(b.nombre) || String(a.talle).localeCompare(String(b.talle)));
+  }).sort((a,b)=> a.nombre.localeCompare(b.nombre) || compareTalle(a.talle,b.talle));
 }
 async function getPreciosCostos(force){ if(force||!DATA.preciosCostos) DATA.preciosCostos = await fetchPreciosCostos(); return DATA.preciosCostos; }
 function margenClass(m){ if(m==null) return ""; return m>=50?"margin-ok": m>=40?"margin-low":"margin-bad"; }
@@ -1972,7 +2161,7 @@ async function aplicarCosto(talleId){
 async function fetchFacturas(){
   const c = getClient();
   const [{ data: facturas, error }, { data: pedidos }, { data: clientes }] = await Promise.all([
-    c.from("007_facturas").select("*").order("fecha",{ascending:false}),
+    c.from("007_facturas").select("*").order("fecha",{ascending:false}).order("numero_comprobante",{ascending:false}),
     c.from("004_pedidos").select("id,numero,cliente_id"),
     c.from("003_clientes").select("id,nombre,apellido"),
   ]);
