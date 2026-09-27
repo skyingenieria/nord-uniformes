@@ -1,8 +1,15 @@
 // POST /api/mail/send-order-notification
 // Envía email a norduniformes@gmail.com notificando nuevo pedido
 // Body: { idPedido, codigoCliente, nombre, apellido, email, items, subtotal, descuento, total, pago, envio }
+// También lo reusa el modal "Avisame cuando haya stock" de wellspring.html
+// (pago:"avisame") -- no hay función nueva para eso por el límite de 12
+// funciones de Vercel Hobby (ver CLAUDE.md), así que nombre/email de
+// cualquier visitante anónimo llegan acá sin pasar por el checkout real.
 
 const nodemailer = require("nodemailer");
+
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -13,11 +20,16 @@ module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
   try {
-    const { idPedido, codigoCliente, nombre, apellido, email, telefono, items, subtotal, descuento, total, pago, envio } = req.body;
+    const { idPedido, codigoCliente, nombre, apellido, email, telefono, pago, envio } = req.body;
+    const items = Array.isArray(req.body.items) ? req.body.items : [];
+    const subtotal = Number(req.body.subtotal) || 0;
+    const descuento = Number(req.body.descuento) || 0;
+    const total = Number(req.body.total) || 0;
 
-    if (!idPedido || !nombre || !email) {
-      return res.status(400).json({ error: "Faltan datos requeridos" });
+    if (!idPedido || typeof nombre !== "string" || !nombre.trim() || typeof email !== "string" || !EMAIL_RE.test(email.trim())) {
+      return res.status(400).json({ error: "Faltan datos requeridos o el email no es válido" });
     }
+    if (!items.length) return res.status(400).json({ error: "El pedido no tiene items" });
 
     // Configurar transporte SMTP (usar credenciales de variable de entorno)
     const transporter = nodemailer.createTransport({
@@ -28,26 +40,31 @@ module.exports = async (req, res) => {
       },
     });
 
-    // Construir HTML del email
-    const itemsHtml = items.map(i =>
-      `<tr><td>${i.nombre} - Talle ${i.talle}</td><td>${i.qty}</td><td>$${i.precio.toLocaleString("es-AR")}</td><td>$${(i.precio * i.qty).toLocaleString("es-AR")}</td></tr>`
-    ).join("");
+    // Todo lo que viene del body (nombre, email, nombres de prenda, etc.) se
+    // escapa antes de meterlo en el HTML del mail -- este endpoint es público
+    // y sin auth, así que nombre/email pueden traer HTML/links armados a
+    // mano para intentar phishing en la bandeja de entrada del negocio.
+    const itemsHtml = items.map(i => {
+      const cant = Number(i.qty) || 0;
+      const precio = Number(i.precio) || 0;
+      return `<tr><td>${esc(i.nombre)} - Talle ${esc(i.talle)}</td><td>${cant}</td><td>$${precio.toLocaleString("es-AR")}</td><td>$${(precio * cant).toLocaleString("es-AR")}</td></tr>`;
+    }).join("");
 
-    const descuentoHtml = descuento > 0 ? `<tr style="color:#2e7d52"><td colspan="3">Descuento (${pago})</td><td>-$${descuento.toLocaleString("es-AR")}</td></tr>` : "";
+    const descuentoHtml = descuento > 0 ? `<tr style="color:#2e7d52"><td colspan="3">Descuento (${esc(pago)})</td><td>-$${descuento.toLocaleString("es-AR")}</td></tr>` : "";
 
     const telDigits = String(telefono || "").replace(/\D/g, "");
     const waNum = telDigits ? (telDigits.startsWith("54") ? telDigits : "549" + telDigits.replace(/^0/, "")) : "";
     const telHtml = telefono
-      ? `<p><strong>Teléfono:</strong> ${telefono}${waNum ? ` — <a href="https://wa.me/${waNum}">Escribir por WhatsApp</a>` : ""}</p>`
+      ? `<p><strong>Teléfono:</strong> ${esc(telefono)}${waNum ? ` — <a href="https://wa.me/${esc(waNum)}">Escribir por WhatsApp</a>` : ""}</p>`
       : "";
 
     const htmlContent = `
-      <h2>Nuevo Pedido #${idPedido}</h2>
-      <p><strong>Cliente:</strong> ${nombre} ${apellido} (${codigoCliente})</p>
-      <p><strong>Email:</strong> ${email}</p>
+      <h2>Nuevo Pedido #${esc(idPedido)}</h2>
+      <p><strong>Cliente:</strong> ${esc(nombre)} ${esc(apellido)} (${esc(codigoCliente)})</p>
+      <p><strong>Email:</strong> ${esc(email)}</p>
       ${telHtml}
-      <p><strong>Forma de Pago:</strong> ${pago}</p>
-      <p><strong>Envío:</strong> ${envio}</p>
+      <p><strong>Forma de Pago:</strong> ${esc(pago)}</p>
+      <p><strong>Envío:</strong> ${esc(envio)}</p>
 
       <h3>Detalle de Prendas:</h3>
       <table style="border-collapse:collapse;width:100%">
@@ -76,7 +93,7 @@ module.exports = async (req, res) => {
       from: process.env.SMTP_USER || "norduniformes@gmail.com",
       to: "norduniformes@gmail.com",
       cc: "flor.cordeviola@hotmail.com",
-      replyTo: email,
+      replyTo: EMAIL_RE.test(String(email).trim()) ? email.trim() : undefined,
       subject: `Nuevo Pedido #${idPedido} - ${nombre} ${apellido}`,
       html: htmlContent,
     });

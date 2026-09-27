@@ -184,6 +184,7 @@ function getCart() {
 }
 function saveCart(c) { localStorage.setItem("nord_cart", JSON.stringify(c)); }
 function fmt(n) { return "$" + Number(n).toLocaleString("es-AR"); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 // Precio de lista (con tarjeta): valor real de la hoja (col F); si falta, transferencia + 15%.
 function listaDe(precio, precioLista) { return (precioLista && precioLista > 0) ? Math.round(precioLista) : Math.round((Number(precio) || 0) * 1.15); }
 
@@ -289,8 +290,8 @@ function buildItemsHtml(cart, metodo, flags) {
     return `
     <div class="cart-item">
       <div class="item-info">
-        <p class="item-name">${i.nombre}${isPromoLine ? ' <span class="promo-tag">· 30% OFF</span>' : ''}</p>
-        <p class="item-talle">Talle ${i.talle}</p>
+        <p class="item-name">${esc(i.nombre)}${isPromoLine ? ' <span class="promo-tag">· 30% OFF</span>' : ''}</p>
+        <p class="item-talle">Talle ${esc(i.talle)}</p>
       </div>
       <div class="qty-wrap">
         <button class="qty-btn" onclick="changeQty('${i.key}',-1)">−</button>
@@ -305,7 +306,7 @@ function buildItemsHtml(cart, metodo, flags) {
   }).join("");
 }
 function buildSummaryLines(cart, metodo, flags) {
-  return cart.map((i, idx) => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${priceHtmlFor(i, idx, cart, metodo, flags)}</span></div>`).join("");
+  return cart.map((i, idx) => `<div class="sum-row"><span>${esc(i.nombre)} x${i.qty}</span><span>${priceHtmlFor(i, idx, cart, metodo, flags)}</span></div>`).join("");
 }
 function agregarChombaPromo() {
   if (_orderCompleted) return;
@@ -456,22 +457,22 @@ function render() {
         <p class="section-block-title">Tus datos</p>
         <div class="form-row">
           <div class="form-group">
-            <label>Nombre<span class="req">*</span></label>
+            <label for="inp-nombre">Nombre<span class="req">*</span></label>
             <input id="inp-nombre" type="text" placeholder="Ej: María" required oninput="this.classList.remove('field-error')">
           </div>
           <div class="form-group">
-            <label>Apellido de familia<span class="req">*</span></label>
+            <label for="inp-apellido">Apellido de familia<span class="req">*</span></label>
             <input id="inp-apellido" type="text" placeholder="Ej: García" required oninput="this.classList.remove('field-error')">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Teléfono<span class="req">*</span></label>
+            <label for="inp-tel">Teléfono<span class="req">*</span></label>
             <input id="inp-tel" type="tel" placeholder="11 1234-5678" required oninput="clearFieldError('inp-tel')">
             <span class="field-hint" id="hint-inp-tel"></span>
           </div>
           <div class="form-group">
-            <label>Email<span class="req">*</span></label>
+            <label for="inp-email">Email<span class="req">*</span></label>
             <input id="inp-email" type="email" placeholder="tu@email.com" required oninput="clearFieldError('inp-email')">
             <span class="field-hint" id="hint-inp-email"></span>
           </div>

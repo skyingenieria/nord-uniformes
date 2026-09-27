@@ -22,7 +22,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NORD | Wellspring Pilar</title>
   <meta name="description" content="Catálogo de uniformes escolares Wellspring Pilar. Consultá stock, elegí talle y pedí por WhatsApp.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="NORD Uniformes — Wellspring Pilar">
+  <meta property="og:description" content="Catálogo de uniformes escolares Wellspring Pilar. Consultá stock, elegí talle y comprá online.">
+  <meta property="og:image" content="https://www.norduniformes.com.ar/images/Chomba_blanca_1.png">
+  <meta property="og:url" content="https://www.norduniformes.com.ar/wellspring">
+  <meta property="og:locale" content="es_AR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="NORD Uniformes — Wellspring Pilar">
+  <meta name="twitter:description" content="Catálogo de uniformes escolares Wellspring Pilar. Consultá stock, elegí talle y comprá online.">
+  <meta name="twitter:image" content="https://www.norduniformes.com.ar/images/Chomba_blanca_1.png">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%230F172E'/><text x='16' y='14' dominant-baseline='central' text-anchor='middle' font-family='system-ui,sans-serif' font-weight='900' font-size='20' fill='white'>N</text></svg>">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ClothingStore",
+    "name": "NORD Uniformes",
+    "description": "Uniformes escolares Wellspring Pilar.",
+    "url": "https://www.norduniformes.com.ar/wellspring",
+    "areaServed": "Pilar, Buenos Aires, Argentina",
+    "priceRange": "$$"
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
@@ -1289,6 +1310,14 @@
       position: relative;
       overflow: visible;
     }
+    /* Un talle agotado nunca debe tomar el mismo dorado de "seleccionado"
+       disponible -- si no, se ve casi igual a uno que sí se puede comprar. */
+    .modal-talle-btn.sin-stock.selected {
+      background: var(--niebla-200);
+      color: var(--azul-600);
+      border-color: var(--niebla);
+      font-weight: 700;
+    }
     .modal-talle-btn.sin-stock::after {
       content: "";
       position: absolute;
@@ -1591,7 +1620,7 @@
       </nav>
       <div class="header-search">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="search-input" type="text" placeholder="Buscar" oninput="applyFilters()">
+        <input id="search-input" type="text" placeholder="Buscar" aria-label="Buscar productos" oninput="syncSearch(this)">
       </div>
       <button class="cart-btn" onclick="openDrawer()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
@@ -1605,8 +1634,8 @@
     <div class="mobile-panel-group">
       <p class="mobile-panel-title">Nivel</p>
       <div class="mobile-panel-pills">
-        <button class="mobile-pill" data-nivel="todos" onclick="filterNivel(this)">Todos</button>
-        <button class="mobile-pill active" data-nivel="kinder" onclick="filterNivel(this)">Kinder</button>
+        <button class="mobile-pill active" data-nivel="todos" onclick="filterNivel(this)">Todos</button>
+        <button class="mobile-pill" data-nivel="kinder" onclick="filterNivel(this)">Kinder</button>
         <button class="mobile-pill" data-nivel="primaria" onclick="filterNivel(this)">Primaria</button>
         <button class="mobile-pill" data-nivel="secundaria" onclick="filterNivel(this)">Secundaria</button>
       </div>
@@ -1623,7 +1652,7 @@
 
   <!-- Barra búsqueda mobile -->
   <div id="mobile-search-bar">
-    <input id="search-input-mobile" type="text" placeholder="Buscar..." oninput="applyFilters()">
+    <input id="search-input-mobile" type="text" placeholder="Buscar..." aria-label="Buscar productos" oninput="syncSearch(this)">
     <button class="mobile-search-close" onclick="toggleMobileSearch()">Cerrar</button>
   </div>
 </header>
@@ -1647,8 +1676,8 @@
       <div class="filter-group">
         <p class="filter-group-title">Nivel</p>
         <ul class="filter-list" id="filter-nivel-side">
-          <li class="filter-item" data-nivel="todos" onclick="filterNivel(this)"><span class="filter-dot"></span>Todos <span class="filter-count" id="count-todos-side"></span></li>
-          <li class="filter-item active" data-nivel="kinder" onclick="filterNivel(this)"><span class="filter-dot"></span>Kinder <span class="filter-count" id="count-kinder-side"></span></li>
+          <li class="filter-item active" data-nivel="todos" onclick="filterNivel(this)"><span class="filter-dot"></span>Todos <span class="filter-count" id="count-todos-side"></span></li>
+          <li class="filter-item" data-nivel="kinder" onclick="filterNivel(this)"><span class="filter-dot"></span>Kinder <span class="filter-count" id="count-kinder-side"></span></li>
           <li class="filter-item" data-nivel="primaria" onclick="filterNivel(this)"><span class="filter-dot"></span>Primaria <span class="filter-count" id="count-primaria-side"></span></li>
           <li class="filter-item" data-nivel="secundaria" onclick="filterNivel(this)"><span class="filter-dot"></span>Secundaria <span class="filter-count" id="count-secundaria-side"></span></li>
         </ul>
@@ -1825,11 +1854,11 @@
     <p id="avisame-prenda-name" style="font-weight:700;color:var(--azul-900);margin-bottom:4px;"></p>
     <p>Te avisamos cuando vuelva a estar disponible.</p>
     <div class="avisame-field">
-      <label>Nombre</label>
+      <label for="av-nombre">Nombre</label>
       <input id="av-nombre" type="text" placeholder="Tu nombre">
     </div>
     <div class="avisame-field">
-      <label>Email</label>
+      <label for="av-email">Email</label>
       <input id="av-email" type="email" placeholder="tu@email.com">
     </div>
     <button class="btn-avisame-submit" onclick="submitAvisame()">AVISAME CUANDO HAYA STOCK</button>
@@ -1979,6 +2008,7 @@
   function fmt(n) {
     return "$" + Number(n).toLocaleString("es-AR");
   }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
   // Precio de lista (con tarjeta). Usa el valor real de la hoja (col F);
   // si falta, cae al viejo cálculo (transferencia + 15%).
@@ -2019,8 +2049,8 @@
       const foto2Raw = (p.fotos && p.fotos[1]) || "";
       const foto2 = foto2Raw ? toDirectImageUrl(foto2Raw) : "";
       const imgHtml = foto1
-        ? `<img class="foto-1" src="${foto1}" alt="${p.nombre}" loading="lazy">
-           ${foto2 ? `<img class="foto-2" src="${foto2}" alt="${p.nombre} - foto 2" loading="lazy">` : ""}`
+        ? `<img class="foto-1" src="${esc(foto1)}" alt="${esc(p.nombre)}" loading="lazy">
+           ${foto2 ? `<img class="foto-2" src="${esc(foto2)}" alt="${esc(p.nombre)} - foto 2" loading="lazy">` : ""}`
         : `<div class="product-img-placeholder">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
             <span>Foto próximamente</span>
@@ -2052,7 +2082,7 @@
           <div class="product-body">
             <div>
               ${generoTag}
-              <h2 class="product-name" onclick="openProductModal('${p.id}')" style="cursor:pointer;">${p.nombre}</h2>
+              <h2 class="product-name" onclick="openProductModal('${p.id}')" style="cursor:pointer;">${esc(p.nombre)}</h2>
               ${precioMostrar > 0
                 ? `<div class="price-lista"><span>${fmt(precioLista)}</span></div>
                    <div class="price-transferencia"><strong>${fmt(Math.round(precioMostrar))}</strong> con Transferencia</div>
@@ -2246,7 +2276,7 @@
 
   // ── Filtros ──────────────────────────────────────────────────────────
   let allProducts = [];
-  let activeNivel  = "kinder";
+  let activeNivel  = "todos";
   let activeGenero = "todos";
 
   function updateCounts() {
@@ -2265,8 +2295,15 @@
     if (el) el.textContent = count + (count === 1 ? " prenda" : " prendas");
   }
 
+  // Los dos buscadores (desktop/mobile) se mantienen espejados entre sí --
+  // así da igual cuál se usó último, nunca hay dos valores distintos sumados.
+  function syncSearch(el) {
+    const other = el.id === "search-input" ? document.getElementById("search-input-mobile") : document.getElementById("search-input");
+    if (other) other.value = el.value;
+    applyFilters();
+  }
   function applyFilters() {
-    const q = ((document.getElementById("search-input")?.value || "") + (document.getElementById("search-input-mobile")?.value || "")).toLowerCase().trim();
+    const q = (document.getElementById("search-input")?.value || document.getElementById("search-input-mobile")?.value || "").toLowerCase().trim();
     const filtered = allProducts.filter(p => {
       const matchSearch = !q || p.nombre.toLowerCase().includes(q);
       // Si hay búsqueda activa, ignorar filtros de nivel y género
@@ -2493,7 +2530,7 @@
     const guideTable = document.getElementById("guide-table");
 
     if (guiaImg) {
-      guideTable.innerHTML = `<tr><td style="padding:0"><img src="${guiaImg}" alt="Guía de talles ${product.nombre}" style="width:100%;border-radius:8px;display:block;"></td></tr>`;
+      guideTable.innerHTML = `<tr><td style="padding:0"><img src="${esc(guiaImg)}" alt="Guía de talles ${esc(product.nombre)}" style="width:100%;border-radius:8px;display:block;"></td></tr>`;
       guideBtn.style.display = "block";
     } else {
       guideBtn.style.display = "none";
@@ -2695,13 +2732,14 @@
     const nombre = document.getElementById("av-nombre").value.trim();
     const email  = document.getElementById("av-email").value.trim();
     if (!nombre || !email) { showToast("Completá nombre y email"); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { showToast("Ingresá un email válido"); return; }
 
     const btn = document.querySelector(".btn-avisame-submit");
     btn.textContent = "Enviando...";
     btn.disabled = true;
 
     try {
-      await fetch("/api/mail/send-order-notification", {
+      const r = await fetch("/api/mail/send-order-notification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2713,10 +2751,14 @@
           pago: "avisame", envio: "retiro",
         }),
       });
-    } catch(e) { /* igual mostramos éxito */ }
-
-    closeAvisame();
-    showToast("¡Te avisamos cuando vuelva a estar disponible!");
+      if (!r.ok) throw new Error("No se pudo enviar");
+      closeAvisame();
+      showToast("¡Te avisamos cuando vuelva a estar disponible!");
+    } catch(e) {
+      btn.textContent = "AVISAME CUANDO HAYA STOCK";
+      btn.disabled = false;
+      showToast("No pudimos registrar el aviso. Probá de nuevo en un rato.");
+    }
   }
 
   updateCartCount();
