@@ -2,17 +2,24 @@
 // Concentra varias acciones en UNA sola funcion serverless para no superar
 // el limite de funciones de Vercel.
 //
-// GET  /api/erp?action=stock       -> stock por prenda/talle (auth)
-// GET  /api/erp?action=clientes    -> lista de clientes (auth)
-// GET  /api/erp?action=pedidos     -> pedidos con saldo/estado (auth)
-// GET  /api/erp?action=dashboard   -> insights financieros (auth)
-// GET  /api/erp?action=validate-code&code=XXX -> valida codigo desc. (publico)
-// POST /api/erp?action=pedido      -> registra un pedido (escribe Ordenes) (auth)
-// POST /api/erp?action=pago        -> registra un pago en Pedidos (auth)
-// POST /api/erp?action=entrega     -> registra estado de entrega en Pedidos (auth)
+// La pagina /erp quedo archivada (ver _archive/erp.html) y con ella el
+// endpoint que emitia el token legacy (/api/admin/auth, tambien archivado)
+// — asi que las acciones de abajo (stock/clientes/pedidos/ordenes/dashboard/
+// pedido/pago/entrega/facturar, todas Sheets) quedaron inalcanzables: nadie
+// puede generar ya un token valido para ellas. Se dejan tal cual, sin
+// borrar, como red de seguridad por si algun dia hay que volver atras.
 //
-// Auth: mismo esquema que /admin — header "Authorization: Bearer <token>".
-// El token se obtiene en POST /api/admin/auth con la ADMIN_PASSWORD.
+// GET  /api/erp?action=stock       -> stock por prenda/talle (auth legacy, sin uso)
+// GET  /api/erp?action=clientes    -> lista de clientes (auth legacy, sin uso)
+// GET  /api/erp?action=pedidos     -> pedidos con saldo/estado (auth legacy, sin uso)
+// GET  /api/erp?action=dashboard   -> insights financieros (auth legacy, sin uso)
+// GET  /api/erp?action=validate-code&code=XXX -> valida codigo desc. (publico, tampoco en uso ya)
+// POST /api/erp?action=pedido      -> registra un pedido (escribe Ordenes) (auth legacy, sin uso)
+// POST /api/erp?action=pago        -> registra un pago en Pedidos (auth legacy, sin uso)
+// POST /api/erp?action=entrega     -> registra estado de entrega en Pedidos (auth legacy, sin uso)
+//
+// Lo que SÍ sigue en uso, desde /gestion (Supabase Auth, no el token legacy):
+// action=facturar-supabase, action=drive-factura, action=ga4-metrics.
 
 const { google } = require("googleapis");
 const crypto = require("crypto");
@@ -36,6 +43,18 @@ function verifyToken(token) {
   const ts    = Math.floor(Date.now() / (1000 * 60 * 60 * 8));
   const valid = crypto.createHmac("sha256", expected).update(String(ts)).digest("hex");
   return token === valid;
+}
+
+const GA4_PROPERTY_ID = "541705478";
+function makeGA4Auth() {
+  return new google.auth.GoogleAuth({
+    credentials: {
+      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      private_key: process.env.GOOGLE_PRIVATE_KEY
+        ?.replace(/\\n/g, "\n").replace(/^"/, "").replace(/"$/, ""),
+    },
+    scopes: ["https://www.googleapis.com/auth/analytics.readonly"],
+  });
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -741,6 +760,76 @@ async function postDriveFactura(req, res) {
   }
 }
 
+// GET ga4-metrics — tráfico del sitio (Google Analytics 4), para /gestion.
+// Ex-/admin y /erp (ambos ya archivados) — mismos reportes que usaban, sólo
+// los que la UI realmente mostraba. Auth: token de Supabase Auth.
+async function getGA4Metrics(req, res) {
+  const token = (req.headers.authorization || "").replace("Bearer ", "").trim();
+  const user = await verifySupabaseUser(token);
+  if (!user) return res.status(401).json({ error: "No autorizado" });
+
+  const auth = makeGA4Auth();
+  const analyticsdata = google.analyticsdata({ version: "v1beta", auth });
+  const prop = `properties/${GA4_PROPERTY_ID}`;
+
+  const [overviewRes, pagesRes, dailyRes, channelsRes] = await Promise.all([
+    analyticsdata.properties.runReport({
+      property: prop,
+      requestBody: {
+        dateRanges: [{ startDate: "30daysAgo", endDate: "today" }],
+        metrics: [{ name: "sessions" }, { name: "activeUsers" }, { name: "screenPageViews" }, { name: "bounceRate" }],
+      },
+    }),
+    analyticsdata.properties.runReport({
+      property: prop,
+      requestBody: {
+        dateRanges: [{ startDate: "30daysAgo", endDate: "today" }],
+        dimensions: [{ name: "pagePath" }],
+        metrics: [{ name: "screenPageViews" }, { name: "activeUsers" }],
+        orderBys: [{ metric: { metricName: "screenPageViews" }, desc: true }],
+        limit: 8,
+      },
+    }),
+    analyticsdata.properties.runReport({
+      property: prop,
+      requestBody: {
+        dateRanges: [{ startDate: "29daysAgo", endDate: "today" }],
+        dimensions: [{ name: "date" }],
+        metrics: [{ name: "sessions" }, { name: "activeUsers" }],
+        orderBys: [{ dimension: { dimensionName: "date" } }],
+      },
+    }),
+    analyticsdata.properties.runReport({
+      property: prop,
+      requestBody: {
+        dateRanges: [{ startDate: "30daysAgo", endDate: "today" }],
+        dimensions: [{ name: "sessionDefaultChannelGroup" }],
+        metrics: [{ name: "sessions" }, { name: "activeUsers" }],
+        orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+        limit: 10,
+      },
+    }),
+  ]);
+
+  const ov = overviewRes.data.rows?.[0]?.metricValues || [];
+  const overview = {
+    sessions: parseInt(ov[0]?.value || 0), users: parseInt(ov[1]?.value || 0),
+    pageviews: parseInt(ov[2]?.value || 0), bounceRate: parseFloat(ov[3]?.value || 0),
+  };
+  const topPages = (pagesRes.data.rows || []).map(r => ({
+    path: r.dimensionValues[0].value, pageviews: parseInt(r.metricValues[0].value), users: parseInt(r.metricValues[1].value),
+  }));
+  const daily = (dailyRes.data.rows || []).map(r => ({
+    date: r.dimensionValues[0].value, sessions: parseInt(r.metricValues[0].value), users: parseInt(r.metricValues[1].value),
+  }));
+  const channels = (channelsRes.data.rows || []).map(r => ({
+    channel: r.dimensionValues[0].value, sessions: parseInt(r.metricValues[0].value),
+  }));
+
+  res.setHeader("Cache-Control", "s-maxage=300");
+  res.json({ overview, topPages, daily, channels });
+}
+
 // ── Router ───────────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -754,9 +843,11 @@ module.exports = async (req, res) => {
     // Accion publica (no requiere token)
     if (action === "validate-code") return await validateCode(req, res);
 
-    // Accion de /gestion (Supabase Auth): tiene su propia validación de token
-    // adentro (no el esquema legacy de abajo, que es solo para /erp).
+    // Acciones de /gestion (Supabase Auth): tienen su propia validación de
+    // token adentro (no el esquema legacy de abajo, que ya nadie usa desde
+    // que /erp quedó archivado).
     if (action === "facturar-supabase" && req.method === "POST") return await postFacturarSupabase(req, res);
+    if (action === "ga4-metrics" && req.method === "GET") return await getGA4Metrics(req, res);
 
     // "drive-factura" la usan las dos apps: /erp con el token legacy (como
     // siempre) y ahora también /gestion con su propio token de Supabase Auth.

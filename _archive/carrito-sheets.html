@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<!-- carrito-beta v1.1 — fuerza redeploy: el alias de producción había quedado en un build viejo -->
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NORD | Carrito (BETA)</title>
+  <title>NORD | Carrito</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%230F172E'/><text x='16' y='14' dominant-baseline='central' text-anchor='middle' font-family='system-ui,sans-serif' font-weight='900' font-size='20' fill='white'>N</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -141,17 +140,13 @@
 </head>
 <body>
 
-<div style="background:#C8A96E;color:#0F172E;text-align:center;font-weight:800;font-size:12.5px;padding:6px 10px;letter-spacing:.02em">
-  🧪 BETA — este pedido se guarda en Supabase (no Sheets) y aparece directo en la app de gestión.
-</div>
-
 <header>
   <div class="header-container">
     <a href="/" class="brand-logo">
       <span class="nord">NORD</span>
       <span class="uniformes">UNIFORMES</span>
     </a>
-    <a href="/wellspringbeta" class="back-link">
+    <a href="/wellspring" class="back-link">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
       Seguir comprando
     </a>
@@ -159,11 +154,11 @@
 </header>
 
 <div class="page">
-  <h1 class="page-title">Tu carrito<span class="beta-badge">BETA</span></h1>
+  <h1 class="page-title">Tu carrito</h1>
   <div class="checkout-grid" id="checkout-grid">
     <div class="cart-empty">
       <p>Tu carrito está vacío</p>
-      <a href="/wellspringbeta" class="btn-outline">Ver catálogo</a>
+      <a href="/wellspring" class="btn-outline">Ver catálogo</a>
     </div>
   </div>
 </div>
@@ -246,7 +241,7 @@ function render() {
   const grid = document.getElementById("checkout-grid");
 
   if (!cart.length) {
-    grid.innerHTML = `<div class="cart-empty"><p>Tu carrito está vacío</p><a href="/wellspringbeta" class="btn-outline">Ver catálogo</a></div>`;
+    grid.innerHTML = `<div class="cart-empty"><p>Tu carrito está vacío</p><a href="/wellspring" class="btn-outline">Ver catálogo</a></div>`;
     return;
   }
 
@@ -424,10 +419,6 @@ function render() {
 }
 
 // ── IR A PAGAR ────────────────────────────────────────────────────────────
-// BETA: cliente + orden se crean en Supabase (003_clientes/004_pedidos/005_ordenes)
-// en vez de Sheets. El precio final lo recalcula el servidor contra
-// 102_precio_vigente/103_costo_vigente — lo que viaja acá es sólo para mostrar
-// el resumen en pantalla.
 let _savedOrderId = null;
 
 async function irAPagar() {
@@ -449,31 +440,40 @@ async function irAPagar() {
   btn.disabled = true;
 
   try {
-    // 1. Cliente en Supabase (003_clientes)
-    const clienteRes = await fetch("/api/cliente/check-or-create", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ backend: "supabase", nombre, apellido, email, telefono: tel }),
-    });
-    const clienteData = await clienteRes.json();
-    if (!clienteRes.ok || !clienteData.id) throw new Error(clienteData.error || "Error cliente");
+    // 1 y 2 en paralelo: cliente + próximo ID de pedido
+    const [clienteRes, pedidoIdRes] = await Promise.all([
+      fetch("/api/cliente/check-or-create", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre, apellido, email, telefono: tel }),
+      }),
+      fetch("/api/pedidos/next-id"),
+    ]);
+    const [clienteData, pedidoIdData] = await Promise.all([
+      clienteRes.json(),
+      pedidoIdRes.json(),
+    ]);
+    if (!clienteData.codigo) throw new Error(clienteData.error || "Error cliente");
+    if (!pedidoIdData.nextId) throw new Error(pedidoIdData.error || "Error ID pedido");
+    const idPedido = pedidoIdData.nextId;
+    _savedOrderId  = idPedido;
 
-    // 2. Guardar pedido + orden en Supabase (004_pedidos/005_ordenes). El "numero"
-    // (YY-NN) se genera solo en el servidor, no hace falta pedirlo antes.
+    // 3. Guardar orden en Sheets
     const ordersRes = await fetch("/api/orders", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        backend: "supabase", clienteId: clienteData.id, items: cart,
-        descuento: metodo === "nave" ? 0 : descuento,
-        pago: metodo === "nave" ? "Tarjeta (Nave)" : "Transf. Banc.",
+        idPedido, codigoCliente: clienteData.codigo,
+        nombre, apellido, email, telefono: tel,
+        items: cart, subtotal: subLista, descuento: metodo === "nave" ? 0 : descuento, codigo: "", total: totalFinal,
+        pago: metodo, envio: "retiro",
+        direccion: "", cp: "", localidad: "",
       }),
     });
-    const pedido = await ordersRes.json();
-    if (!ordersRes.ok) throw new Error(pedido.error || "Error guardando orden (" + ordersRes.status + ")");
+    if (!ordersRes.ok) {
+      const errData = await ordersRes.json().catch(() => ({}));
+      throw new Error(errData.error || "Error guardando orden (" + ordersRes.status + ")");
+    }
 
-    const idPedido = pedido.numero; // "YY-NN", para mostrar/WhatsApp/mail
-    _savedOrderId  = idPedido;
-
-    // 2b. Notificar el pedido por mail (a norduniformes@gmail.com + CC Flor), en cualquier método. No bloquea el flujo.
+    // 3b. Notificar el pedido por mail (a norduniformes@gmail.com + CC Flor), en cualquier método. No bloquea el flujo.
     fetch("/api/mail/send-order-notification", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -484,15 +484,14 @@ async function irAPagar() {
       }),
     }).catch(() => {});
 
-    // 3. Guardar en session
+    // 4. Guardar en session
     sessionStorage.setItem("nord_last_order", JSON.stringify({
       idPedido, nombre, apellido, items: cart, total: totalFinal,
     }));
 
-    // 4. Flujo según método. A Nave le pasamos el uuid del pedido (pedido.id),
-    // no el "numero" — así el webhook nunca lo confunde con un pedido de Sheets.
+    // 5. Flujo según método
     if (metodo === "nave") {
-      await pagarConNave({ idPedido: pedido.id, total: subLista, nombre, apellido, email, tel, cart, btn });
+      await pagarConNave({ idPedido, total: subLista, nombre, apellido, email, tel, cart, btn });
     } else {
       pagarConTransferencia({ subTransfer, subLista, descuento, idPedido, clienteData, nombre, apellido, email, cart, btn });
     }

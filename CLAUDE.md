@@ -14,64 +14,78 @@ Desarrolladores: Fede (alonsofede93@gmail.com) y su novia (Flor).
 ## Arquitectura
 
 ### Frontend
-- `wellspring.html` — catálogo de productos Wellspring (página principal)
-- `carrito.html` — carrito de compras con checkout
-- `admin.html` — panel de administración (órdenes, clientes, métricas GA4, facturación ARCA)
+- `wellspring.html` — catálogo de productos Wellspring (página principal). Habla
+  directo con Supabase desde el browser (anon key pública, seguridad vía RLS).
+- `carrito.html` — carrito de compras con checkout. Ídem: pedido/cliente se
+  crean en Supabase vía `api/orders.js`/`api/cliente/check-or-create.js`
+  (`backend:"supabase"`), no en Sheets.
+- `gestion.html` — la web app de gestión (Flor/Fede), en `/gestion`. Ver
+  sección propia más abajo.
 - `tools/qr-folletos.html` — generador de QRs con UTM tracking para folletos
 
+**`_archive/`** — páginas y funciones viejas, retiradas del cutover a
+Supabase del 2026-09-27 (ver "Datos" abajo). Excluidas del deploy vía
+`.vercelignore` (no responden en la web), pero se dejan en el repo completas
+por si algún día hay que volver atrás:
+- `_archive/wellspring-sheets.html`, `_archive/carrito-sheets.html` — las
+  versiones Sheets de `wellspring.html`/`carrito.html`, previas al cutover.
+- `_archive/erp.html` + `_archive/sw-erp.js` — la app de gestión vieja
+  (mobile-first, Sheets, token `ADMIN_PASSWORD`), reemplazada por
+  `gestion.html`.
+- `_archive/api-admin/` — `orders.js`/`auth.js`, el backend del panel
+  `/admin` (ya había sido retirado del frontend antes; esto archiva lo que
+  quedaba). Su reporte de tráfico GA4 se portó a `gestion.html` (acción
+  `ga4-metrics` de `api/erp.js`) antes de archivar.
+
 ### Backend (Vercel Serverless — `api/`)
-- `api/products.js` — lee productos desde Google Sheets ERP
+- `api/products.js` — lee productos desde Google Sheets ERP (sin uso desde
+  el cutover — lo sigue teniendo `_archive/wellspring-sheets.html` como red
+  de seguridad, nada en producción lo llama)
 - `api/nave/` — integración con pasarela de pago Nave (tarjeta débito/crédito)
   - `_auth.js` (helper, no ruta) — token cacheado
   - `create-payment.js` — crea la sesión de pago
   - `warmup.js` — pre-calienta el token al seleccionar tarjeta
-  - `webhook.js` — recibe confirmación de pago
+  - `webhook.js` — recibe confirmación de pago (rama Supabase y rama Sheets,
+    según si `orderId` es un uuid o un "YY-NN")
 - `api/mail/send-order-notification.js` — notificación por email al confirmar pedido
-- `api/admin/orders.js` — órdenes, clientes, métricas GA4, métricas de cobros
+- `api/erp.js` — router único para `gestion.html` (Supabase Auth): facturar
+  por ARCA, subir PDF a Drive, tráfico GA4. También conserva, sin uso, las
+  acciones viejas de Sheets/token legacy que usaba `/erp` (ver comentario al
+  principio del archivo) — quedan de red de seguridad, no de borrar.
 - `api/arca.js` + `api/arca/_client.js` — facturación AFIP/ARCA (Factura C, Monotributo)
-- `api/pedidos/` — gestión de pedidos desde el carrito
+- `api/pedidos/` — gestión de pedidos desde el carrito (Sheets, sin uso desde el cutover)
+- `api/_supabase.js` — cliente Supabase compartido (service_role key) para
+  las funciones serverless de arriba.
 
 ⚠️ **Vercel Hobby = máximo 12 serverless functions.** El proyecto está al límite. Agregar un endpoint nuevo puede romper el deploy. Si necesitás agregar lógica, consolidar en endpoints existentes o usar helpers con `_` al inicio del nombre (no cuentan como ruta).
 
-### Datos — hoy 100% Google Sheets en la web. Base nueva en Supabase, diseñada y cargada, todavía SIN conectar
+### Datos — 100% Supabase en la web desde el cutover del 2026-09-27. Sheets queda de respaldo/histórico, no se lee más en producción
 
-⚠️ **Regla vigente (pedida por Flor el 2026-09-26): no tocar wellspring.html,
-carrito.html, erp.html ni ningún archivo de `api/` hasta que se indique lo
-contrario.** `api/products.js` y `api/orders.js` siguen intactos, cero
-dependencia de Supabase. Si alguna sesión anterior dejó estos archivos
-leyendo de Supabase, es un error — revertirlos.
+**Plan en 4 etapas (definido por Flor el 2026-09-26) — estado actual:**
+1. **Migración de base de datos** Sheets → Supabase — **completa**.
+2. Web app **desktop** de gestión (`gestion.html`, Supabase Auth con roles
+   `admin`/`vendedor`) — **completa y es la única app de gestión** (`/erp` y
+   `/admin` quedaron archivados, ver `_archive/` arriba).
+3. Web app **mobile** — mismo código que `gestion.html` (responsive, ya
+   muestra un subconjunto de tabs en pantallas chicas). Se sigue afinando
+   sobre la marcha, no es una app aparte.
+4. **Cutover del sitio público** (`wellspring.html`/`carrito.html`) a
+   Supabase — **completo el 2026-09-27**. `wellspring.html`/`carrito.html`
+   pasaron a ser lo que antes era `wellspringbeta.html`/`carrito-beta.html`
+   (fases A y B de esta etapa); las versiones Sheets quedaron en `_archive/`.
 
-**Única excepción concedida (Flor, 2026-09-26, sesión de gestion.html):**
-agregar a `api/erp.js` lo mínimo para que **gestion.html** pueda facturar
-por ARCA y guardar el PDF en Drive, sin tocar ninguna acción existente de
-`/erp` (Sheets, token legacy). Lo que se agregó, todo aditivo:
-- Acción nueva `action=facturar-supabase` (POST): emite Factura C y la
-  guarda en `007_facturas` (Supabase). Valida el token de **Supabase Auth**
-  del usuario logueado en /gestion (vía GoTrue), no el token legacy — y usa
-  ESE mismo token para escribir en `007_facturas` por REST, así las RLS ya
-  cargadas deciden el permiso (no hace falta `SUPABASE_SERVICE_ROLE_KEY` en
-  Vercel).
-- La acción `drive-factura` (ya existía, la usa /erp para subir el PDF a
-  Drive) ahora acepta **también** un token de Supabase Auth además del
-  legacy — ninguna acción ni comportamiento existente cambió para /erp.
-- Todo lo demás de `api/erp.js` (stock/clientes/pedidos/ordenes/dashboard/
-  pedido/pago/entrega/facturar de Sheets) sigue exactamente igual.
-
-**Plan en 4 etapas (definido por Flor el 2026-09-26):**
-1. **Migración de base de datos** Sheets → Supabase — **completa**, ver abajo.
-2. Web app **desktop** (gestión completa: catálogo, clientes, pedidos, pagos,
-   facturas, dashboard) — Supabase Auth con roles `admin`/`vendedor`. **Es lo
-   que sigue.**
-3. Web app **mobile** — misma app, responsive, con un subconjunto de
-   funciones (venta rápida, pedidos, cobros, facturas) para vendedores.
-4. Recién ahí conectar/reemplazar el sitio actual (`wellspring.html` /
-   `carrito.html` / `erp.html`) con Supabase.
+Todo el sitio (catálogo, carrito, checkout, `/gestion`) lee y escribe en
+Supabase. Las rutas/funciones que dependían de Sheets (`api/products.js`,
+`api/pedidos/`, y la rama Sheets de `api/orders.js`/`api/cliente/check-or-create.js`/
+`api/nave/webhook.js`) se dejaron intactas sin borrar, como red de seguridad
+para poder volver atrás — pero nada en producción las llama ya.
 
 **Proyecto Supabase:** `https://piaagjddrrcbijienvll.supabase.co`, región
-`sa-east-1`. Las API keys (`SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY`) y la
-password de Postgres viven en `.env.local` local de cada uno (no en el repo).
-`SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` **todavía no están en Vercel** a
-propósito: el sitio no usa Supabase todavía (ver regla de arriba).
+`sa-east-1`. `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` **ya están cargadas
+en Vercel** (necesarias para que `api/orders.js`, `api/cliente/check-or-create.js`,
+`api/nave/webhook.js` y `api/_supabase.js` funcionen). La password de
+Postgres sigue sólo en `.env.local` local de cada uno (no en el repo, no
+hace falta en Vercel — nada usa conexión directa a Postgres, ver abajo).
 
 ⚠️ **La conexión directa a Postgres (puerto 5432/6543, `DATABASE_URL`) NO
 funciona desde una sesión de Claude Code en la nube**: el entorno solo
@@ -173,61 +187,71 @@ desde la web app nueva cuando haya tiempo):
   históricos, proveedores/compras). Ya corrido salvo el DROP pendiente.
 - `supabase/data/01_catalogo.sql` .. `04_facturas.sql` — carga inicial de
   datos reales (ya aplicada, vía API).
-- `api/_supabase.js` — cliente Supabase compartido (service_role key),
-  listo para cuando se empiece a cablear la API real (Etapa 2). Todavía
-  sin usar en ningún endpoint activo. Ojo: sigue apuntando a los nombres
-  de tabla viejos (`products`, `product_variants`, etc.) si en algún
-  momento se usa como referencia — hay que actualizarlo a los nombres
-  numerados nuevos.
 - `scripts/migrate-catalogo-to-supabase.js` — quedó desactualizado tras el
   rediseño (apunta a `products`/`product_variants` con columnas de stock
   que ya no existen ahí). Revisar/reescribir antes de volver a usarlo.
 
-**Decisiones ya tomadas sobre la web app nueva** (para cuando se retome):
+**Decisiones ya tomadas sobre `gestion.html`:**
 - Una sola app responsive (no dos apps separadas): mismo código, mismo
   login, pero en pantallas chicas se muestra un subconjunto de funciones
   (pensado para vendedores usando el celular: venta rápida, pedidos,
   cobros, facturas). El escritorio muestra todo (+ inventario, clientes,
   proveedores/compras, dashboard, gestión de catálogo).
-- Login individual por persona vía **Supabase Auth** (no la clave única
-  ADMIN_PASSWORD actual), con rol `admin` o `vendedor` por usuario (tabla
-  `012_profiles`). Permite saber quién hizo cada venta/cobro y, a futuro,
-  limitar acciones por rol.
-- El objetivo de fondo: que la web app nueva hable directo con Supabase
-  (Supabase Auth + RLS) para la mayoría de las operaciones, reduciendo la
-  dependencia de funciones serverless en Vercel — ayuda además con el límite
-  de 12 funciones del plan Hobby mencionado arriba.
+- Login individual por persona vía **Supabase Auth** (ya no existe
+  ADMIN_PASSWORD — quedó sólo en el código archivado de `_archive/`), con
+  rol `admin` o `vendedor` por usuario (tabla `012_profiles`). Permite saber
+  quién hizo cada venta/cobro y, a futuro, limitar acciones por rol.
+- Habla directo con Supabase (Supabase Auth + RLS, anon key pública) para
+  casi todo — reduce la dependencia de funciones serverless en Vercel, que
+  ayuda con el límite de 12 funciones del plan Hobby mencionado arriba.
+  `api/erp.js` sólo entra para lo que necesita credenciales que no pueden
+  viajar al browser: ARCA, Drive, Google Analytics.
 
-**Estado de `gestion.html` (Etapa 2, en desarrollo activo):** vive en
-`https://www.norduniformes.com.ar/gestion` (rewrite en `vercel.json`), habla
-directo a Supabase desde el browser (`supabase-js`, anon key pública — la
-seguridad la da RLS). Tabs: Inicio (dashboard con ventas/ganancia/margen%),
-Stock (solo lectura), Vender, Pedidos, Clientes, Proveedores, Compras,
-Precios y costos, Contabilidad, Configuración (alta de prendas/talles).
+**Estado de `gestion.html`:** vive en `https://www.norduniformes.com.ar/gestion`
+(rewrite en `vercel.json`, **sin subdominio propio** — decisión de Flor,
+2026-09-27). Tabs: Dashboard (ventas/ganancia/margen%, año calendario, y
+tráfico del sitio vía GA4 con carga bajo demanda), Stock (solo lectura),
+Vender, Pedidos, Órdenes (detalle línea por línea de lo vendido), Clientes,
+Proveedores, Compras (editable tipo Excel), Precios y costos (editable tipo
+Excel), Contabilidad, Catálogo (alta de prendas/talles).
 
 - **Modelo de precios de `gestion.html`** (distinto del "Modelo de precios"
-  de abajo, que es de wellspring/carrito — ésos NO se tocaron): el precio
-  base de cada ítem, en Vender y al editar un pedido ya creado, es **siempre
-  el precio de lista**, sin importar la forma de pago. El % de descuento por
-  ítem es lo que lo baja desde ahí — típicamente hasta el precio de
-  transferencia (hay un botón "→Transf." por línea que carga ese % exacto
-  automáticamente), pero puede ser cualquier valor manual. El checkout
-  muestra el desglose: subtotal a precio de lista, descuento por prenda
-  (suma de los descuentos ítem por ítem) y descuento del pedido (aparte, un
-  monto fijo en $).
+  de abajo, que es de wellspring/carrito): el precio base de cada ítem, en
+  Vender y al editar un pedido ya creado, es **siempre el precio de lista**,
+  sin importar la forma de pago. El % de descuento por ítem es lo que lo
+  baja desde ahí — típicamente hasta el precio de transferencia (hay un
+  botón "→Transf." por línea que carga ese % exacto automáticamente), pero
+  puede ser cualquier valor manual. El checkout muestra el desglose:
+  subtotal a precio de lista, descuento por prenda (suma de los descuentos
+  ítem por ítem) y descuento del pedido (aparte, un monto fijo en $). Ese %
+  se guarda tal cual en `005_ordenes.descuento_pct` (no se recalcula contra
+  el precio de hoy) — filas de antes de que existiera esa columna quedan en
+  NULL y la UI les sigue estimando el % en vivo, como hacía antes.
 - **Edición de pedidos ya creados:** de sólo lectura por default (una línea
   por ítem: talle/cantidad/precio/%desc/subtotal) — hay que tocar "✏️ Editar
   prendas" para habilitar los controles editables, para evitar cambios
-  accidentales una vez armado el pedido.
+  accidentales una vez armado el pedido. También hay un campo de nota
+  interna libre por pedido (`004_pedidos.notas`).
 - **Facturación ARCA + Drive:** desde Pedidos se emite Factura C real (acción
-  `facturar-supabase` de `api/erp.js`, ver excepción documentada arriba). Al
-  emitir se genera el PDF (reusando `/factura.js` + `/factura-pdf.js`, los
-  mismos scripts estáticos que usa `/erp`) y se sube a Google Drive en
-  segundo plano vía la acción `drive-factura`; el link queda en
-  `007_facturas.drive_link` y se ve como botón/link "Ver factura en Drive"
-  en el pedido y en la tabla de Contabilidad. **Pendiente correr en el SQL
-  Editor:** `supabase/data/07_drive_link.sql` (agrega esa columna) — mientras
-  no se corra, el link se ve en la sesión pero no se guarda entre visitas.
+  `facturar-supabase` de `api/erp.js`). Al emitir se genera el PDF (reusando
+  `/factura.js` + `/factura-pdf.js`, los mismos scripts estáticos que usaba
+  `/erp`, ahora archivado) y se sube a Google Drive en segundo plano vía la
+  acción `drive-factura`; el link queda en `007_facturas.drive_link` y se ve
+  como botón/link "Ver factura en Drive" en el pedido y en la tabla de
+  Contabilidad.
+- **Tráfico del sitio (GA4):** en el Dashboard, botón "Ver tráfico" que
+  carga bajo demanda (acción `ga4-metrics` de `api/erp.js`, Supabase Auth) —
+  portado desde el panel `/admin` viejo antes de archivarlo.
+
+**Migraciones de Supabase corridas manualmente en el SQL Editor** (no hay
+forma de correr DDL desde una sesión de Claude Code en la nube, ver abajo —
+quedan documentadas acá para no perder el rastro):
+`supabase/data/05_rediseno_ddl.sql`, `06_rls_app.sql`, `07_drive_link.sql`,
+`08_rls_wellspringbeta.sql`, `09_ordenes_notas_drivelink.sql` (agrega
+`007_facturas.drive_link` si no estaba, `005_ordenes.descuento_pct`,
+`004_pedidos.notas`, y recrea la vista `104_pedidos_con_saldo` con `notas`
+al final del `select` — Postgres no deja insertar columnas en el medio de
+una vista con `create or replace view`, sólo al final).
 
 ---
 
@@ -264,7 +288,8 @@ Integración con pasarela Nave para tarjeta débito/crédito.
 | `NAVE_CLIENT_SECRET` | Credencial Nave |
 | `SMTP_USER` | Gmail para notificaciones de pedidos |
 | `SMTP_PASS` | App password de Gmail |
-| `ADMIN_PASSWORD` | Contraseña del panel /admin |
+| `SUPABASE_URL` | Proyecto Supabase (no es secreta, pero vive acá igual) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Backend (`api/_supabase.js`, `api/orders.js`, etc.) — nunca se expone al browser |
 | `ARCA_CUIT` | CUIT para facturación ARCA |
 | `ARCA_CERT` | Certificado ARCA |
 | `ARCA_KEY` | Clave ARCA |
@@ -273,10 +298,9 @@ Integración con pasarela Nave para tarjeta débito/crédito.
 
 Para desarrollo local: pedirle a Fede el archivo `.env.local` (no está en el repo).
 
-`SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` **todavía no están en Vercel** a
-propósito (ver sección "Datos" arriba): el sitio no usa Supabase todavía. Solo
-hace falta tenerlas en un `.env.local` local para correr los scripts de
-`scripts/` contra el proyecto Supabase mientras se arma la migración.
+`ADMIN_PASSWORD` queda en Vercel sin uso real (el código legacy que la
+validaba está archivado o inalcanzable — ver "Datos" arriba) — se puede
+borrar de Vercel el día que se confirme que nada la necesita, no es urgente.
 
 ---
 
@@ -312,13 +336,16 @@ No trabajar directo en `main` para evitar conflictos entre los dos.
 ## Google Analytics 4
 
 Property ID: `541705478`  
-Se usa en `api/admin/orders.js` para el panel de métricas.  
+Se usa en `api/erp.js` (acción `ga4-metrics`, Supabase Auth) para el tab
+Dashboard de `gestion.html`.  
 UTM tracking activo para QRs de folletos: `utm_medium=qr`, fuentes `via_publica`, `folleto`, `cartelera_colegio`.
 
 ---
 
 ## Facturación ARCA (ex-AFIP)
 
-- Tab "Facturación" en `/admin`
-- Monotributo → Factura C (CbteTipo 11, sin IVA)
-- Estado: scaffold completo, pendiente cargar certificado y env vars de producción.
+- Desde `gestion.html`, tab Pedidos → "Emitir Factura C" (acción
+  `facturar-supabase` de `api/erp.js`).
+- Monotributo → Factura C (CbteTipo 11, sin IVA). El PDF se guarda en Google
+  Drive (acción `drive-factura`), link en `007_facturas.drive_link`.
+- Estado: en producción, funcionando con certificado y env vars reales.

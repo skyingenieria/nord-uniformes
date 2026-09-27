@@ -6,7 +6,7 @@
 // al browser), así que ignora RLS y tiene acceso total a las tablas. Hace
 // falta cargar SUPABASE_SERVICE_ROLE_KEY en Vercel para que esto funcione
 // (SUPABASE_URL no es secreta — ya viaja hardcodeada en gestion.html/
-// wellspringbeta.html — así que si no está en las env vars se usa ese
+// wellspring.html — así que si no está en las env vars se usa ese
 // mismo valor como default).
 
 const { createClient } = require("@supabase/supabase-js");

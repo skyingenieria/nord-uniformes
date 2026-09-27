@@ -27,7 +27,6 @@
     .brand-logo .uniformes{font-weight:300;font-size:6px;letter-spacing:.55em;display:block;margin-top:2px;padding-left:.55em;color:var(--azul-900)}
     .back-link{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--azul-400);display:flex;align-items:center;gap:6px;transition:color .2s}
     .back-link:hover{color:var(--azul-900)}
-    .beta-badge{background:#7c3aed;color:#fff;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:4px;margin-left:8px}
 
     .page{max-width:var(--max);margin:0 auto;padding:48px var(--pad-x) 80px}
     .page-title{font-size:clamp(28px,4vw,40px);font-weight:900;letter-spacing:-.02em;margin-bottom:8px;display:flex;align-items:center;gap:12px}
@@ -419,6 +418,10 @@ function render() {
 }
 
 // ── IR A PAGAR ────────────────────────────────────────────────────────────
+// Cliente + orden se crean en Supabase (003_clientes/004_pedidos/005_ordenes)
+// en vez de Sheets. El precio final lo recalcula el servidor contra
+// 102_precio_vigente/103_costo_vigente — lo que viaja acá es sólo para mostrar
+// el resumen en pantalla.
 let _savedOrderId = null;
 
 async function irAPagar() {
@@ -440,40 +443,31 @@ async function irAPagar() {
   btn.disabled = true;
 
   try {
-    // 1 y 2 en paralelo: cliente + próximo ID de pedido
-    const [clienteRes, pedidoIdRes] = await Promise.all([
-      fetch("/api/cliente/check-or-create", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, apellido, email, telefono: tel }),
-      }),
-      fetch("/api/pedidos/next-id"),
-    ]);
-    const [clienteData, pedidoIdData] = await Promise.all([
-      clienteRes.json(),
-      pedidoIdRes.json(),
-    ]);
-    if (!clienteData.codigo) throw new Error(clienteData.error || "Error cliente");
-    if (!pedidoIdData.nextId) throw new Error(pedidoIdData.error || "Error ID pedido");
-    const idPedido = pedidoIdData.nextId;
-    _savedOrderId  = idPedido;
+    // 1. Cliente en Supabase (003_clientes)
+    const clienteRes = await fetch("/api/cliente/check-or-create", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ backend: "supabase", nombre, apellido, email, telefono: tel }),
+    });
+    const clienteData = await clienteRes.json();
+    if (!clienteRes.ok || !clienteData.id) throw new Error(clienteData.error || "Error cliente");
 
-    // 3. Guardar orden en Sheets
+    // 2. Guardar pedido + orden en Supabase (004_pedidos/005_ordenes). El "numero"
+    // (YY-NN) se genera solo en el servidor, no hace falta pedirlo antes.
     const ordersRes = await fetch("/api/orders", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        idPedido, codigoCliente: clienteData.codigo,
-        nombre, apellido, email, telefono: tel,
-        items: cart, subtotal: subLista, descuento: metodo === "nave" ? 0 : descuento, codigo: "", total: totalFinal,
-        pago: metodo, envio: "retiro",
-        direccion: "", cp: "", localidad: "",
+        backend: "supabase", clienteId: clienteData.id, items: cart,
+        descuento: metodo === "nave" ? 0 : descuento,
+        pago: metodo === "nave" ? "Tarjeta (Nave)" : "Transf. Banc.",
       }),
     });
-    if (!ordersRes.ok) {
-      const errData = await ordersRes.json().catch(() => ({}));
-      throw new Error(errData.error || "Error guardando orden (" + ordersRes.status + ")");
-    }
+    const pedido = await ordersRes.json();
+    if (!ordersRes.ok) throw new Error(pedido.error || "Error guardando orden (" + ordersRes.status + ")");
 
-    // 3b. Notificar el pedido por mail (a norduniformes@gmail.com + CC Flor), en cualquier método. No bloquea el flujo.
+    const idPedido = pedido.numero; // "YY-NN", para mostrar/WhatsApp/mail
+    _savedOrderId  = idPedido;
+
+    // 2b. Notificar el pedido por mail (a norduniformes@gmail.com + CC Flor), en cualquier método. No bloquea el flujo.
     fetch("/api/mail/send-order-notification", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -484,14 +478,15 @@ async function irAPagar() {
       }),
     }).catch(() => {});
 
-    // 4. Guardar en session
+    // 3. Guardar en session
     sessionStorage.setItem("nord_last_order", JSON.stringify({
       idPedido, nombre, apellido, items: cart, total: totalFinal,
     }));
 
-    // 5. Flujo según método
+    // 4. Flujo según método. A Nave le pasamos el uuid del pedido (pedido.id),
+    // no el "numero" — así el webhook nunca lo confunde con un pedido de Sheets.
     if (metodo === "nave") {
-      await pagarConNave({ idPedido, total: subLista, nombre, apellido, email, tel, cart, btn });
+      await pagarConNave({ idPedido: pedido.id, total: subLista, nombre, apellido, email, tel, cart, btn });
     } else {
       pagarConTransferencia({ subTransfer, subLista, descuento, idPedido, clienteData, nombre, apellido, email, cart, btn });
     }

@@ -29,9 +29,10 @@ function makeAuth() {
   });
 }
 
-// carrito-beta.html (catálogo/ventas en Supabase) manda backend:"supabase" —
-// busca/crea en 003_clientes en vez de la hoja 'Clientes'. Todo lo demás de
-// esta acción (el flujo de /carrito con Sheets) sigue exactamente igual.
+// carrito.html (Supabase, definitivo desde el cutover de Etapa 4) manda
+// backend:"supabase" — busca/crea en 003_clientes en vez de la hoja
+// 'Clientes'. La rama de abajo (Sheets) queda intacta, sin usarse, como red
+// de seguridad: la usaba el /carrito viejo, archivado en _archive/carrito-sheets.html.
 async function checkOrCreateSupabase(req, res) {
   const { nombre, apellido, email, telefono } = req.body;
   if (!nombre || !email) return res.status(400).json({ error: "Faltan datos requeridos (nombre, email)" });

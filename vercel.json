@@ -2,12 +2,9 @@
   "rewrites": [
     { "source": "/",          "destination": "/wellspring.html" },
     { "source": "/wellspring", "destination": "/wellspring.html" },
-    { "source": "/wellspringbeta", "destination": "/wellspringbeta.html" },
     { "source": "/carrito",    "destination": "/carrito.html" },
     { "source": "/pago-transferencia", "destination": "/pago-transferencia.html" },
     { "source": "/confirmacion", "destination": "/confirmacion.html" },
-    { "source": "/carrito-beta", "destination": "/carrito-beta.html" },
-    { "source": "/erp",        "destination": "/erp.html" },
     { "source": "/gestion",    "destination": "/gestion.html" },
     { "source": "/comprobante", "destination": "/comprobante.html" },
     { "source": "/privacidad", "destination": "/privacidad.html" },

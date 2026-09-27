@@ -12,12 +12,14 @@ function makeAuth() {
   });
 }
 
-// carrito-beta.html manda backend:"supabase" — crea el pedido en
-// 004_pedidos/005_ordenes en vez de en la hoja 'Ordenes'. Los precios NO se
-// confían del cliente: se resuelven de nuevo server-side contra
-// 102_precio_vigente/103_costo_vigente por (nombre, talle), así nadie puede
-// manipular el carrito en el navegador para pagar menos. El resto de esta
-// acción (el flujo de /carrito con Sheets) sigue exactamente igual.
+// carrito.html (Supabase, definitivo desde el cutover de Etapa 4) manda
+// backend:"supabase" — crea el pedido en 004_pedidos/005_ordenes en vez de
+// en la hoja 'Ordenes'. Los precios NO se confían del cliente: se resuelven
+// de nuevo server-side contra 102_precio_vigente/103_costo_vigente por
+// (nombre, talle), así nadie puede manipular el carrito en el navegador
+// para pagar menos. La rama de abajo (Sheets) queda intacta, sin usarse,
+// como red de seguridad: la usaba el /carrito viejo, archivado en
+// _archive/carrito-sheets.html.
 async function postOrderSupabase(req, res) {
   const { clienteId, items = [], envio = 0, descuento = 0, pago = "Transf. Banc." } = req.body;
   if (!clienteId) return res.status(400).json({ error: "Falta clienteId" });

@@ -25,11 +25,12 @@ async function getPaymentStatus(payment_check_url, token) {
   return r.json();
 }
 
-// carrito-beta.html (Supabase) manda el id del pedido (uuid) como orderId a
-// Nave en vez del "YY-NN" de Sheets — así nunca compiten por el mismo
-// espacio de IDs. Si external_payment_id tiene forma de uuid, es un pedido
-// de Supabase: se registra el pago en 006_pagos y se actualiza estado_pago
-// en 004_pedidos, en vez de tocar la hoja 'Ordenes'.
+// carrito.html (Supabase, definitivo desde el cutover de Etapa 4) manda el
+// id del pedido (uuid) como orderId a Nave en vez del "YY-NN" de Sheets —
+// así nunca compiten por el mismo espacio de IDs. Si external_payment_id
+// tiene forma de uuid, es un pedido de Supabase: se registra el pago en
+// 006_pagos y se actualiza estado_pago en 004_pedidos, en vez de tocar la
+// hoja 'Ordenes' (esa rama queda de red de seguridad, ver api/orders.js).
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function actualizarPagoSupabase(pedidoId, sheetStatus) {

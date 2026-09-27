@@ -1,18 +1,30 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
 <head>
-  <!-- wellspringbeta: version de prueba, catalogo/precios desde Supabase en vez
-       de Sheets. Carrito/checkout/pago/pedidos siguen exactamente igual que en
-       /wellspring (Sheets) — sin analytics de producción acá a propósito. -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-5M0T17EKC7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-5M0T17EKC7');
+  </script>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x7jkrq09ps");
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex, nofollow">
-  <title>NORD | Wellspring Pilar (BETA)</title>
+  <title>NORD | Wellspring Pilar</title>
   <meta name="description" content="Catálogo de uniformes escolares Wellspring Pilar. Consultá stock, elegí talle y pedí por WhatsApp.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%230F172E'/><text x='16' y='14' dominant-baseline='central' text-anchor='middle' font-family='system-ui,sans-serif' font-weight='900' font-size='20' fill='white'>N</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="/api/products" as="fetch" crossorigin="anonymous">
   <link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,400&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -1554,9 +1566,6 @@
 </head>
 <body>
 
-<div style="background:#C8A96E;color:#0F172E;text-align:center;font-weight:800;font-size:12.5px;padding:6px 10px;letter-spacing:.02em">
-  🧪 BETA — catálogo y precios leídos desde Supabase (no Sheets). Carrito/pago/pedidos siguen igual que en /wellspring.
-</div>
 <div class="promo-banner">🚚 ENVÍO GRATIS PARA COMPRAS MAYORES A $130.000 &nbsp;·&nbsp; 3 CUOTAS SIN INTERÉS</div>
 
 <header>
@@ -1742,7 +1751,7 @@
       </div>
     </div>
 
-    <button class="btn-checkout" onclick="window.location.href='/carrito-beta'">
+    <button class="btn-checkout" onclick="window.location.href='/carrito'">
       IR A PAGAR
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
@@ -2159,72 +2168,14 @@
   }
 
 
-  // ── Fetch productos — BETA: Supabase en vez de /api/products (Sheets) ──
-  // Mismo shape exacto que devolvía /api/products, así el resto del archivo
-  // (filtros, render, carrito, checkout) no se toca para nada.
-  const SB_URL = "https://piaagjddrrcbijienvll.supabase.co";
-  const SB_ANON_KEY = "sb_publishable_yd1wUT0mgOFUcqzbJl_9Cw_WZ8AX6Vp";
-  let _sbClient = null;
-  function waitForSupabaseLib() {
-    return new Promise(resolve => {
-      if (window.supabase) return resolve();
-      const iv = setInterval(() => { if (window.supabase) { clearInterval(iv); resolve(); } }, 20);
-    });
-  }
-  async function getSb() {
-    await waitForSupabaseLib();
-    if (!_sbClient) _sbClient = window.supabase.createClient(SB_URL, SB_ANON_KEY);
-    return _sbClient;
-  }
-  const SIZE_ORDER_BETA = ['XS','S','M','L','XL','XXL','XXXL'];
-  function talleSortBeta(a, b) {
-    const na = Number(a.talle), nb = Number(b.talle);
-    const aNum = !isNaN(na) && String(a.talle).trim() !== "", bNum = !isNaN(nb) && String(b.talle).trim() !== "";
-    if (aNum && bNum) return na - nb;
-    if (aNum) return -1;
-    if (bNum) return 1;
-    const ai = SIZE_ORDER_BETA.indexOf(String(a.talle).toUpperCase()), bi = SIZE_ORDER_BETA.indexOf(String(b.talle).toUpperCase());
-    if (ai !== -1 && bi !== -1) return ai - bi;
-    return String(a.talle).localeCompare(String(b.talle));
-  }
-  async function fetchProductsFromSupabase() {
-    const c = await getSb();
-    const [{ data: prendas, error: e1 }, { data: talles, error: e2 }, { data: stock, error: e3 }, { data: precios, error: e4 }] = await Promise.all([
-      c.from("001_prendas").select("id,slug,nombre,descripcion,genero,categorias,foto1,foto2"),
-      c.from("002_talles").select("id,product_id,talle"),
-      c.from("101_stock_actual").select("talle_id,stock"),
-      c.from("102_precio_vigente").select("talle_id,precio_lista,precio_transferencia"),
-    ]);
-    if (e1) throw e1; if (e2) throw e2; if (e3) throw e3; if (e4) throw e4;
-    const stockMap = Object.fromEntries((stock || []).map(s => [s.talle_id, s.stock]));
-    const precioMap = Object.fromEntries((precios || []).map(p => [p.talle_id, p]));
-    const byPrenda = {};
-    (talles || []).forEach(t => {
-      if (!byPrenda[t.product_id]) byPrenda[t.product_id] = [];
-      const pr = precioMap[t.id] || {};
-      byPrenda[t.product_id].push({
-        talle: t.talle, stock: stockMap[t.id] || 0,
-        precio: Number(pr.precio_transferencia) || 0,
-        precioLista: Number(pr.precio_lista) || 0,
-      });
-    });
-    return (prendas || []).map(p => {
-      const ts = (byPrenda[p.id] || []).sort(talleSortBeta);
-      const fotos = [p.foto1, p.foto2].filter(Boolean);
-      const conPrecio = ts.filter(t => t.precio > 0);
-      const base = conPrecio.length ? conPrecio.reduce((m, t) => t.precio < m.precio ? t : m) : { precio: 0, precioLista: 0 };
-      return {
-        id: p.slug, nombre: p.nombre, precio: base.precio, precioLista: base.precioLista,
-        imagen_url: fotos[0] || "", fotos, genero: p.genero || "", categorias: p.categorias || [],
-        descripcion: p.descripcion || "", talles: ts,
-      };
-    });
-  }
+  // ── Fetch productos ──────────────────────────────────────────────────
   async function loadProducts() {
     const container = document.getElementById("products-container");
     try {
+      const res = await fetch("/api/products");
+      if (!res.ok) throw new Error("Error HTTP " + res.status);
       const OCULTOS = [];
-      allProducts = (await fetchProductsFromSupabase()).filter(p => !OCULTOS.includes(p.nombre.toLowerCase().trim()));
+      allProducts = (await res.json()).filter(p => !OCULTOS.includes(p.nombre.toLowerCase().trim()));
       renderProducts(allProducts);
       updateCounts();
       updateGridCount(allProducts.length);

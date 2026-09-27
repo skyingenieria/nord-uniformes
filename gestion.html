@@ -80,6 +80,14 @@
   .kpi.hl .lbl{color:var(--azul-400)} .kpi.hl .sub{color:#b9c4da}
   .kpi.gold{background:linear-gradient(135deg,#d8bd88,#C8A96E);border:none;color:var(--azul-900)}
   .kpi.gold .lbl{color:#6b551f}
+  .bars{display:flex;flex-direction:column;gap:9px}
+  .bar-item{display:flex;align-items:center;gap:10px;font-size:12.5px}
+  .bar-item .bl{min-width:118px;max-width:118px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar-track{flex:1;height:9px;background:#eef1f6;border-radius:999px;overflow:hidden}
+  .bar-fill{height:100%;background:linear-gradient(90deg,var(--azul-600),var(--azul-900));border-radius:999px}
+  .bar-item .bv{min-width:74px;text-align:right;color:var(--muted);font-weight:700}
+  .daily{display:flex;align-items:flex-end;gap:2px;height:84px;margin-top:4px}
+  .daily .db{flex:1;background:var(--dorado);border-radius:3px 3px 0 0;min-height:2px;opacity:.9}
 
   .section-h{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:22px 2px 10px}
 
@@ -658,7 +666,13 @@ async function viewInicio(v,force){
           <div class="row"><div class="grow"><div class="name">${esc(p.nombre)}</div><div class="meta">${fmt(p.ventas)} en ventas</div></div>
           <span class="chip n">${p.qty} u.</span></div>`).join("")
         : '<div class="empty">Sin datos todavía</div>'
-      }</div>`;
+      }</div>
+
+      <div class="section-h" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span>Tráfico del sitio (GA4)</span>
+        <button class="btn ghost sm" onclick="loadGA4()">Ver tráfico</button>
+      </div>
+      <div id="ga4-box"></div>`;
 
     document.querySelectorAll("#bars .bar").forEach(b=>{
       b.style.flex="1"; b.style.background="var(--azul-900)"; b.style.borderRadius="4px 4px 0 0"; b.style.minHeight="2px"; b.style.opacity=".9";
@@ -666,6 +680,42 @@ async function viewInicio(v,force){
         document.querySelectorAll("#bars .bar").forEach(x=>x.style.opacity=".35"); b.style.opacity="1"; };
     });
   }catch(e){ errBox(v,e); }
+}
+function ga4BarRow(label, pct, value){
+  return `<div class="bar-item"><div class="bl" title="${esc(label)}">${esc(label)}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.max(1,Math.min(100,pct)).toFixed(1)}%"></div></div>
+    <div class="bv">${esc(value)}</div></div>`;
+}
+async function loadGA4(){
+  const box=$("#ga4-box"); if(!box) return;
+  box.innerHTML='<div class="card"><div class="spinner" style="margin:14px auto"></div></div>';
+  try{
+    const token=await getAccessToken(); if(!token) throw new Error("Sesión inválida, volvé a iniciar sesión");
+    const r=await fetch("/api/erp?action=ga4-metrics",{headers:{Authorization:`Bearer ${token}`}});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||"No se pudo cargar el tráfico");
+    const ov=d.overview||{};
+    const daily=d.daily||[]; const maxS=Math.max(1,...daily.map(x=>x.sessions));
+    const dbars=daily.map(x=>`<div class="db" style="height:${Math.max(2,x.sessions/maxS*100).toFixed(1)}%" title="${x.date?x.date.slice(6,8)+'/'+x.date.slice(4,6):''}: ${x.sessions} ses."></div>`).join("");
+    const pages=d.topPages||[]; const maxPv=Math.max(1,...pages.map(p=>p.pageviews));
+    const pageBars=pages.slice(0,7).map(p=>ga4BarRow(p.path,p.pageviews/maxPv*100,(p.pageviews||0).toLocaleString("es-AR"))).join("")||'<div class="empty">Sin datos</div>';
+    const chs=d.channels||[]; const maxCh=Math.max(1,...chs.map(c=>c.sessions));
+    const chBars=chs.map(c=>ga4BarRow(c.channel,c.sessions/maxCh*100,(c.sessions||0).toLocaleString("es-AR"))).join("")||'<div class="empty">Sin datos</div>';
+    box.innerHTML=`
+      <div class="kpi-grid grid4" style="margin-bottom:14px">
+        <div class="kpi"><div class="lbl">Sesiones</div><div class="val">${(ov.sessions||0).toLocaleString("es-AR")}</div></div>
+        <div class="kpi"><div class="lbl">Usuarios</div><div class="val">${(ov.users||0).toLocaleString("es-AR")}</div></div>
+        <div class="kpi"><div class="lbl">Vistas</div><div class="val">${(ov.pageviews||0).toLocaleString("es-AR")}</div></div>
+        <div class="kpi"><div class="lbl">Rebote</div><div class="val">${((ov.bounceRate||0)*100).toFixed(1)}%</div></div>
+      </div>
+      <div class="grid2">
+        <div><div class="section-h" style="margin-top:0">Sesiones por día</div><div class="card"><div class="daily">${dbars}</div></div></div>
+        <div><div class="section-h" style="margin-top:0">Canales de origen</div><div class="card"><div class="bars">${chBars}</div></div></div>
+      </div>
+      <div class="section-h">Páginas más vistas</div><div class="card"><div class="bars">${pageBars}</div></div>`;
+  }catch(e){
+    box.innerHTML=`<div class="card"><div class="empty">No se pudo cargar el tráfico (GA4): ${esc(e.message)}</div></div>`;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────── STOCK (solo lectura)
