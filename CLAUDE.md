@@ -221,17 +221,20 @@ impuestos, etc — tabla `013_gastos`), Contabilidad (con botón "Subir a
 Drive" por factura), Catálogo (alta de prendas/talles).
 
 - **Modelo de precios de `gestion.html`** (distinto del "Modelo de precios"
-  de abajo, que es de wellspring/carrito): el precio base de cada ítem, en
-  Vender y al editar un pedido ya creado, es **siempre el precio de lista**,
-  sin importar la forma de pago. El % de descuento por ítem es lo que lo
-  baja desde ahí (valor manual, sin atajo automático a transferencia — el
-  botón "→Transf." que había por línea se sacó por pedido de Flor,
-  2026-09-27). El checkout muestra el desglose:
-  subtotal a precio de lista, descuento por prenda (suma de los descuentos
-  ítem por ítem) y descuento del pedido (aparte, un monto fijo en $). Ese %
-  se guarda tal cual en `005_ordenes.descuento_pct` (no se recalcula contra
-  el precio de hoy) — filas de antes de que existiera esa columna quedan en
-  NULL y la UI les sigue estimando el % en vivo, como hacía antes.
+  de abajo, que es de wellspring/carrito): en Vender, sin tocar nada, Transf./
+  Efectivo bajan solos el precio de lista a precio de transferencia y Tarjeta
+  se queda en lista — es el único descuento "automático". El % de descuento
+  manual por ítem (Vender, Pedido ya creado, u Órdenes) **anula ese automático
+  en vez de sumarse** (antes se acumulaban, cambiado a pedido de Flor
+  2026-09-27: la promo de la Chomba Blanca al 30% OFF daba de más si el
+  pedido era por transferencia) y se calcula **siempre sobre precio de
+  lista**, sea cual sea la forma de pago. El checkout muestra el desglose:
+  subtotal a precio de lista, descuento por medio de pago, descuento promo
+  (la parte extra que agrega el % manual, si lo hay) y descuento del pedido
+  (aparte, un monto fijo en $). Ese % se guarda tal cual en
+  `005_ordenes.descuento_pct` (no se recalcula contra el precio de hoy) —
+  filas de antes de que existiera esa columna quedan en NULL y la UI les
+  sigue estimando el % en vivo, como hacía antes.
 - **Edición de pedidos ya creados:** de sólo lectura por default (una línea
   por ítem: talle/cantidad/precio/%desc/subtotal) — hay que tocar "✏️ Editar
   prendas" para habilitar los controles editables, para evitar cambios
