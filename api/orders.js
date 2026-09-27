@@ -23,9 +23,16 @@ function makeAuth() {
 // Promo "Chomba Blanca" al 30% off SIEMPRE sobre precio de lista (no sobre
 // transferencia, cualquiera sea el método de pago) si el pedido incluye
 // otra prenda que no sea medias — hasta 1 unidad EN TOTAL por pedido, aunque
-// haya varias líneas de Chomba Blanca en distintos talles. Evaluada acá
-// contra el contenido real del pedido, nunca contra un flag que mande el
-// cliente (no se puede falsear).
+// haya varias líneas de Chomba Blanca en distintos talles. El tope de 1
+// unidad y el requisito de "otra prenda calificante" se evalúan acá contra
+// el contenido real del pedido, nunca contra nada que mande el cliente (no
+// se puede inflar el descuento). El único dato que SÍ se toma del cliente es
+// item.promo (marca la línea agregada desde el botón "+Agregar" de la oferta
+// en el carrito, distinta de agregar una Chomba Blanca por su cuenta desde
+// el catálogo): decide CUÁL línea es candidata a esa única unidad
+// descontada, no CUÁNTAS ni CUÁNTO — como mucho siempre 1 unidad al 30%,
+// venga o no marcada, así que no hay manera de sacar más descuento mintiendo
+// el flag.
 const CHOMBA_PROMO_NOMBRE = "Chomba Blanca";
 const CHOMBA_PROMO_PCT = 30;
 
@@ -66,7 +73,7 @@ async function postOrderSupabase(req, res) {
       const cantidad = Number(item.qty) || 1;
 
       let precioUnit = precioBase, descuentoPct = 0;
-      if (item.nombre === CHOMBA_PROMO_NOMBRE && chombaDiscountRemaining > 0 && precioLista > 0) {
+      if (item.nombre === CHOMBA_PROMO_NOMBRE && item.promo === true && chombaDiscountRemaining > 0 && precioLista > 0) {
         const promoQty = Math.min(cantidad, chombaDiscountRemaining);
         chombaDiscountRemaining -= promoQty;
         const conDescuento = Math.round(precioLista * (1 - CHOMBA_PROMO_PCT / 100));

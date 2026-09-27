@@ -247,12 +247,16 @@ function cartHasPromoItem(cart) { return cart.some(i => i.nombre === PROMO_NOMBR
 // Cuántas unidades de cada línea llevan el 30% — como mucho 1 EN TOTAL entre
 // todas las líneas de "Chomba Blanca" del carrito (si hay dos talles
 // distintos, sólo la primera unidad de la primera línea lo lleva).
+// Sólo cuenta una línea agregada por el botón de la promo (i.promo === true):
+// una Chomba Blanca agregada por su cuenta desde el catálogo, a precio
+// normal, nunca lleva el 30% aunque el pedido tenga otra prenda que
+// calificaría — así el descuento sólo se accede a través de la oferta.
 function chombaDiscountFlags(cart) {
   const flags = new Array(cart.length).fill(0);
   if (!cartHasQualifyingItem(cart)) return flags;
   let remaining = 1;
   cart.forEach((i, idx) => {
-    if (i.nombre !== PROMO_NOMBRE || remaining <= 0) return;
+    if (i.nombre !== PROMO_NOMBRE || !i.promo || remaining <= 0) return;
     const used = Math.min(i.qty, remaining);
     flags[idx] = used;
     remaining -= used;
@@ -315,13 +319,15 @@ function agregarChombaPromo() {
   const t = (_chombaTalles || []).find(x => String(x.talle) === talle);
   if (!t) return;
   const cart = getCart();
-  // Mismo esquema de key que wellspring.html (${productId}_${talle}) para que
-  // si ya había una Chomba Blanca del mismo talle agregada desde el catálogo,
-  // sume cantidad en una sola línea en vez de duplicarla.
-  const key = _chombaProductSlug ? `${_chombaProductSlug}_${talle}` : "chomba-blanca-promo-" + talle;
+  // Key distinta de la del catálogo (${productId}_${talle}__promo, no
+  // ${productId}_${talle}): si NO se fusiona con una Chomba Blanca agregada
+  // a mano desde wellspring.html, esa línea manual se queda siempre a precio
+  // normal y sólo la agregada acá (con promo:true) puede llevar el 30%.
+  const baseKey = _chombaProductSlug ? `${_chombaProductSlug}_${talle}` : "chomba-blanca-promo-" + talle;
+  const key = baseKey + "__promo";
   const existing = cart.find(i => i.key === key);
   if (existing) existing.qty += 1;
-  else cart.push({ key, productId: _chombaProductSlug, nombre: PROMO_NOMBRE, talle: t.talle, qty: 1, precio: t.precio, precioLista: t.precioLista });
+  else cart.push({ key, productId: _chombaProductSlug, nombre: PROMO_NOMBRE, talle: t.talle, qty: 1, precio: t.precio, precioLista: t.precioLista, promo: true });
   saveCart(cart);
   render();
 }
