@@ -211,11 +211,13 @@
   #eg-table{table-layout:fixed;min-width:860px}
   #ga-table td, #ga-table th, #eg-table td, #eg-table th{white-space:normal;word-break:break-word}
   #eg-table td select{width:100%;box-sizing:border-box}
-  /* Acá .pr-editable no puede ser inline-block con min-width fijo -- con columnas
-     angostas eso hace que la celda "de verdad" (el <td>, con table-layout:fixed)
-     quede más chica que su contenido y el contenido se dibuje encima de la celda
-     vecina. Tiene que ocupar el ancho real de su columna y ajustarse (wrap) adentro. */
-  #ga-table .pr-editable, #eg-table .pr-editable{display:block;width:100%;min-width:0;white-space:normal;word-break:break-word}
+  /* OJO: acá .pr-editable está puesto directo en el <td> (no en un <span> adentro,
+     como en Compras/Precios) -- así que "display:inline-block" de la regla de
+     abajo saca al <td> del layout de tabla y hace que las columnas se dibujen
+     una encima de la otra. Tiene que seguir siendo table-cell, sólo sacándole
+     el min-width fijo (que con columnas angostas era más ancho que la celda real
+     y desbordaba sobre la vecina). */
+  #ga-table .pr-editable, #eg-table .pr-editable{display:table-cell;min-width:0;white-space:normal;word-break:break-word}
   .pr-editable{cursor:pointer;display:inline-block;padding:3px 6px;border-radius:6px;border:1px solid transparent;min-width:70px;box-sizing:border-box}
   /* :hover sólo con mouse real -- en touch (mobile) el :hover queda "pegado" tras
      tocar y scrollear, mostrando cajas fantasma en celdas que no se tocaron. */
