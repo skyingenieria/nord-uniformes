@@ -2,6 +2,16 @@
 // Body: { orderId, total, nombreCliente, email, telefono, items }
 
 const getAccessToken = require("./_auth");
+const { supabase } = require("../_supabase");
+
+// El "total" y el precio de cada ítem que manda el body NO se confían tal
+// cual: el carrito vive en localStorage (editable por consola) y cualquiera
+// podría bajar un precio antes de tocar "Pagar con tarjeta". Cuando orderId
+// es el uuid de un pedido real de Supabase (siempre, desde carrito.html y
+// gestion.html Vender), se ignora el total/precios del body y se cobra lo
+// que dice 104_pedidos_con_saldo/005_ordenes en el servidor -- misma idea
+// que ya usa api/orders.js para no confiar en precios del cliente.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -12,10 +22,25 @@ module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
   try {
-    const { orderId, total, nombreCliente, email, telefono, items } = req.body;
+    const { orderId, nombreCliente, email, telefono } = req.body;
+    let { total, items } = req.body;
 
     if (!orderId || !total || !items) {
       return res.status(400).json({ error: "Faltan datos requeridos" });
+    }
+
+    if (UUID_RE.test(String(orderId))) {
+      const sb = supabase();
+      const [{ data: pedido, error: eP }, { data: ordenes, error: eO }] = await Promise.all([
+        sb.from("104_pedidos_con_saldo").select("total_venta").eq("id", orderId).maybeSingle(),
+        sb.from("005_ordenes").select("nombre_prenda,talle,cantidad,precio_unitario").eq("pedido_id", orderId),
+      ]);
+      if (eP) throw eP; if (eO) throw eO;
+      if (!pedido || !ordenes || !ordenes.length) {
+        return res.status(404).json({ error: "No se encontró el pedido para generar el cobro" });
+      }
+      total = Number(pedido.total_venta) || 0;
+      items = ordenes.map(o => ({ nombre: o.nombre_prenda, talle: o.talle, qty: o.cantidad, precio: Number(o.precio_unitario) || 0 }));
     }
 
     // Nave exige un email de comprador. Si el cliente no tiene uno válido

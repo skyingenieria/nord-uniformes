@@ -1338,7 +1338,7 @@ async function registrarPedido(){
     if(card){
       try{
         const nr=await fetch("/api/nave/create-payment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-          orderId:pedido.numero, total, nombreCliente:(venta.cliente.nombre+" "+(venta.cliente.apellido||"")).trim(),
+          orderId:pedido.id, total, nombreCliente:(venta.cliente.nombre+" "+(venta.cliente.apellido||"")).trim(),
           email:venta.cliente.email||"", telefono:venta.cliente.telefono||"",
           items:cart.map(i=>({nombre:i.nombre,talle:i.talle,qty:i.qty,precio:unitPrice(i)})),
         })});

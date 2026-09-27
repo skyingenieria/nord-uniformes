@@ -311,6 +311,7 @@ function buildSummaryLines(cart, metodo, flags) {
   return cart.map((i, idx) => `<div class="sum-row"><span>${i.nombre} x${i.qty}</span><span>${priceHtmlFor(i, idx, cart, metodo, flags)}</span></div>`).join("");
 }
 function agregarChombaPromo() {
+  if (_orderCompleted) return;
   const sel = document.getElementById("promo-talle");
   const talle = sel?.value;
   const t = (_chombaTalles || []).find(x => String(x.talle) === talle);
@@ -325,6 +326,7 @@ function agregarChombaPromo() {
 }
 
 function changeQty(key, d) {
+  if (_orderCompleted) return;
   const cart = getCart();
   const item = cart.find(i => i.key === key);
   if (!item) return;
@@ -332,7 +334,7 @@ function changeQty(key, d) {
   if (item.qty <= 0) cart.splice(cart.indexOf(item), 1);
   saveCart(cart); render();
 }
-function removeItem(key) { saveCart(getCart().filter(i => i.key !== key)); render(); }
+function removeItem(key) { if (_orderCompleted) return; saveCart(getCart().filter(i => i.key !== key)); render(); }
 
 function getMetodoPago() {
   const r = document.querySelector('input[name="metodo-pago"]:checked');
@@ -579,8 +581,15 @@ function render() {
 // 102_precio_vigente/103_costo_vigente — lo que viaja acá es sólo para mostrar
 // el resumen en pantalla.
 let _savedOrderId = null;
+// Una vez que el pedido ya se guardó en Supabase (cualquier método de pago),
+// se bloquea toda edición del carrito -- antes solo Nave vaciaba el carrito
+// al confirmar; por transferencia el carrito seguía editable y "IR A PAGAR"
+// seguía clickeable, así que volver a /carrito (back, refresh, doble tab)
+// podía generar un segundo pedido real con el mismo contenido.
+let _orderCompleted = false;
 
 async function irAPagar() {
+  if (_orderCompleted) return;
   if (!validate()) return;
 
   const metodo   = getMetodoPago();
@@ -656,6 +665,8 @@ async function irAPagar() {
 }
 
 function pagarConTransferencia({ totalFinal, idPedido, clienteData, nombre, apellido, email, cart, btn }) {
+  _orderCompleted = true;
+  saveCart([]);
   document.getElementById("total-a-pagar").textContent = fmt(totalFinal);
   document.getElementById("datos-pago").classList.add("visible");
   btn.textContent = "✓ PEDIDO REGISTRADO";
@@ -713,6 +724,7 @@ function cerrarModalNave() {
 }
 
 function mostrarExitoNave() {
+  _orderCompleted = true;
   const btn = document.querySelector(".btn-pagar");
   if (btn) { btn.textContent = "✓ PAGO CONFIRMADO"; btn.style.background = "#166534"; btn.disabled = true; }
   const ok = document.getElementById("nave-ok");

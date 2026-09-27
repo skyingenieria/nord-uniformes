@@ -17,8 +17,26 @@ function makeAuth() {
   });
 }
 
+// Dominios reales de la API de Nave (mismo host que usa create-payment.js
+// para crear el pago). El body del webhook lo manda el propio request, así
+// que si no se valida acá, cualquiera puede mandar un payment_check_url
+// propio que devuelva {status:{name:"APPROVED"}} y marcar un pedido como
+// pagado sin haber cobrado un peso -- y de paso el token real de Nave viajaría
+// como Authorization al servidor de un atacante. Nunca confiar en la URL tal
+// cual viene del body.
+const NAVE_ALLOWED_HOSTS = ["api.ranty.io", "api-sandbox.ranty.io"];
+function assertNaveUrl(urlStr) {
+  let u;
+  try { u = new URL(urlStr); } catch { throw new Error("payment_check_url inválida"); }
+  if (u.protocol !== "https:" || !NAVE_ALLOWED_HOSTS.includes(u.hostname)) {
+    throw new Error(`payment_check_url no pertenece a Nave: ${u.hostname}`);
+  }
+  return u.toString();
+}
+
 async function getPaymentStatus(payment_check_url, token) {
-  const r = await fetch(payment_check_url, {
+  const safeUrl = assertNaveUrl(payment_check_url);
+  const r = await fetch(safeUrl, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!r.ok) throw new Error(`Failed to check payment: ${r.status}`);
