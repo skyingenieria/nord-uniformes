@@ -86,7 +86,7 @@ async function postOrderSupabase(req, res) {
     // que restar algo acá otra vez duplicaría el descuento en total_venta.
     const { data: pedido, error: ePedido } = await sb.from("004_pedidos").insert({
       colegio: "WS", cliente_id: clienteId, forma_pago: pago,
-      cargo_envio: Number(envio) || 0, descuento: 0, envio: "retiro",
+      cargo_envio: Number(envio) || 0, descuento: 0, envio: "Retiro Habitat",
     }).select().single();
     if (ePedido) throw ePedido;
 
