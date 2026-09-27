@@ -70,6 +70,15 @@
     .info-box{background:var(--crema-2);border-left:3px solid var(--dorado);padding:16px 18px;text-align:left;margin-bottom:32px;font-size:13px;color:var(--azul-400);line-height:1.7;border-radius:10px}
     .info-box strong{color:var(--azul-900)}
 
+    .datos-pago{background:var(--crema-2);border:1px solid var(--niebla-200);border-radius:10px;padding:18px;text-align:left;margin-bottom:32px}
+    .datos-pago-title{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--azul-400);margin-bottom:12px}
+    .dato-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--niebla-200);font-size:13px}
+    .dato-row:last-child{border-bottom:none}
+    .dato-label{color:var(--azul-400);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+    .dato-val{font-weight:700;font-size:14px;color:var(--azul-900)}
+    .btn-copy{background:none;border:1px solid var(--niebla-200);border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--azul-600);transition:all .2s}
+    .btn-copy:hover{background:var(--azul-900);color:white;border-color:var(--azul-900)}
+
     .btn-wp{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:#25D366;color:#fff;border:none;padding:15px 32px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:background .2s, box-shadow .2s;text-decoration:none;margin-bottom:16px;width:100%;border-radius:10px;box-shadow:0 4px 12px rgba(37,211,102,.2)}
     .btn-wp:hover{background:#1ebe5d;box-shadow:0 6px 16px rgba(37,211,102,.3)}
     .btn-seguir{display:block;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--azul-400);margin-top:8px;transition:color .15s}
@@ -91,8 +100,8 @@
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#C8A96E" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
   </div>
 
-  <h1>¡Muchas gracias por tu compra!</h1>
-  <p class="subtitle">Nos estaremos contactando para coordinar el retiro de tu pedido.</p>
+  <h1 id="page-title">¡Muchas gracias por tu compra!</h1>
+  <p class="subtitle" id="page-subtitle">Nos estaremos contactando para coordinar el retiro de tu pedido.</p>
 
   <div class="order-id-box" id="order-id">Pedido #...</div>
 
@@ -102,7 +111,38 @@
     <div id="sum-rows" style="margin-top:16px"></div>
   </div>
 
-  <div class="info-box" id="info-box"></div>
+  <div class="info-box" id="info-box" style="display:none"></div>
+
+  <!-- Datos de transferencia (solo si el pago fue por transferencia) -->
+  <div class="datos-pago" id="datos-pago" style="display:none">
+    <p class="datos-pago-title">Datos para la transferencia</p>
+    <div class="dato-row">
+      <span class="dato-label">Titular</span>
+      <span class="dato-val">Florencia Cordeviola</span>
+    </div>
+    <div class="dato-row">
+      <span class="dato-label">Banco</span>
+      <span class="dato-val">Galicia</span>
+    </div>
+    <div class="dato-row">
+      <span class="dato-label">Alias</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="dato-val">nord.uniformes</span>
+        <button class="btn-copy" onclick="copiar('nord.uniformes', this)">Copiar</button>
+      </div>
+    </div>
+    <div class="dato-row">
+      <span class="dato-label">CBU</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="dato-val" style="font-size:12px">0070999030004239948231</span>
+        <button class="btn-copy" onclick="copiar('0070999030004239948231', this)">Copiar</button>
+      </div>
+    </div>
+    <div class="dato-row">
+      <span class="dato-label">Total a transferir</span>
+      <span class="dato-val" id="total-a-pagar">—</span>
+    </div>
+  </div>
 
   <a class="btn-wp" id="btn-wp" href="#" target="_blank" rel="noopener">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -113,40 +153,72 @@
 
 <script>
 const WHATSAPP = "5491122913796";
+const WHATSAPP_COMPROBANTE = "5491135057838";
 function fmt(n) { return "$" + Math.round(Number(n)).toLocaleString("es-AR"); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function copiar(texto, btn) {
+  navigator.clipboard.writeText(texto).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = "✓ Copiado";
+    btn.style.background = "var(--azul-900)";
+    btn.style.color = "white";
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ""; btn.style.color = ""; }, 1800);
+  });
+}
 
 const data = JSON.parse(sessionStorage.getItem("nord_last_order") || "null");
 
 if (!data) {
   document.getElementById("order-id").textContent = "Sin datos de orden";
+  document.getElementById("page-subtitle").textContent = "No encontramos el detalle de un pedido reciente en este navegador.";
 } else {
+  const esNave = data.pago === "nave";
   document.getElementById("order-id").textContent = "Pedido #" + data.idPedido;
 
-  // Items
+  // Items (ya vienen con el precio efectivo por línea, con descuento/promo aplicados)
   const itemsEl = document.getElementById("items-list");
   (data.items || []).forEach(i => {
     itemsEl.innerHTML += `<div class="item-row">
-      <div><div>${i.nombre}</div><div class="item-sub">Talle ${i.talle} × ${i.qty}</div></div>
-      <div>${fmt(i.precio * i.qty)}</div>
+      <div><div>${esc(i.nombre)}</div><div class="item-sub">Talle ${esc(i.talle)} × ${i.qty}</div></div>
+      <div>${fmt(i.subtotal)}</div>
     </div>`;
   });
 
   // Totales
   const sumEl = document.getElementById("sum-rows");
-  let html = `<div class="sum-row"><span>Subtotal</span><span>${fmt(data.subtotal)}</span></div>`;
+  let html = `<div class="sum-row"><span>Subtotal (precio de lista)</span><span>${fmt(data.subtotal)}</span></div>`;
   if (data.descuento > 0)
-    html += `<div class="sum-row"><span>Descuento (${data.pago === "transferencia" ? "Transferencia" : "Nave"})</span><span style="color:#2e7d52">- ${fmt(data.descuento)}</span></div>`;
+    html += `<div class="sum-row"><span>Descuento</span><span style="color:#2e7d52">- ${fmt(data.descuento)}</span></div>`;
   html += `<div class="sum-row"><span>Envío</span><span>Gratis (Retiro)</span></div>`;
   html += `<div class="sum-total"><span>Total</span><span>${fmt(data.total)}</span></div>`;
   sumEl.innerHTML = html;
 
-  // Info box
   const info = document.getElementById("info-box");
-  info.innerHTML = `<strong>✓ Pago recibido:</strong> tu pedido #<strong>${data.idPedido}</strong> ha sido confirmado. Te contactaremos en breve para coordinar el retiro en Barrio Habitat, Pilar.`;
+  const datosPago = document.getElementById("datos-pago");
+  const btnWp = document.getElementById("btn-wp");
 
-  // WA link
-  const msg = encodeURIComponent(`Hola! Quiero consultar sobre mi pedido #${data.idPedido}. Gracias`);
-  document.getElementById("btn-wp").href = `https://wa.me/${WHATSAPP}?text=${msg}`;
+  if (esNave) {
+    // Pago con tarjeta: solo se llega acá después de que Nave confirmó el pago.
+    document.getElementById("page-title").textContent = "¡Pago confirmado!";
+    document.getElementById("page-subtitle").textContent = "Nos estaremos contactando para coordinar el retiro de tu pedido.";
+    info.style.display = "block";
+    info.innerHTML = `<strong>✓ Pago recibido:</strong> tu pedido #<strong>${esc(data.idPedido)}</strong> ha sido confirmado. Te contactaremos en breve para coordinar el retiro en Barrio Habitat, Pilar.`;
+    const msg = encodeURIComponent(`Hola! Quiero consultar sobre mi pedido #${data.idPedido}. Gracias`);
+    btnWp.href = `https://wa.me/${WHATSAPP}?text=${msg}`;
+    btnWp.lastChild.textContent = "Contactar por WhatsApp";
+  } else {
+    // Transferencia: el pedido quedó registrado pero el pago todavía no se
+    // confirmó -- nunca decir "pago recibido" acá, sería falso.
+    document.getElementById("page-title").textContent = "¡Pedido registrado!";
+    document.getElementById("page-subtitle").textContent = "Ahora hacé la transferencia y envianos el comprobante para confirmarlo.";
+    datosPago.style.display = "block";
+    document.getElementById("total-a-pagar").textContent = fmt(data.total);
+    const items = (data.items || []).map(i => `• ${i.nombre} talle ${i.talle} x${i.qty}: ${fmt(i.subtotal)}`).join("\n");
+    const msg = encodeURIComponent(`Hola NORD Uniformes! Acá va mi comprobante de pago 🧾\n\n*Pedido #${data.idPedido}*\n*Familia: ${data.apellido} - ${data.nombre}*\n\n${items}\n\n*Total transferido: ${fmt(data.total)}*\n\nAlias: nord.uniformes\n\n¡Gracias! 🙌`);
+    btnWp.href = `https://wa.me/${WHATSAPP_COMPROBANTE}?text=${msg}`;
+    btnWp.lastChild.textContent = "Enviar comprobante por WhatsApp";
+  }
 
   // Limpiar carrito
   localStorage.removeItem("nord_cart");

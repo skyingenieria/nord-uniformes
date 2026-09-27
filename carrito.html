@@ -79,38 +79,23 @@
 
     .req{color:#c0392b;margin-left:2px}
     .field-error{border-color:#c0392b !important}
+    .field-hint{display:block;color:#c0392b;font-size:11.5px;margin-top:4px;min-height:14px}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--azul-900);color:var(--crema);padding:13px 22px;font-size:13px;font-weight:600;letter-spacing:.02em;z-index:999;transition:transform .3s ease;border-radius:10px;box-shadow:0 6px 20px rgba(15,23,46,.25);max-width:min(90vw,420px);text-align:center}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    .toast.err{background:#7a2626}
 
     .btn-pagar{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;background:var(--azul-900);color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s;border-radius:10px}
     .btn-pagar:hover:not(:disabled){background:var(--azul)}
     .btn-pagar:disabled{opacity:.7;cursor:not-allowed}
     .btn-pagar.nave-btn{background:#6d28d9}
     .btn-pagar.nave-btn:hover:not(:disabled){background:#5b21b6}
-    .btn-wp{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:10px;background:#25D366;color:#fff;border:none;padding:15px;font-family:var(--sans);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s;text-decoration:none;border-radius:10px}
-    .btn-wp:hover{background:#1ebe5d}
     .note{margin-top:12px;font-size:11px;color:var(--azul-400);text-align:center;line-height:1.5}
-
-    /* Datos transferencia */
-    .datos-pago{display:none;background:var(--crema);border:1px solid var(--niebla-200);border-radius:10px;padding:18px;margin-top:16px}
-    .datos-pago.visible{display:block}
-    .dato-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--niebla-200);font-size:13px}
-    .dato-row:last-child{border-bottom:none}
-    .dato-label{color:var(--azul-400);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
-    .dato-val{font-weight:700;font-size:14px;color:var(--azul-900)}
-    .btn-copy{background:none;border:1px solid var(--niebla-200);border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--azul-600);transition:all .2s}
-    .btn-copy:hover{background:var(--azul-900);color:white;border-color:var(--azul-900)}
 
     /* Nave loading indicator (mientras carga el modal) */
     .nave-loading{display:none;align-items:center;justify-content:center;gap:10px;margin-top:14px;font-size:12px;color:#6d28d9;font-weight:700}
     .nave-loading.visible{display:flex}
     .spinner{display:inline-block;width:16px;height:16px;border:2px solid #c4b5fd;border-top-color:#6d28d9;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
     @keyframes spin{to{transform:rotate(360deg)}}
-
-    /* Panel éxito Nave */
-    .nave-ok{display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:20px;margin-top:16px;text-align:center}
-    .nave-ok.visible{display:block}
-    .nave-ok-icon{font-size:36px;margin-bottom:8px}
-    .nave-ok h3{font-size:16px;font-weight:800;color:#166534;margin-bottom:6px}
-    .nave-ok p{font-size:13px;color:#166534;line-height:1.5}
 
     .accordion{margin-top:10px;border:1px solid var(--niebla-200);border-radius:10px;overflow:hidden}
     .accordion-item{border-bottom:1px solid var(--niebla-200)}
@@ -182,8 +167,18 @@
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
 
 <script>
+function showToast(msg, isError) {
+  const t = document.getElementById("toast");
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.toggle("err", !!isError);
+  t.classList.add("show");
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(() => t.classList.remove("show"), isError ? 4500 : 2200);
+}
 function getCart() {
   try { return JSON.parse(localStorage.getItem("nord_cart") || "[]"); } catch { return []; }
 }
@@ -228,11 +223,13 @@ function talleSort(a, b) {
   if (ai !== -1 && bi !== -1) return ai - bi;
   return String(a.talle).localeCompare(String(b.talle));
 }
+let _chombaProductSlug = null;
 async function loadChombaPromo() {
   try {
     const c = await getSb();
-    const { data: prenda } = await c.from("001_prendas").select("id").eq("nombre", PROMO_NOMBRE).maybeSingle();
+    const { data: prenda } = await c.from("001_prendas").select("id,slug").eq("nombre", PROMO_NOMBRE).maybeSingle();
     if (!prenda) return;
+    _chombaProductSlug = prenda.slug; // mismo id que usa wellspring.html en el key del carrito (${productId}_${talle})
     const [{ data: talles }, { data: precios }] = await Promise.all([
       c.from("002_talles").select("id,talle").eq("product_id", prenda.id),
       c.from("102_precio_vigente").select("talle_id,precio_lista,precio_transferencia"),
@@ -317,10 +314,13 @@ function agregarChombaPromo() {
   const t = (_chombaTalles || []).find(x => String(x.talle) === talle);
   if (!t) return;
   const cart = getCart();
-  const key = "chomba-blanca-promo-" + talle;
+  // Mismo esquema de key que wellspring.html (${productId}_${talle}) para que
+  // si ya había una Chomba Blanca del mismo talle agregada desde el catálogo,
+  // sume cantidad en una sola línea en vez de duplicarla.
+  const key = _chombaProductSlug ? `${_chombaProductSlug}_${talle}` : "chomba-blanca-promo-" + talle;
   const existing = cart.find(i => i.key === key);
   if (existing) existing.qty += 1;
-  else cart.push({ key, nombre: PROMO_NOMBRE, talle: t.talle, qty: 1, precio: t.precio, precioLista: t.precioLista });
+  else cart.push({ key, productId: _chombaProductSlug, nombre: PROMO_NOMBRE, talle: t.talle, qty: 1, precio: t.precio, precioLista: t.precioLista });
   saveCart(cart);
   render();
 }
@@ -341,16 +341,40 @@ function getMetodoPago() {
   return r ? r.value : "transferencia";
 }
 
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+function setFieldError(id, msg) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add("field-error");
+  const hint = document.getElementById("hint-" + id);
+  if (hint) hint.textContent = msg || "";
+}
+function clearFieldError(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove("field-error");
+  const hint = document.getElementById("hint-" + id);
+  if (hint) hint.textContent = "";
+}
 function validate() {
   const fields = ["inp-nombre","inp-apellido","inp-tel","inp-email"];
   let ok = true;
+  let firstErrorId = null;
   fields.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    if (!el.value.trim()) { el.classList.add("field-error"); ok = false; }
-    else el.classList.remove("field-error");
+    if (!el.value.trim()) { setFieldError(id, "Campo obligatorio"); ok = false; firstErrorId = firstErrorId || id; }
+    else clearFieldError(id);
   });
-  if (!ok) { document.getElementById("inp-nombre")?.scrollIntoView({behavior:"smooth",block:"center"}); }
+  const email = document.getElementById("inp-email");
+  if (email && email.value.trim() && !EMAIL_RE.test(email.value.trim())) {
+    setFieldError("inp-email", "Ingresá un email válido (ej: nombre@dominio.com)");
+    ok = false; firstErrorId = firstErrorId || "inp-email";
+  }
+  const tel = document.getElementById("inp-tel");
+  if (tel && tel.value.trim() && tel.value.replace(/\D/g, "").length < 8) {
+    setFieldError("inp-tel", "Ingresá un teléfono válido (mínimo 8 números)");
+    ok = false; firstErrorId = firstErrorId || "inp-tel";
+  }
+  if (!ok) { document.getElementById(firstErrorId)?.scrollIntoView({behavior:"smooth",block:"center"}); }
   return ok;
 }
 
@@ -385,10 +409,7 @@ function onMetodoPagoChange() {
   }
   // Pre-calentar token de Nave para reducir latencia al pagar
   if (metodo === "nave") fetch("/api/nave/warmup").catch(() => {});
-  // Ocultar paneles de resultado si el usuario cambia de método
-  ["datos-pago","nave-loading","nave-ok"].forEach(id => {
-    document.getElementById(id)?.classList.remove("visible");
-  });
+  document.getElementById("nave-loading")?.classList.remove("visible");
 }
 
 function render() {
@@ -446,11 +467,13 @@ function render() {
         <div class="form-row">
           <div class="form-group">
             <label>Teléfono<span class="req">*</span></label>
-            <input id="inp-tel" type="tel" placeholder="11 1234-5678" required oninput="this.classList.remove('field-error')">
+            <input id="inp-tel" type="tel" placeholder="11 1234-5678" required oninput="clearFieldError('inp-tel')">
+            <span class="field-hint" id="hint-inp-tel"></span>
           </div>
           <div class="form-group">
             <label>Email<span class="req">*</span></label>
-            <input id="inp-email" type="email" placeholder="tu@email.com" required oninput="this.classList.remove('field-error')">
+            <input id="inp-email" type="email" placeholder="tu@email.com" required oninput="clearFieldError('inp-email')">
+            <span class="field-hint" id="hint-inp-email"></span>
           </div>
         </div>
       </div>
@@ -486,52 +509,10 @@ function render() {
 
       <button class="btn-pagar" onclick="irAPagar()">IR A PAGAR</button>
 
-      <!-- Panel transferencia -->
-      <div class="datos-pago" id="datos-pago">
-        <p style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--azul-400);margin-bottom:12px;">Datos para la transferencia</p>
-        <div class="dato-row">
-          <span class="dato-label">Titular</span>
-          <span class="dato-val">Florencia Cordeviola</span>
-        </div>
-        <div class="dato-row">
-          <span class="dato-label">Banco</span>
-          <span class="dato-val">Galicia</span>
-        </div>
-        <div class="dato-row">
-          <span class="dato-label">Alias</span>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span class="dato-val">nord.uniformes</span>
-            <button class="btn-copy" onclick="copiar('nord.uniformes', this)">Copiar</button>
-          </div>
-        </div>
-        <div class="dato-row">
-          <span class="dato-label">CBU</span>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span class="dato-val" style="font-size:12px">0070999030004239948231</span>
-            <button class="btn-copy" onclick="copiar('0070999030004239948231', this)">Copiar</button>
-          </div>
-        </div>
-        <div class="dato-row">
-          <span class="dato-label">Total a transferir</span>
-          <span class="dato-val" id="total-a-pagar">—</span>
-        </div>
-        <button class="btn-wp" onclick="enviarComprobante()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          ENVIAR COMPROBANTE POR WHATSAPP
-        </button>
-      </div>
-
       <!-- Loading mientras abre el modal de Nave -->
       <div class="nave-loading" id="nave-loading">
         <div class="spinner"></div>
         Abriendo checkout de Nave…
-      </div>
-
-      <!-- Éxito Nave -->
-      <div class="nave-ok" id="nave-ok">
-        <div class="nave-ok-icon">✅</div>
-        <h3>¡Pago aprobado!</h3>
-        <p>Tu pedido quedó confirmado. Te vamos a contactar por WhatsApp para coordinar el retiro.</p>
       </div>
 
       <div class="accordion">
@@ -580,7 +561,6 @@ function render() {
 // en vez de Sheets. El precio final lo recalcula el servidor contra
 // 102_precio_vigente/103_costo_vigente — lo que viaja acá es sólo para mostrar
 // el resumen en pantalla.
-let _savedOrderId = null;
 // Una vez que el pedido ya se guardó en Supabase (cualquier método de pago),
 // se bloquea toda edición del carrito -- antes solo Nave vaciaba el carrito
 // al confirmar; por transferencia el carrito seguía editable y "IR A PAGAR"
@@ -631,7 +611,12 @@ async function irAPagar() {
     if (!ordersRes.ok) throw new Error(pedido.error || "Error guardando orden (" + ordersRes.status + ")");
 
     const idPedido = pedido.numero; // "YY-NN", para mostrar/WhatsApp/mail
-    _savedOrderId  = idPedido;
+    // El pedido ya existe en Supabase a partir de acá -- se bloquea toda
+    // edición del carrito de inmediato (no solo cuando termina de confirmarse
+    // el pago), para que volver atrás/refrescar nunca pueda generar un
+    // segundo pedido con el mismo contenido.
+    _orderCompleted = true;
+    saveCart([]);
 
     // 2b. Notificar el pedido por mail (a norduniformes@gmail.com + CC Flor), en cualquier método. No bloquea el flujo.
     fetch("/api/mail/send-order-notification", {
@@ -644,37 +629,49 @@ async function irAPagar() {
       }),
     }).catch(() => {});
 
-    // 3. Guardar en session
+    // 3. Guardar en session, para /confirmacion. Se manda el subtotal YA
+    // calculado por línea (con descuento por medio de pago y promo Chomba
+    // Blanca aplicados) en vez del cart crudo, para no tener que reimplementar
+    // esa lógica de precios en confirmacion.html -- ahí solo se muestra.
+    const lineasConfirmacion = cart.map((i, idx) => ({
+      nombre: i.nombre, talle: i.talle, qty: i.qty,
+      subtotal: itemPrecioEfectivo(i, idx, cart, metodo, flags) * i.qty,
+    }));
     sessionStorage.setItem("nord_last_order", JSON.stringify({
-      idPedido, nombre, apellido, items: cart, total: totalFinal,
+      idPedido, nombre, apellido, items: lineasConfirmacion, total: totalFinal,
+      subtotal: totalLista, descuento: ahorro, pago: metodo,
     }));
 
     // 4. Flujo según método. A Nave le pasamos el uuid del pedido (pedido.id),
     // no el "numero" — así el webhook nunca lo confunde con un pedido de Sheets.
     if (metodo === "nave") {
-      await pagarConNave({ idPedido: pedido.id, total: totalFinal, nombre, apellido, email, tel, cart, btn });
+      _naveRetryCtx = { idPedido: pedido.id, total: totalFinal, nombre, apellido, email, tel, cart };
+      await pagarConNave({ ..._naveRetryCtx, btn });
     } else {
-      pagarConTransferencia({ totalFinal, idPedido, clienteData, nombre, apellido, email, cart, btn });
+      pagarConTransferencia();
     }
 
   } catch (err) {
-    btn.textContent = getMetodoPago() === "nave" ? "PAGAR CON TARJETA →" : "IR A PAGAR";
-    btn.disabled = false;
-    alert("Error: " + err.message);
+    console.error("Error al registrar el pedido:", err);
+    if (_orderCompleted && _naveRetryCtx) {
+      // El pedido ya se había creado (ej. falló la conexión con Nave después) --
+      // no hay que recrearlo, solo reintentar el cobro para el mismo pedido.
+      showToast("No pudimos conectar con Nave. Podés reintentar el pago.", true);
+      habilitarReintentoNave();
+    } else {
+      btn.textContent = getMetodoPago() === "nave" ? "PAGAR CON TARJETA →" : "IR A PAGAR";
+      btn.disabled = false;
+      showToast("No pudimos procesar tu pedido. Probá de nuevo o escribinos por WhatsApp.", true);
+    }
   }
 }
 
-function pagarConTransferencia({ totalFinal, idPedido, clienteData, nombre, apellido, email, cart, btn }) {
-  _orderCompleted = true;
-  saveCart([]);
-  document.getElementById("total-a-pagar").textContent = fmt(totalFinal);
-  document.getElementById("datos-pago").classList.add("visible");
-  btn.textContent = "✓ PEDIDO REGISTRADO";
-  btn.style.background = "#2e7d52";
-  btn.disabled = true;
-  document.getElementById("datos-pago").scrollIntoView({ behavior: "smooth", block: "start" });
+function pagarConTransferencia() {
+  window.location.href = "/confirmacion";
 }
 
+let navePopup = null;
+let _naveRetryCtx = null;
 async function pagarConNave({ idPedido, total, nombre, apellido, email, tel, cart, btn }) {
   btn.textContent = "Conectando con Nave…";
   // Abrir popup ANTES del fetch para que esté dentro del user-gesture (necesario en mobile)
@@ -706,8 +703,8 @@ async function pagarConNave({ idPedido, total, nombre, apellido, email, tel, car
   }
 
   document.getElementById("nave-loading").classList.remove("visible");
-  btn.textContent = "PAGAR CON TARJETA →";
-  btn.disabled = false;
+  btn.textContent = "Esperando confirmación del pago…";
+  btn.disabled = true;
 
   // Navegar el popup ya abierto (abierto en el user-gesture para que mobile no lo bloquee)
   if (navePopup && !navePopup.closed) {
@@ -724,12 +721,21 @@ function cerrarModalNave() {
 }
 
 function mostrarExitoNave() {
-  _orderCompleted = true;
+  window.location.href = "/confirmacion";
+}
+// El pedido ya se creó (sin pagar) apenas se llamó a irAPagar -- si Nave
+// rechaza o la sesión vence, no hace falta arrancar de cero: se reintenta el
+// cobro para el mismo pedido, sin recrear cliente/orden ni volver a
+// habilitar la edición del carrito (que ya quedó vacío y bloqueado).
+function habilitarReintentoNave() {
   const btn = document.querySelector(".btn-pagar");
-  if (btn) { btn.textContent = "✓ PAGO CONFIRMADO"; btn.style.background = "#166534"; btn.disabled = true; }
-  const ok = document.getElementById("nave-ok");
-  if (ok) { ok.classList.add("visible"); ok.scrollIntoView({ behavior: "smooth", block: "start" }); }
-  saveCart([]);
+  if (!btn || !_naveRetryCtx) return;
+  btn.disabled = false;
+  btn.textContent = "REINTENTAR PAGO →";
+  btn.onclick = () => { btn.onclick = null; pagarConNave({ ..._naveRetryCtx, btn }).catch(err => {
+    console.error("Error al reintentar el pago:", err);
+    showToast("No pudimos conectar con Nave. Probá de nuevo o escribinos por WhatsApp.", true);
+  }); };
 }
 
 // Escuchar eventos del iframe de Nave
@@ -743,10 +749,12 @@ window.addEventListener("message", (e) => {
     cerrarModalNave();
   } else if (d.expiration) {
     cerrarModalNave();
-    alert("La sesión de pago venció. Podés intentar de nuevo.");
+    showToast("La sesión de pago venció. Podés intentar de nuevo.", true);
+    habilitarReintentoNave();
   } else if (d.rejected) {
     cerrarModalNave();
-    alert("El pago fue rechazado. Podés intentar con otra tarjeta.");
+    showToast("El pago fue rechazado. Podés intentar con otra tarjeta.", true);
+    habilitarReintentoNave();
   }
 });
 
@@ -755,28 +763,6 @@ function toggleAccordion(btn) {
   const isOpen = item.classList.contains("open");
   item.closest(".accordion").querySelectorAll(".accordion-item").forEach(i => i.classList.remove("open"));
   if (!isOpen) item.classList.add("open");
-}
-
-function copiar(texto, btn) {
-  navigator.clipboard.writeText(texto).then(() => {
-    const orig = btn.textContent;
-    btn.textContent = "✓ Copiado";
-    btn.style.background = "var(--azul-900)";
-    btn.style.color = "white";
-    setTimeout(() => { btn.textContent = orig; btn.style.background = ""; btn.style.color = ""; }, 1800);
-  });
-}
-
-function enviarComprobante() {
-  const cart = getCart();
-  const flags = chombaDiscountFlags(cart);
-  const sub = computeTotals(cart, "transferencia", flags).totalEfectivo;
-  const nombre   = document.getElementById("inp-nombre")?.value.trim() || "";
-  const apellido = document.getElementById("inp-apellido")?.value.trim() || "";
-  const idPedido = _savedOrderId || "—";
-  const items = cart.map((i, idx) => `• ${i.nombre} talle ${i.talle} x${i.qty}: ${fmt(itemPrecioEfectivo(i, idx, cart, "transferencia", flags) * i.qty)}`).join("\n");
-  const msg = `Hola NORD Uniformes! Acá va mi comprobante de pago 🧾\n\n*Pedido #${idPedido}*\n*Familia: ${apellido} - ${nombre}*\n\n${items}\n\n*Total transferido: ${fmt(sub)}*\n\nAlias: nord.uniformes\n\n¡Gracias! 🙌`;
-  window.open(`https://wa.me/5491135057838?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
 render();
