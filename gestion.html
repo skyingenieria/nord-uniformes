@@ -165,6 +165,9 @@
   table.pr-table.static tbody tr{cursor:default}
   table.pr-table.static tbody tr:hover{background:transparent}
   table.pr-table td select{padding:5px 7px;border:1.5px solid var(--line);border-radius:7px;font-size:12px;background:#fff;cursor:pointer}
+  .pr-editable{cursor:pointer;display:inline-block;padding:3px 6px;border-radius:6px;border:1px solid transparent}
+  .pr-editable:hover{background:#fbf9f4;border-color:var(--line)}
+  .pr-editable input{width:80px;padding:5px 6px;border:1.5px solid var(--dorado);border-radius:6px;font-size:13px;text-align:right}
   .tot-line{display:flex;justify-content:space-between;padding:5px 0;font-size:14px}
   .tot-line.big{font-size:19px;font-weight:800;border-top:1.5px solid var(--line);margin-top:6px;padding-top:12px}
   .tot-line .disc{color:var(--green)}
@@ -1733,10 +1736,20 @@ async function viewPrecios(v,force){
     window._prSort = window._prSort||{field:"nombre",dir:1};
     v.innerHTML=`
       <div class="view-title">Precios y costos</div>
-      <p style="font-size:12.5px;color:var(--muted);margin-top:-8px">Margen = (precio transferencia − costo) / precio transferencia. Tocá los encabezados para ordenar/filtrar. Tocá una fila para simular un aumento antes de aplicarlo.</p>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-8px">Margen = (precio transferencia − costo) / precio transferencia. Tocá costo/transferencia/lista para editar directo (Enter guarda y baja a la fila siguiente); tocá el margen para simular antes de aplicar.</p>
+      <div class="card" id="pr-bulk" style="display:none;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <b id="pr-bulk-count" style="font-size:13px"></b>
+          <div class="field" style="margin:0;width:100px"><input type="text" inputmode="numeric" id="pr-bulk-pct" placeholder="% aum."></div>
+          <label style="font-size:12.5px;display:flex;align-items:center;gap:4px;font-weight:600"><input type="checkbox" id="pr-bulk-lista" checked> Lista</label>
+          <label style="font-size:12.5px;display:flex;align-items:center;gap:4px;font-weight:600"><input type="checkbox" id="pr-bulk-trans" checked> Transferencia</label>
+          <button class="btn" id="pr-bulk-apply" style="margin-left:auto;width:auto;padding:10px 18px" onclick="prBulkApply()">Aplicar aumento</button>
+        </div>
+      </div>
       <div class="search"><span class="mag">🔎</span><input id="pr-q" placeholder="Buscar prenda…" value="${esc(window._prQ)}"></div>
-      <div class="table-wrap"><table class="pr-table" id="pr-table">
+      <div class="table-wrap"><table class="pr-table static" id="pr-table">
         <thead><tr>
+          <th><input type="checkbox" id="pr-check-all" onchange="prCheckAll(this.checked)"></th>
           <th data-field="nombre">Prenda</th>
           <th data-field="talle">Talle</th>
           <th data-field="costo">Costo</th>
@@ -1747,34 +1760,135 @@ async function viewPrecios(v,force){
         <tbody id="pr-tbody"></tbody>
       </table></div>`;
     const inp=$("#pr-q");
-    const draw=()=>{
-      const q=inp.value.trim().toLowerCase(); window._prQ=inp.value;
-      const {field,dir}=window._prSort;
-      const list=(DATA.preciosCostos||[]).filter(r=>r.nombre.toLowerCase().includes(q)).sort((a,b)=>{
-        const av=a[field], bv=b[field];
-        if(typeof av==="string"||typeof bv==="string") return String(av||"").localeCompare(String(bv||""),"es")*dir;
-        return ((av??-Infinity)-(bv??-Infinity))*dir;
-      });
-      $("#pr-tbody").innerHTML=list.length?list.map(r=>`<tr onclick='openSimularPrecio(${JSON.stringify(r.talleId)})'>
-          <td>${esc(r.nombre)}</td><td>T${esc(r.talle)}</td><td>${fmt(r.costo)}</td><td>${fmt(r.precio)}</td><td>${fmt(r.precioLista)}</td>
-          <td><span class="chip n ${margenClass(r.margen)}">${r.margen!=null?r.margen.toFixed(0)+"%":"—"}</span></td></tr>`).join("")
-        : `<tr><td colspan="6"><div class="empty">Sin resultados</div></td></tr>`;
-      $("#pr-table").querySelectorAll("th").forEach(th=>{
-        th.classList.toggle("sorted", th.dataset.field===field);
-        th.querySelectorAll(".arrow").forEach(a=>a.remove());
-        if(th.dataset.field===field) th.insertAdjacentHTML("beforeend", `<span class="arrow">${dir>0?"▲":"▼"}</span>`);
-      });
-    };
-    inp.oninput=draw;
-    $("#pr-table").querySelectorAll("th").forEach(th=>{
+    inp.oninput=()=>{ window._prQ=inp.value; drawPrecios(); };
+    $("#pr-table").querySelectorAll("th[data-field]").forEach(th=>{
       th.onclick=()=>{
         const f=th.dataset.field;
         if(window._prSort.field===f) window._prSort.dir*=-1; else window._prSort={field:f,dir:f==="nombre"?1:-1};
-        draw();
+        drawPrecios();
       };
     });
-    draw();
+    drawPrecios();
   }catch(e){ errBox(v,e); }
+}
+function prRowHtml(r){
+  return `<tr id="pr-row-${r.talleId}">
+    <td><input type="checkbox" class="pr-check" data-talle="${r.talleId}" onchange="prUpdateBulkBar()"></td>
+    <td>${esc(r.nombre)}</td><td>T${esc(r.talle)}</td>
+    <td><span class="pr-editable" data-talle="${r.talleId}" data-field="costo" onclick="prEditCell(this)">${fmt(r.costo)}</span></td>
+    <td><span class="pr-editable" data-talle="${r.talleId}" data-field="precio" onclick="prEditCell(this)">${fmt(r.precio)}</span></td>
+    <td><span class="pr-editable" data-talle="${r.talleId}" data-field="precioLista" onclick="prEditCell(this)">${fmt(r.precioLista)}</span></td>
+    <td><span class="chip n ${margenClass(r.margen)}" style="cursor:pointer" onclick='openSimularPrecio(${JSON.stringify(r.talleId)})'>${r.margen!=null?r.margen.toFixed(0)+"%":"—"}</span></td>
+  </tr>`;
+}
+function drawPrecios(){
+  const inp=$("#pr-q"); if(!inp) return;
+  const q=inp.value.trim().toLowerCase(); window._prQ=inp.value;
+  const {field,dir}=window._prSort;
+  const list=(DATA.preciosCostos||[]).filter(r=>r.nombre.toLowerCase().includes(q)).sort((a,b)=>{
+    const av=a[field], bv=b[field];
+    if(typeof av==="string"||typeof bv==="string") return String(av||"").localeCompare(String(bv||""),"es")*dir;
+    return ((av??-Infinity)-(bv??-Infinity))*dir;
+  });
+  window._prList=list;
+  $("#pr-tbody").innerHTML=list.length?list.map(r=>prRowHtml(r)).join("") : `<tr><td colspan="7"><div class="empty">Sin resultados</div></td></tr>`;
+  $("#pr-table").querySelectorAll("th[data-field]").forEach(th=>{
+    th.classList.toggle("sorted", th.dataset.field===field);
+    th.querySelectorAll(".arrow").forEach(a=>a.remove());
+    if(th.dataset.field===field) th.insertAdjacentHTML("beforeend", `<span class="arrow">${dir>0?"▲":"▼"}</span>`);
+  });
+  prUpdateBulkBar();
+}
+// ── Edición inline tipo Excel (Costo/Transf./Lista) ──────────────────────────
+function prEditCell(span){
+  if(span.querySelector("input")) return;
+  const talleId=span.dataset.talle, field=span.dataset.field;
+  const r=(DATA.preciosCostos||[]).find(x=>x.talleId===talleId); if(!r) return;
+  const cur = r[field];
+  span.innerHTML=`<input type="text" inputmode="numeric" value="${fmtMiles(cur)}">`;
+  const input=span.querySelector("input");
+  input.focus(); input.select();
+  let done=false;
+  const cancel=()=>{ if(done) return; done=true; span.innerHTML=fmt(cur); };
+  input.addEventListener("keydown", e=>{
+    if(e.key==="Enter"){ e.preventDefault(); if(done) return; done=true; prSaveCell(talleId, field, parseMiles(input.value), true); }
+    else if(e.key==="Escape"){ e.preventDefault(); cancel(); }
+  });
+  input.addEventListener("blur", ()=>{ if(done) return; done=true; prSaveCell(talleId, field, parseMiles(input.value), false); });
+}
+async function prSaveCell(talleId, field, value, moveNext){
+  const r=(DATA.preciosCostos||[]).find(x=>x.talleId===talleId); if(!r) return;
+  const span=document.querySelector(`.pr-editable[data-talle="${talleId}"][data-field="${field}"]`);
+  try{
+    if(field==="costo"){
+      if(!value) throw new Error("Ingresá un costo válido");
+      const { error } = await getClient().from("011_costos_reposicion").insert({ talle_id:talleId, costo:value, vigente_desde:todayISO() });
+      if(error) throw error;
+      r.costo=value;
+    } else {
+      const nuevoLista = field==="precioLista"?value:r.precioLista;
+      const nuevoTrans = field==="precio"?value:r.precio;
+      if(!nuevoLista&&!nuevoTrans) throw new Error("Ingresá al menos un precio");
+      const { error } = await getClient().from("010_precios").insert({ talle_id:talleId, precio_lista:nuevoLista, precio_transferencia:nuevoTrans, vigente_desde:todayISO() });
+      if(error) throw error;
+      r.precioLista=nuevoLista; r.precio=nuevoTrans;
+      DATA.catalogo=null; // Vender usa estos mismos precios vigentes
+    }
+    r.margen = r.precio>0 ? ((r.precio-r.costo)/r.precio*100) : null;
+    const row=$("#pr-row-"+CSS.escape(talleId)); if(row) row.outerHTML=prRowHtml(r);
+    if(moveNext) prFocusNext(talleId, field);
+  }catch(e){
+    toast(e.message,true);
+    if(span) span.innerHTML=fmt(r[field]);
+  }
+}
+function prFocusNext(talleId, field){
+  const list=window._prList||[];
+  const idx=list.findIndex(x=>x.talleId===talleId);
+  if(idx<0 || idx>=list.length-1) return;
+  const next=list[idx+1];
+  const span=document.querySelector(`.pr-editable[data-talle="${next.talleId}"][data-field="${field}"]`);
+  if(span) prEditCell(span);
+}
+// ── Selección múltiple + aumento % masivo ────────────────────────────────────
+function prCheckAll(checked){
+  document.querySelectorAll(".pr-check").forEach(cb=>cb.checked=checked);
+  prUpdateBulkBar();
+}
+function prUpdateBulkBar(){
+  const n=document.querySelectorAll(".pr-check:checked").length;
+  const bar=$("#pr-bulk"); if(!bar) return;
+  bar.style.display=n>0?"block":"none";
+  const c=$("#pr-bulk-count"); if(c) c.textContent=`${n} seleccionado${n!==1?"s":""}`;
+}
+async function prBulkApply(){
+  const pct=parseMiles($("#pr-bulk-pct").value); if(!pct) return toast("Ingresá el % de aumento",true);
+  const doLista=$("#pr-bulk-lista").checked, doTrans=$("#pr-bulk-trans").checked;
+  if(!doLista && !doTrans) return toast("Elegí lista y/o transferencia",true);
+  const checked=[...document.querySelectorAll(".pr-check:checked")].map(cb=>cb.dataset.talle);
+  if(!checked.length) return toast("Seleccioná al menos una prenda",true);
+  const btn=$("#pr-bulk-apply"); btn.disabled=true; btn.textContent="Aplicando…";
+  try{
+    const rows=checked.map(talleId=>{
+      const r=(DATA.preciosCostos||[]).find(x=>x.talleId===talleId);
+      return { talle_id:talleId,
+        precio_lista: doLista?Math.round(r.precioLista*(1+pct/100)):r.precioLista,
+        precio_transferencia: doTrans?Math.round(r.precio*(1+pct/100)):r.precio,
+        vigente_desde: todayISO() };
+    });
+    const { error } = await getClient().from("010_precios").insert(rows);
+    if(error) throw error;
+    rows.forEach(row=>{
+      const r=(DATA.preciosCostos||[]).find(x=>x.talleId===row.talle_id); if(!r) return;
+      r.precioLista=row.precio_lista; r.precio=row.precio_transferencia;
+      r.margen=r.precio>0?((r.precio-r.costo)/r.precio*100):null;
+    });
+    DATA.catalogo=null;
+    toast(`Precio actualizado en ${rows.length} talle${rows.length!==1?"s":""}`);
+    $("#pr-bulk-pct").value="";
+    drawPrecios();
+  }catch(e){ toast(e.message,true); }
+  btn.disabled=false; btn.textContent="Aplicar aumento";
 }
 function openSimularPrecio(talleId){
   const r=(DATA.preciosCostos||[]).find(x=>x.talleId===talleId); if(!r) return;
