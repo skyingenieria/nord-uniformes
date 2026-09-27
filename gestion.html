@@ -1674,11 +1674,11 @@ function openSimularPrecio(talleId){
 
     <div class="section-h" style="margin-top:16px">Simular / aumentar precio</div>
     <div class="two">
-      <div class="field"><label>Nuevo precio lista</label><input type="text" inputmode="numeric" id="sp-lista" value="${fmtMiles(r.precioLista)}" oninput="simularPrecio(${JSON.stringify(talleId)},'lista')"></div>
-      <div class="field"><label>Nuevo precio transferencia</label><input type="text" inputmode="numeric" id="sp-trans" value="${fmtMiles(r.precio)}" oninput="simularPrecio(${JSON.stringify(talleId)},'trans')"></div>
+      <div class="field"><label>Nuevo precio lista</label><input type="text" inputmode="numeric" id="sp-lista" value="${fmtMiles(r.precioLista)}" oninput='simularPrecio(${JSON.stringify(talleId)},"lista")'></div>
+      <div class="field"><label>Nuevo precio transferencia</label><input type="text" inputmode="numeric" id="sp-trans" value="${fmtMiles(r.precio)}" oninput='simularPrecio(${JSON.stringify(talleId)},"trans")'></div>
     </div>
     <p style="margin:-8px 0 12px;font-size:11.5px;color:var(--muted)">La transferencia se ajusta sola con la misma proporción hasta que la edites a mano.</p>
-    <div class="field"><label>Costo (para simular el margen)</label><input type="text" inputmode="numeric" id="sp-costo" value="${fmtMiles(r.costo)}" oninput="simularPrecio(${JSON.stringify(talleId)},'costo')"></div>
+    <div class="field"><label>Costo (para simular el margen)</label><input type="text" inputmode="numeric" id="sp-costo" value="${fmtMiles(r.costo)}" oninput='simularPrecio(${JSON.stringify(talleId)},"costo")'></div>
     <div class="card" id="sp-result" style="margin-bottom:16px"></div>
     <button class="btn" id="sp-save" onclick='aplicarPrecio(${JSON.stringify(talleId)})'>Aplicar nuevo precio (desde hoy)</button>
     <button class="btn ghost" id="sp-costo-save" style="margin-top:10px" onclick='aplicarCosto(${JSON.stringify(talleId)})'>Guardar nuevo costo (desde hoy)</button>`);
