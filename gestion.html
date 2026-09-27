@@ -145,10 +145,11 @@
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .oi-row{display:grid;grid-template-columns:minmax(64px,1fr) 54px 74px 78px 58px 68px;align-items:center;
     column-gap:8px;row-gap:2px;padding:10px 0;overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .oi-row.has-transf{grid-template-columns:minmax(64px,1fr) 54px 74px 78px 58px 52px 68px}
   .oi-row .oi-nombre{font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .oi-row select.oi-talle{width:100%;padding:6px 4px;border:1.5px solid var(--line);border-radius:8px;font-size:12.5px;font-weight:700;background:#fff}
-  .oi-row .qty{transform:scale(.86);transform-origin:left center}
+  .oi-row select.oi-talle{width:100%;padding:4px 4px;border:1.5px solid var(--line);border-radius:8px;font-size:12.5px;font-weight:700;background:#fff}
+  .oi-row .qty{border-radius:8px}
+  .oi-row .qty button{width:24px;height:24px;font-size:14px}
+  .oi-row .qty span{min-width:22px;font-size:12px}
   .oi-row .oi-precio{font-size:11.5px;color:var(--azul-900);white-space:nowrap;text-align:right;line-height:1.3}
   .oi-row .oi-precio b{font-size:12.5px;font-weight:800}
   .oi-row .oi-lista{font-size:10px;color:var(--muted);font-weight:600}
@@ -156,8 +157,6 @@
   .oi-row .oi-desc-wrap input{width:38px;padding:6px 5px;border:1.5px solid var(--line);border-radius:8px;font-size:12px;text-align:center}
   .oi-row .oi-desc-wrap span{font-size:11px;color:var(--muted);font-weight:700}
   .oi-row .oi-subtotal{font-weight:800;font-size:13.5px;text-align:right;white-space:nowrap}
-  .oi-row .oi-transf-btn{border:1.5px solid var(--line);background:#fff;color:var(--azul-900);border-radius:8px;padding:5px 6px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap}
-  .oi-row .oi-transf-btn:active{background:#eef1f6}
   .oi-row .oi-ro{font-size:12.5px;font-weight:700;color:var(--azul-900);background:#f4f1ea;border-radius:8px;padding:6px 9px;text-align:center;white-space:nowrap}
   .oi-row.editing{grid-template-columns:minmax(56px,1fr) 54px 74px 78px 58px 68px 24px}
   .oi-row .oi-del{border:none;background:transparent;color:#b23b3b;font-size:17px;font-weight:800;cursor:pointer;padding:2px 4px;line-height:1;justify-self:end}
@@ -170,17 +169,15 @@
   .ga-add input{text-align:left}
   @media (max-width:480px){
     .oi-row{grid-template-columns:minmax(36px,1fr) 36px 54px 56px 38px 48px;column-gap:4px;padding:8px 0}
-    .oi-row.has-transf{grid-template-columns:minmax(36px,1fr) 36px 54px 56px 38px 32px 48px}
     .oi-row.editing{grid-template-columns:minmax(28px,1fr) 36px 54px 56px 38px 48px 20px}
     .oi-row .oi-nombre{font-size:10px}
     .oi-row .oi-lista{display:none}
     .oi-row .oi-precio{font-size:9.5px}
     .oi-row .oi-precio b{font-size:10.5px}
-    .oi-row .qty{transform:scale(.68);transform-origin:left center}
-    .oi-row select.oi-talle{font-size:10px;padding:5px 1px}
+    .oi-row .qty button{width:18px;height:18px;font-size:11px}
+    .oi-row .qty span{min-width:14px;font-size:10px}
+    .oi-row select.oi-talle{font-size:10px;padding:3px 1px}
     .oi-row .oi-desc-wrap input{width:24px;padding:4px 2px;font-size:10px}
-    .oi-row .oi-transf-btn{font-size:0;padding:4px 2px}
-    .oi-row .oi-transf-btn::before{content:"T%";font-size:9.5px}
     .oi-row .oi-subtotal{font-size:11px}
     .oi-row .oi-ro{font-size:10px;padding:4px 4px}
     .oi-row .oi-del{font-size:15px}
@@ -1013,9 +1010,6 @@ function isCard(){ return /nave|tarjeta/i.test(venta.pago); }
 function basePrice(i){ return i.precioLista>0 ? i.precioLista : Math.round(i.precio*CARD_SURCHARGE); }
 function priceAfterPaymentMethod(i){ return isCard() ? basePrice(i) : i.precio; }
 function unitPrice(i){ const b=priceAfterPaymentMethod(i); const d=Math.min(100,Math.max(0,i.descPct||0)); return Math.round(b*(1-d/100)); }
-// % de descuento promo que llega exactamente al precio de transferencia de este ítem
-// (ya arrancando desde lo que dejó el medio de pago — es 0% si ya está en transferencia).
-function descPctATransferencia(i){ const b=priceAfterPaymentMethod(i); return b>0 ? Math.max(0,Math.round((1-i.precio/b)*100)) : 0; }
 function cartGrossSubtotal(){ return cart.reduce((s,i)=>s+basePrice(i)*i.qty,0); }
 function cartPaymentDiscountTotal(){ return cart.reduce((s,i)=>s+(basePrice(i)-priceAfterPaymentMethod(i))*i.qty,0); }
 function cartPromoDiscountTotal(){ return cart.reduce((s,i)=>s+(priceAfterPaymentMethod(i)-unitPrice(i))*i.qty,0); }
@@ -1119,16 +1113,6 @@ function setItemDesc(idx,val){
   const subEl=$("#cart-sub-"+idx); if(subEl) subEl.textContent=fmt(unitPrice(i)*i.qty);
   drawTotals();
 }
-// Aplica automáticamente el % de descuento que lleva este ítem al precio de transferencia.
-function setItemDescTransf(idx){
-  const i=cart[idx]; if(!i) return;
-  const n=descPctATransferencia(i);
-  i.descPct=n;
-  const el=$("#cart-desc-"+idx); if(el) el.value=n;
-  const precEl=$("#cart-precio-"+idx); if(precEl) precEl.innerHTML=cartPrecioHtml(i);
-  const subEl=$("#cart-sub-"+idx); if(subEl) subEl.textContent=fmt(unitPrice(i)*i.qty);
-  drawTotals();
-}
 function cartChangeTalle(idx,talleId){
   const i=cart[idx]; if(!i) return;
   const prenda=(DATA.catalogo||[]).find(p=>p.nombre===i.nombre); if(!prenda) return;
@@ -1148,13 +1132,12 @@ function cartRowHtml(i,idx){
     ? talles.map(t=>`<option value="${t.talleId}" ${t.talleId===i.talleId?"selected":""}>${esc(t.talle)}</option>`).join("")
     : `<option value="${i.talleId||''}" selected>${esc(i.talle)}</option>`;
   const over=i.stock!=null && i.qty>i.stock;
-  return `<div class="row oi-row has-transf" id="cart-row-${idx}">
+  return `<div class="row oi-row" id="cart-row-${idx}">
     <div class="oi-nombre" title="${esc(i.nombre)}">${esc(i.nombre)}${over?' ⚠':''}</div>
     <select class="oi-talle" onchange="cartChangeTalle(${idx}, this.value)">${talleOpts}</select>
     <div class="qty"><button onclick="chQty(${idx},-1)">−</button><span id="cart-qty-${idx}">${i.qty}</span><button onclick="chQty(${idx},1)">+</button></div>
     <div class="oi-precio" id="cart-precio-${idx}">${cartPrecioHtml(i)}</div>
     <div class="oi-desc-wrap"><input type="text" inputmode="numeric" id="cart-desc-${idx}" value="${i.descPct||0}" oninput="setItemDesc(${idx},this.value)"><span>%</span></div>
-    <button type="button" class="oi-transf-btn" title="Aplicar precio de transferencia" onclick="setItemDescTransf(${idx})">→Transf.</button>
     <span class="oi-subtotal" id="cart-sub-${idx}">${fmt(unitPrice(i)*i.qty)}</span>
   </div>`;
 }

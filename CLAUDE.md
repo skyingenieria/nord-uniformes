@@ -224,9 +224,9 @@ Drive" por factura), Catálogo (alta de prendas/talles).
   de abajo, que es de wellspring/carrito): el precio base de cada ítem, en
   Vender y al editar un pedido ya creado, es **siempre el precio de lista**,
   sin importar la forma de pago. El % de descuento por ítem es lo que lo
-  baja desde ahí — típicamente hasta el precio de transferencia (hay un
-  botón "→Transf." por línea que carga ese % exacto automáticamente), pero
-  puede ser cualquier valor manual. El checkout muestra el desglose:
+  baja desde ahí (valor manual, sin atajo automático a transferencia — el
+  botón "→Transf." que había por línea se sacó por pedido de Flor,
+  2026-09-27). El checkout muestra el desglose:
   subtotal a precio de lista, descuento por prenda (suma de los descuentos
   ítem por ítem) y descuento del pedido (aparte, un monto fijo en $). Ese %
   se guarda tal cual en `005_ordenes.descuento_pct` (no se recalcula contra
