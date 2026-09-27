@@ -17,15 +17,20 @@ alter table "004_pedidos" add column if not exists notas text;
 
 -- 4) La vista de pedidos con saldo lista columnas explicitas (no select *),
 --    asi que hay que agregarle "notas" a mano para que gestion.html la lea.
+--    Postgres exige que "create or replace view" solo agregue columnas al
+--    FINAL de la lista (si se insertan en el medio, interpreta que se está
+--    renombrando una columna existente y lo rechaza) -- por eso "notas" va
+--    al final, no junto a las demás columnas de "004_pedidos".
 create or replace view "104_pedidos_con_saldo" as
 select
   p.id, p.numero, p.colegio, p.cliente_id, p.forma_pago, p.cargo_envio,
-  p.descuento, p.envio, p.estado_envio, p.estado_pago, p.vendedor_id, p.created_at, p.notas,
+  p.descuento, p.envio, p.estado_envio, p.estado_pago, p.vendedor_id, p.created_at,
   coalesce(items.cant, 0) as cant,
   coalesce(items.monto, 0) as monto,
   coalesce(items.monto, 0) + p.cargo_envio - p.descuento as total_venta,
   coalesce(pagos.monto_pagado, 0) as monto_pagado,
-  (coalesce(items.monto, 0) + p.cargo_envio - p.descuento) - coalesce(pagos.monto_pagado, 0) as saldo
+  (coalesce(items.monto, 0) + p.cargo_envio - p.descuento) - coalesce(pagos.monto_pagado, 0) as saldo,
+  p.notas
 from "004_pedidos" p
 left join (
   select pedido_id, sum(cantidad) as cant, sum(cantidad * precio_unitario) as monto
