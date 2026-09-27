@@ -1611,6 +1611,8 @@ async function viewCompras(v,force){
           <td>${fmt(co.costo_unitario)}</td>
           <td style="font-weight:700">${fmt(subtotal)}</td>
           <td><select onchange='coChangeEstado(${JSON.stringify(co.id)}, this.value)'>
+            <option ${co.estado==="Pedido"?"selected":""}>Pedido</option>
+            <option ${co.estado==="Señado"?"selected":""}>Señado</option>
             <option ${co.estado==="Entregado"?"selected":""}>Entregado</option>
             <option ${co.estado==="Falta Bordado"?"selected":""}>Falta Bordado</option>
           </select></td>
@@ -1663,7 +1665,7 @@ function openNuevaCompra(){
       <div class="field"><label>Proveedor</label><select id="nco-prov"><option value="">Sin especificar</option></select></div>
       <div class="field"><label>Fecha</label><input id="nco-fecha" value="${todayISO()}"></div>
     </div>
-    <div class="field"><label>Estado</label><select id="nco-estado"><option>Entregado</option><option>Falta Bordado</option></select></div>
+    <div class="field"><label>Estado</label><select id="nco-estado"><option>Pedido</option><option>Señado</option><option>Entregado</option><option>Falta Bordado</option></select></div>
 
     <div class="section-h" style="margin-top:18px">Agregar línea</div>
     <div class="field"><label>Prenda</label><select id="nco-prenda" onchange="fillTallesCompra()"></select></div>
