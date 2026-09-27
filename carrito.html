@@ -217,6 +217,17 @@ async function getSb() {
   return _sbClient;
 }
 let _chombaTalles = null; // null = todavía no cargó / no se pudo cargar
+const TALLE_ORDER = ['XS','S','M','L','XL','XXL','XXXL'];
+function talleSort(a, b) {
+  const na = Number(a.talle), nb = Number(b.talle);
+  const aNum = !isNaN(na) && String(a.talle).trim() !== "", bNum = !isNaN(nb) && String(b.talle).trim() !== "";
+  if (aNum && bNum) return na - nb;
+  if (aNum) return -1;
+  if (bNum) return 1;
+  const ai = TALLE_ORDER.indexOf(String(a.talle).toUpperCase()), bi = TALLE_ORDER.indexOf(String(b.talle).toUpperCase());
+  if (ai !== -1 && bi !== -1) return ai - bi;
+  return String(a.talle).localeCompare(String(b.talle));
+}
 async function loadChombaPromo() {
   try {
     const c = await getSb();
@@ -230,7 +241,7 @@ async function loadChombaPromo() {
     _chombaTalles = (talles || []).map(t => {
       const pr = precioMap[t.id] || {};
       return { talle: t.talle, precio: Number(pr.precio_transferencia) || 0, precioLista: Number(pr.precio_lista) || 0 };
-    });
+    }).sort(talleSort);
   } catch (e) { console.error("No se pudo cargar la promo Chomba Blanca:", e); }
 }
 function cartHasQualifyingItem(cart) { return cart.some(i => i.nombre !== PROMO_NOMBRE && !/^medias?\b/i.test(i.nombre || "")); }
@@ -399,11 +410,9 @@ function render() {
   const promoHtml = showPromoCard ? `
       <div class="section-block promo-card">
         <div class="promo-badge">-30%</div>
-        <p class="promo-eyebrow">🎁 Oferta por tu compra</p>
+        <p class="promo-eyebrow">🎁 Oferta exclusiva para vos</p>
         <p class="promo-title">${alreadyHasChomba ? "Sumá otra Chomba Blanca" : "Sumá una Chomba Blanca"}</p>
-        <p class="promo-sub">${alreadyHasChomba
-          ? "El 30% OFF sobre el precio de lista aplica una sola vez por pedido — ésta se suma a precio de lista."
-          : "30% OFF sobre el precio de lista. Elegí el talle que quieras:"}</p>
+        <p class="promo-sub">El 30% OFF aplica sobre el precio de lista. Válido para una sola prenda.</p>
         <div class="promo-actions">
           <select id="promo-talle" class="promo-select">
             ${_chombaTalles.map(t => `<option value="${t.talle}">Talle ${t.talle}</option>`).join("")}
