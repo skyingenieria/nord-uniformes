@@ -154,13 +154,17 @@
   .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff;border-radius:14px;border:1px solid var(--line)}
   table.pr-table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
   table.pr-table th{position:sticky;top:0;background:#fbf9f4;text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;
-    color:var(--muted);font-weight:800;padding:10px 12px;cursor:pointer;user-select:none;border-bottom:1.5px solid var(--line)}
+    color:var(--muted);font-weight:800;padding:10px 12px;user-select:none;border-bottom:1.5px solid var(--line)}
+  table.pr-table th[data-field]{cursor:pointer}
   table.pr-table th.sorted{color:var(--azul-900)}
   table.pr-table th .arrow{margin-left:4px;font-size:9px}
   table.pr-table td{padding:10px 12px;border-bottom:1px solid var(--line)}
   table.pr-table tbody tr{cursor:pointer}
   table.pr-table tbody tr:hover{background:#fbf9f4}
   table.pr-table tbody tr:last-child td{border-bottom:none}
+  table.pr-table.static tbody tr{cursor:default}
+  table.pr-table.static tbody tr:hover{background:transparent}
+  table.pr-table td select{padding:5px 7px;border:1.5px solid var(--line);border-radius:7px;font-size:12px;background:#fff;cursor:pointer}
   .tot-line{display:flex;justify-content:space-between;padding:5px 0;font-size:14px}
   .tot-line.big{font-size:19px;font-weight:800;border-top:1.5px solid var(--line);margin-top:6px;padding-top:12px}
   .tot-line .disc{color:var(--green)}
@@ -262,7 +266,7 @@
     <button data-tab="compras"        class="desk-only" onclick="go('compras')"><span class="ic">📥</span>Compras</button>
     <button data-tab="precios"        class="desk-only" onclick="go('precios')"><span class="ic">💲</span>Precios</button>
     <button data-tab="contabilidad"   class="desk-only" onclick="go('contabilidad')"><span class="ic">📊</span>Contabilidad</button>
-    <button data-tab="configuracion"  class="desk-only" onclick="go('configuracion')"><span class="ic">⚙️</span>Configuración</button>
+    <button data-tab="configuracion"  class="desk-only" onclick="go('configuracion')"><span class="ic">🗂️</span>Catálogo</button>
   </nav>
 </div>
 
@@ -326,7 +330,7 @@ function showApp(){
 
 // ─────────────────────────────────────────────────────────────── NAV
 const TITLES = {inicio:"Dashboard", stock:"Stock", vender:"Vender", pedidos:"Pedidos", clientes:"Clientes",
-  proveedores:"Proveedores", compras:"Compras", precios:"Precios y costos", contabilidad:"Contabilidad", configuracion:"Configuración"};
+  proveedores:"Proveedores", compras:"Compras", precios:"Precios y costos", contabilidad:"Contabilidad", configuracion:"Catálogo"};
 function go(tab,opts){
   opts=opts||{};
   if(opts.push!==false && TAB!==tab){ navStack.push(TAB); history.pushState({tab},""); }
@@ -591,7 +595,7 @@ async function viewConfiguracion(v,force){
     if(force||!DATA.catalogo){ loading(v); await getCatalogo(true); }
     window._cfgQ = window._cfgQ||"";
     v.innerHTML = `
-      <div class="view-title">Configuración</div>
+      <div class="view-title">Catálogo</div>
       <div class="section-h" style="margin-top:0">Prendas y talles</div>
       <button class="btn gold" style="margin-bottom:14px" onclick="openNuevaPrenda()">+ Nueva prenda</button>
       <div class="search"><span class="mag">🔎</span><input id="cfg-q" placeholder="Buscar prenda para editar…" value="${esc(window._cfgQ)}"></div>
@@ -601,8 +605,8 @@ async function viewConfiguracion(v,force){
       const q=inp.value.trim().toLowerCase(); window._cfgQ=inp.value;
       const list=(DATA.catalogo||[]).filter(p=>p.nombre.toLowerCase().includes(q));
       $("#cfg-list").innerHTML = list.length ? list.map(p=>`
-        <div class="row" style="cursor:pointer" onclick='openPrenda(${JSON.stringify(p.id)})'>
-          <div class="grow"><div class="name">${esc(p.nombre)}</div><div class="meta">${p.talles.length} talle${p.talles.length!==1?'s':''}</div></div>
+        <div class="row" style="cursor:pointer;padding:10px 0" onclick='openPrenda(${JSON.stringify(p.id)})'>
+          <div class="grow"><span class="name">${esc(p.nombre)}</span> <span style="color:var(--muted);font-size:12.5px;font-weight:600">· ${p.talles.length} talle${p.talles.length!==1?'s':''}</span></div>
           <span style="color:var(--dorado);font-size:20px">›</span></div>`).join("") : '<div class="empty">Sin resultados</div>';
     };
     inp.oninput=draw; draw();
@@ -1384,22 +1388,48 @@ async function saveEntrega(pedidoId){
 async function viewClientes(v,force){
   try{
     if(force||!DATA.clientes){ loading(v); await getClientes(true); }
+    window._cliSort = window._cliSort||{field:"nombre",dir:1};
     v.innerHTML=`
       <div class="view-title">Clientes <span style="font-size:15px;color:var(--muted);font-weight:600">· ${(DATA.clientes||[]).length}</span></div>
       <button class="btn gold" style="margin-bottom:14px" onclick="openNuevoClienteAdmin()">+ Nuevo cliente</button>
       <div class="search"><span class="mag">🔎</span><input id="cli-q" placeholder="Buscar por nombre, email, teléfono o código…" value="${esc(window._cliQ||"")}"></div>
-      <div class="card" id="cli-list"></div>`;
-    const inp=$("#cli-q"); inp.oninput=()=>{ window._cliQ=inp.value; drawClientes(); }; drawClientes();
+      <div class="table-wrap"><table class="pr-table" id="cli-table">
+        <thead><tr>
+          <th data-field="codigo">Código</th>
+          <th data-field="nombre">Nombre</th>
+          <th data-field="apellido">Apellido</th>
+          <th data-field="email">Email</th>
+          <th data-field="telefono">WhatsApp</th>
+        </tr></thead>
+        <tbody id="cli-tbody"></tbody>
+      </table></div>`;
+    const inp=$("#cli-q"); inp.oninput=()=>{ window._cliQ=inp.value; drawClientes(); };
+    $("#cli-table").querySelectorAll("th[data-field]").forEach(th=>{
+      th.onclick=()=>{
+        const f=th.dataset.field;
+        if(window._cliSort.field===f) window._cliSort.dir*=-1; else window._cliSort={field:f,dir:1};
+        drawClientes();
+      };
+    });
+    drawClientes();
   }catch(e){ errBox(v,e); }
 }
 function drawClientes(){
-  const el=$("#cli-list"); if(!el) return;
+  const el=$("#cli-tbody"); if(!el) return;
   const q=(window._cliQ||"").toLowerCase().trim();
-  const list=(DATA.clientes||[]).filter(c=> !q || [c.nombre,c.apellido,c.email,c.telefono,c.codigo].some(x=>String(x||"").toLowerCase().includes(q)));
-  el.innerHTML = list.length ? list.map(c=>`<div class="row" style="cursor:pointer" onclick='openEditarCliente(${JSON.stringify(c.id)})'>
-      <div class="grow"><div class="name">${esc(c.nombre)} ${esc(c.apellido||"")}</div>
-      <div class="meta">${esc(c.email||"—")}${c.telefono?" · "+esc(c.telefono):""}</div></div>
-      <span class="chip n">${esc(c.codigo||"")}</span></div>`).join("") : '<div class="empty">Sin clientes</div>';
+  const {field,dir}=window._cliSort;
+  const list=(DATA.clientes||[]).filter(c=> !q || [c.nombre,c.apellido,c.email,c.telefono,c.codigo].some(x=>String(x||"").toLowerCase().includes(q)))
+    .sort((a,b)=>String(a[field]||"").localeCompare(String(b[field]||""),"es")*dir);
+  el.innerHTML = list.length ? list.map(c=>`<tr style="cursor:pointer" onclick='openEditarCliente(${JSON.stringify(c.id)})'>
+      <td>${c.codigo?`<span class="chip n">${esc(c.codigo)}</span>`:"—"}</td>
+      <td>${esc(c.nombre)}</td><td>${esc(c.apellido||"—")}</td><td>${esc(c.email||"—")}</td><td>${esc(c.telefono||"—")}</td></tr>`).join("")
+    : `<tr><td colspan="5"><div class="empty">Sin clientes</div></td></tr>`;
+  const table=$("#cli-table"); if(!table) return;
+  table.querySelectorAll("th[data-field]").forEach(th=>{
+    th.classList.toggle("sorted", th.dataset.field===field);
+    th.querySelectorAll(".arrow").forEach(a=>a.remove());
+    if(th.dataset.field===field) th.insertAdjacentHTML("beforeend", `<span class="arrow">${dir>0?"▲":"▼"}</span>`);
+  });
 }
 function openNuevoClienteAdmin(){
   openSheet(`<div class="grabber"></div><h3>Nuevo cliente</h3>
@@ -1423,7 +1453,7 @@ async function crearClienteAdmin(){
 }
 function openEditarCliente(id){
   const c=(DATA.clientes||[]).find(x=>x.id===id); if(!c) return;
-  openSheet(`<div class="grabber"></div><h3>${esc(c.nombre)} ${esc(c.apellido||"")}</h3><p class="sub">${esc(c.codigo||"")}</p>
+  openCenterSheet(`<div class="grabber"></div><h3>${esc(c.nombre)} ${esc(c.apellido||"")}</h3><p class="sub">${esc(c.codigo||"")}</p>
     <div class="field"><label>Nombre</label><input id="ec-nom" value="${esc(c.nombre)}"></div>
     <div class="field"><label>Apellido / Familia</label><input id="ec-ape" value="${esc(c.apellido||"")}"></div>
     <div class="field"><label>Email</label><input id="ec-mail" type="email" value="${esc(c.email||"")}"></div>
@@ -1495,23 +1525,103 @@ async function viewCompras(v,force){
   try{
     if(force||!DATA.compras){ loading(v); await getCompras(true); }
     window._coQ = window._coQ||"";
+    window._coSort = window._coSort||{field:"fecha",dir:-1};
+    const list0=DATA.compras||[];
+    const totalComprado=list0.reduce((s,co)=>s+(Number(co.cantidad)||0)*(Number(co.costo_unitario)||0),0);
+
+    // Resumen agrupado por número de compra (C-001, C-002…)
+    const grupos={};
+    list0.forEach(co=>{
+      const key=co.numero||"—";
+      if(!grupos[key]) grupos[key]={numero:key, proveedor:co.proveedorNombre||"", cant:0, costo:0};
+      const g=grupos[key];
+      g.cant+=Number(co.cantidad)||0;
+      g.costo+=(Number(co.cantidad)||0)*(Number(co.costo_unitario)||0);
+      if(!g.proveedor && co.proveedorNombre) g.proveedor=co.proveedorNombre;
+    });
+    const resumen=Object.values(grupos).sort((a,b)=>b.numero.localeCompare(a.numero,undefined,{numeric:true}));
+
     v.innerHTML = `
       <div class="view-title">Compras</div>
       <button class="btn gold" style="margin-bottom:14px" onclick="openNuevaCompra()">+ Registrar compra</button>
+
+      <div class="card" style="text-align:center;padding:16px;margin-bottom:16px"><div style="font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase">Total comprado</div><div style="font-size:22px;font-weight:800;margin-top:4px">${fmt(totalComprado)}</div></div>
+
+      <div class="section-h" style="margin-top:0">Resumen por compra</div>
+      <div class="table-wrap" style="margin-bottom:22px"><table class="pr-table static">
+        <thead><tr><th>N° Compra</th><th>Proveedor</th><th>Prendas</th><th>Costo total</th></tr></thead>
+        <tbody>${resumen.length?resumen.map(g=>`<tr>
+            <td><span class="chip n">${esc(g.numero)}</span></td><td>${esc(g.proveedor||"—")}</td><td>${g.cant}</td><td style="font-weight:700">${fmt(g.costo)}</td></tr>`).join("")
+          : `<tr><td colspan="4"><div class="empty">Sin compras todavía</div></td></tr>`}</tbody>
+      </table></div>
+
+      <div class="section-h">Detalle de compras</div>
       <div class="search"><span class="mag">🔎</span><input id="co-q" placeholder="Buscar prenda o proveedor…" value="${esc(window._coQ)}"></div>
-      <div class="card" id="co-list"></div>`;
+      <div class="table-wrap"><table class="pr-table static" id="co-table">
+        <thead><tr>
+          <th data-field="numero">N° Compra</th>
+          <th data-field="fecha">Fecha</th>
+          <th data-field="prenda">Prenda</th>
+          <th data-field="talleNombre">Talle</th>
+          <th data-field="proveedorNombre">Proveedor</th>
+          <th data-field="cantidad">Cant.</th>
+          <th data-field="costo_unitario">Costo u.</th>
+          <th>Subtotal</th>
+          <th>Estado</th>
+        </tr></thead>
+        <tbody id="co-tbody"></tbody>
+      </table></div>`;
+
     const inp=$("#co-q");
     const draw=()=>{
       const q=inp.value.trim().toLowerCase(); window._coQ=inp.value;
-      const list=(DATA.compras||[]).filter(co=>!q||`${co.prenda||co.sku_original||""} ${co.proveedorNombre||""}`.toLowerCase().includes(q));
-      $("#co-list").innerHTML=list.length?list.map(co=>`<div class="row"><div class="grow">
-        <div class="name">${co.numero?`<span class="chip n" style="margin-right:6px">${esc(co.numero)}</span>`:""}${esc(co.prenda||co.sku_original||"—")}${co.talleNombre?" · T"+esc(co.talleNombre):""}</div>
-        <div class="meta">${esc(co.fecha||"")}${co.proveedorNombre?" · "+esc(co.proveedorNombre):""} · ${esc(co.estado||"")}</div></div>
-        <div style="text-align:right"><div style="font-weight:700">×${co.cantidad}</div><div class="meta">${fmt(co.costo_unitario)} c/u</div></div></div>`).join("")
-        : '<div class="empty">Sin compras todavía</div>';
+      const {field,dir}=window._coSort;
+      const list=list0.filter(co=>!q||`${co.prenda||co.sku_original||""} ${co.proveedorNombre||""}`.toLowerCase().includes(q)).sort((a,b)=>{
+        const av=a[field], bv=b[field];
+        if(typeof av==="string"||typeof bv==="string") return String(av||"").localeCompare(String(bv||""),"es")*dir;
+        return ((av??-Infinity)-(bv??-Infinity))*dir;
+      });
+      $("#co-tbody").innerHTML=list.length?list.map(co=>{
+        const subtotal=(Number(co.cantidad)||0)*(Number(co.costo_unitario)||0);
+        return `<tr>
+          <td>${co.numero?`<span class="chip n">${esc(co.numero)}</span>`:"—"}</td>
+          <td>${esc(co.fecha||"")}</td>
+          <td>${esc(co.prenda||co.sku_original||"—")}</td>
+          <td>${co.talleNombre?"T"+esc(co.talleNombre):"—"}</td>
+          <td>${esc(co.proveedorNombre||"—")}</td>
+          <td>${co.cantidad}</td>
+          <td>${fmt(co.costo_unitario)}</td>
+          <td style="font-weight:700">${fmt(subtotal)}</td>
+          <td><select onchange='coChangeEstado(${JSON.stringify(co.id)}, this.value)'>
+            <option ${co.estado==="Entregado"?"selected":""}>Entregado</option>
+            <option ${co.estado==="Falta Bordado"?"selected":""}>Falta Bordado</option>
+          </select></td>
+        </tr>`;
+      }).join("") : `<tr><td colspan="9"><div class="empty">Sin resultados</div></td></tr>`;
+      $("#co-table").querySelectorAll("th[data-field]").forEach(th=>{
+        th.classList.toggle("sorted", th.dataset.field===field);
+        th.querySelectorAll(".arrow").forEach(a=>a.remove());
+        if(th.dataset.field===field) th.insertAdjacentHTML("beforeend", `<span class="arrow">${dir>0?"▲":"▼"}</span>`);
+      });
     };
-    inp.oninput=draw; draw();
+    inp.oninput=draw;
+    $("#co-table").querySelectorAll("th[data-field]").forEach(th=>{
+      th.onclick=()=>{
+        const f=th.dataset.field;
+        if(window._coSort.field===f) window._coSort.dir*=-1; else window._coSort={field:f,dir:f==="fecha"?-1:1};
+        draw();
+      };
+    });
+    draw();
   }catch(e){ errBox(v,e); }
+}
+async function coChangeEstado(compraId, estado){
+  try{
+    const { error } = await getClient().from("009_compras").update({ estado }).eq("id", compraId);
+    if(error) throw error;
+    const co=(DATA.compras||[]).find(x=>x.id===compraId); if(co) co.estado=estado;
+    toast("Estado actualizado");
+  }catch(e){ toast(e.message,true); }
 }
 function nextCompraNumero(){
   const nums=(DATA.compras||[]).map(co=>{ const m=/^C-(\d+)$/.exec(co.numero||""); return m?parseInt(m[1],10):0; });
@@ -1762,7 +1872,7 @@ async function viewContabilidad(v,force){
       </div>
       <p style="font-size:12.5px;color:var(--muted);margin-top:-6px">${list0.length} factura${list0.length!==1?"s":""} emitida${list0.length!==1?"s":""}. Tocá los encabezados para ordenar.</p>
       <div class="search"><span class="mag">🔎</span><input id="fa-q" placeholder="Buscar cliente o N° de pedido…" value="${esc(window._faQ)}"></div>
-      <div class="table-wrap"><table class="pr-table" id="fa-table">
+      <div class="table-wrap"><table class="pr-table static" id="fa-table">
         <thead><tr>
           <th data-field="fecha">Fecha</th>
           <th data-field="numero_comprobante">Comprobante</th>
