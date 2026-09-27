@@ -1437,7 +1437,7 @@ function drawClientes(){
   const q=(window._cliQ||"").toLowerCase().trim();
   const {field,dir}=window._cliSort;
   const list=(DATA.clientes||[]).filter(c=> !q || [c.nombre,c.apellido,c.email,c.telefono,c.codigo].some(x=>String(x||"").toLowerCase().includes(q)))
-    .sort((a,b)=>String(a[field]||"").localeCompare(String(b[field]||""),"es")*dir);
+    .sort((a,b)=> field==="codigo" ? ((Number(a.nro)||0)-(Number(b.nro)||0))*dir : String(a[field]||"").localeCompare(String(b[field]||""),"es")*dir);
   el.innerHTML = list.length ? list.map(c=>`<tr style="cursor:pointer" onclick='openEditarCliente(${JSON.stringify(c.id)})'>
       <td>${c.codigo?`<span class="chip n">${esc(c.codigo)}</span>`:"—"}</td>
       <td>${esc(c.nombre)}</td><td>${esc(c.apellido||"—")}</td><td>${esc(c.email||"—")}</td><td>${esc(c.telefono||"—")}</td></tr>`).join("")
