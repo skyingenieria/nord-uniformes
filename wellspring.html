@@ -2224,7 +2224,8 @@
       const base = conPrecio.length ? conPrecio.reduce((m, t) => t.precio < m.precio ? t : m) : { precio: 0, precioLista: 0 };
       return {
         id: p.slug, nombre: p.nombre, precio: base.precio, precioLista: base.precioLista,
-        imagen_url: fotos[0] || "", fotos, genero: p.genero || "", categorias: p.categorias || [],
+        imagen_url: fotos[0] || "", fotos, genero: p.genero || "",
+        categorias: (p.categorias || []).map(c => String(c).toLowerCase()),
         descripcion: p.descripcion || "", talles: ts,
       };
     });
