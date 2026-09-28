@@ -11,6 +11,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
 <script src="/qrcode.js" defer></script>
 <script src="/factura.js" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -25,7 +28,7 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.4}
   button{font-family:inherit;cursor:pointer}
   input,select{font-family:inherit;font-size:16px}
@@ -62,7 +65,18 @@
 
   nav{position:fixed;bottom:0;left:0;right:0;z-index:30;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
     padding-bottom:env(safe-area-inset-bottom);background:#fff;border-top:1px solid var(--line);
-    display:grid;grid-template-columns:repeat(5,1fr);box-shadow:0 -2px 14px rgba(15,23,46,.06)}
+    display:grid;grid-template-columns:repeat(4,1fr);box-shadow:0 -2px 14px rgba(15,23,46,.06)}
+  /* Mobile: bottom bar = Home, Clientes, Ventas, Gastos nomás (acceso directo);
+     Stock/Pedidos/Dashboard viven de acá en más como tarjetas de la Home
+     (ver viewInicioHome) -- el resto de las pestañas sigue .desk-only. El
+     orden visual se resuelve con `order` para no tener que mover el <button>
+     de Clientes en el DOM (rompería el orden del sidebar de escritorio). */
+  @media (max-width:899px){
+    nav button[data-tab="inicio"]{order:1}
+    nav button[data-tab="clientes"]{order:2}
+    nav button[data-tab="vender"]{order:3}
+    nav button[data-tab="gastos"]{order:4}
+  }
   nav button{position:relative;background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:10.5px;font-weight:600;padding-top:8px;transition:color .15s}
   nav button .ic{font-size:20px;line-height:1;transition:transform .15s}
   nav button.active{color:var(--azul-900);font-weight:800}
@@ -391,7 +405,7 @@
       <button class="icon-btn" id="back-btn" onclick="goBack()" title="Volver" style="display:none;font-size:22px">‹</button>
       <div>
         <div class="h-sub" id="h-sub">NORD Uniformes</div>
-        <div class="h-title" id="h-title">Dashboard</div>
+        <div class="h-title" id="h-title">Inicio</div>
       </div>
     </div>
     <div class="h-actions">
@@ -408,12 +422,12 @@
   </div>
 
   <nav>
-    <button data-tab="inicio"     class="active" onclick="go('inicio')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7"/><path d="M9 22V12h6v10"/><path d="M5 10v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10"/></svg></span>Dashboard</button>
-    <button data-tab="stock"      onclick="go('stock')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>Stock</button>
-    <button data-tab="vender"     onclick="go('vender')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></span>Vender</button>
-    <button data-tab="pedidos"    onclick="go('pedidos')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>Pedidos</button>
+    <button data-tab="inicio"     class="active" onclick="go('inicio')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7"/><path d="M9 22V12h6v10"/><path d="M5 10v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10"/></svg></span>Inicio</button>
+    <button data-tab="stock"      class="desk-only" onclick="go('stock')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>Stock</button>
+    <button data-tab="vender"     onclick="go('vender')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></span>Ventas</button>
+    <button data-tab="pedidos"    class="desk-only" onclick="go('pedidos')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>Pedidos</button>
     <button data-tab="ordenes"        class="desk-only" onclick="go('ordenes')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>Órdenes</button>
-    <button data-tab="clientes"       class="desk-only" onclick="go('clientes')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Clientes</button>
+    <button data-tab="clientes"       onclick="go('clientes')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Clientes</button>
     <button data-tab="proveedores"    class="desk-only" onclick="go('proveedores')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>Proveedores</button>
     <button data-tab="compras"        class="desk-only" onclick="go('compras')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>Compras</button>
     <button data-tab="precios"        class="desk-only" onclick="go('precios')"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span>Precios</button>
@@ -503,7 +517,7 @@ function showApp(){
 }
 
 // ─────────────────────────────────────────────────────────────── NAV
-const TITLES = {inicio:"Dashboard", stock:"Stock", vender:"Vender", pedidos:"Pedidos", ordenes:"Órdenes", clientes:"Clientes",
+const TITLES = {inicio:"Inicio", metricas:"Métricas", stock:"Stock", vender:"Ventas", pedidos:"Pedidos", ordenes:"Órdenes", clientes:"Clientes",
   proveedores:"Proveedores", compras:"Compras", precios:"Precios y costos", gastos:"Gastos", egresos:"Egresos", contabilidad:"Contabilidad", configuracion:"Catálogo"};
 function go(tab,opts){
   opts=opts||{};
@@ -784,6 +798,7 @@ async function openPedidoPorId(pedidoId){
 async function render(force){
   const v = $("#view");
   if(TAB==="inicio")        return viewInicio(v,force);
+  if(TAB==="metricas")      return viewInicio(v,force,true);
   if(TAB==="stock")         return viewStock(v,force);
   if(TAB==="vender")        return viewVender(v,force);
   if(TAB==="pedidos")       return viewPedidos(v,force);
@@ -891,7 +906,29 @@ async function fetchStockValorizacion(){
     .sort((a,b)=>b.ventaTotal-a.ventaTotal);
 }
 async function getStockValorizacion(force){ if(force||!DATA.stockValor) DATA.stockValor = await fetchStockValorizacion(); return DATA.stockValor; }
-async function viewInicio(v,force){
+// Home de mobile (Smart Grid estilo Shopify POS): sin fetch, se dibuja al
+// toque. Reemplaza a la grilla que antes vivía adentro de la pestaña Vender
+// -- ahora es la pantalla de inicio de toda la app, no de una venta puntual.
+function viewInicioHome(v){
+  v.innerHTML=`
+    <div class="vm-grid" style="margin-top:2px">
+      <button type="button" class="vm-tile" onclick="openCliente()"><span class="vm-tile-ic">👤</span><span>Agregar cliente</span></button>
+      <button type="button" class="vm-tile" onclick="homeGoVenta()"><span class="vm-tile-ic">🛒</span><span>Agregar venta</span></button>
+      <button type="button" class="vm-tile" onclick="go('gastos')"><span class="vm-tile-ic">💵</span><span>Registrar gasto</span></button>
+      <button type="button" class="vm-tile" onclick="go('stock')"><span class="vm-tile-ic">📦</span><span>Ver stock</span></button>
+      <button type="button" class="vm-tile" onclick="go('metricas')"><span class="vm-tile-ic">📊</span><span>Ver métricas</span></button>
+      <button type="button" class="vm-tile" onclick="go('pedidos')"><span class="vm-tile-ic">📋</span><span>Ver pedidos</span></button>
+    </div>`;
+}
+function homeGoVenta(){ window._vmStep="search"; window._vmTab="productos"; go("vender"); }
+
+// En mobile, "Inicio" ya no es el Dashboard -- es la Home con tarjetas de
+// acceso directo (estilo Shopify POS), y el Dashboard pasa a vivir en la
+// tarjeta "Ver métricas" (pestaña "metricas", misma función con
+// forceDashboard=true). En desktop, "Inicio" sigue siendo el Dashboard de
+// siempre -- no hay Home de tarjetas ahí, el sidebar ya da acceso a todo.
+async function viewInicio(v,force,forceDashboard){
+  if(isMobileVender() && !forceDashboard) return viewInicioHome(v);
   try{
     loading(v);
     const [peds, ordenes] = await Promise.all([ getPedidos(force), fetchOrdenesDashboard() ]);
@@ -1074,37 +1111,38 @@ async function viewStock(v,force){
     window._catQ = window._catQ||"";
     v.innerHTML = `
       <div class="view-title">Stock</div>
-      <div class="search"><span class="mag">🔎</span><input id="cat-q" placeholder="Buscar prenda…" value="${esc(window._catQ)}"></div>
+      <div class="search"><span class="mag">🔎</span><input id="cat-q" placeholder="Buscar prenda…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(window._catQ)}"></div>
       <div id="cat-list"></div>`;
     const inp=$("#cat-q");
     const draw=()=>{
       const q=inp.value.trim().toLowerCase(); window._catQ=inp.value;
       const list=(DATA.catalogo||[]).filter(p=>p.nombre.toLowerCase().includes(q));
-      $("#cat-list").innerHTML = list.length ? `<div class="table-wrap"><table class="pr-table static"><tbody>
-        ${list.map(p=>{
-          const tot=p.talles.reduce((s,t)=>s+t.stock,0);
-          return `<tr style="cursor:pointer" onclick='openPrendaStock(${JSON.stringify(p.id)})'>
-            <td style="white-space:normal;vertical-align:top">
-              <div style="font-weight:700">${esc(p.nombre)}</div>
-              <span class="chip ${tot<=0?'r':tot<=8?'a':'g'}" style="margin-top:4px">${tot} u.</span>
-            </td>
-            <td><div class="talles" style="margin:0">${p.talles.map(t=>`<div class="talle ${talleClass(t.stock)}"><div class="t">${esc(t.talle)}</div><div class="s">${t.stock}</div></div>`).join("")}</div></td>
-          </tr>`;
-        }).join("")}
-      </tbody></table></div>` : '<div class="empty">Sin resultados</div>';
+      // Sólo la fila de la prenda -- nombre, foto y stock total. Las
+      // variantes (talle + stock) se ven al entrar (openPrendaStock), como
+      // la lista de variantes de un producto en Shopify (no todo junto acá).
+      $("#cat-list").innerHTML = list.length ? `<div class="vm-list">${list.map(p=>{
+        const tot=p.talles.reduce((s,t)=>s+t.stock,0);
+        return `<div class="vm-row" onclick='openPrendaStock(${JSON.stringify(p.id)})'>
+          ${p.foto?`<img class="thumb" src="${esc(p.foto)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'thumb ph',textContent:'👕'}))">`:'<div class="thumb ph">👕</div>'}
+          <div class="grow"><div class="vm-row-title">${esc(p.nombre)}</div><div class="vm-row-sub">${p.talles.length} talle${p.talles.length!==1?"s":""}</div></div>
+          <span class="chip ${tot<=0?'r':tot<=8?'a':'g'}">${tot} u.</span>
+          <span class="vm-chevron">›</span></div>`;
+      }).join("")}</div>` : '<div class="empty">Sin resultados</div>';
     };
     inp.oninput=draw; draw();
   }catch(e){ errBox(v,e); }
 }
+// Detalle de una prenda: una fila por variante (talle), con stock y precio
+// juntos -- como la lista de variantes de un producto en Shopify.
 function openPrendaStock(prendaId){
   const p=(DATA.catalogo||[]).find(x=>x.id===prendaId); if(!p) return;
   openSheet(`<div class="grabber"></div>
     ${p.foto?`<img class="sheet-foto" src="${esc(p.foto)}" onerror="this.style.display='none'">`:''}
     <h3>${esc(p.nombre)}</h3><p class="sub">${esc(p.genero||"")}${p.categorias.length?" · "+esc(p.categorias.join(", ")):""}</p>
-    <div class="talles">${p.talles.map(t=>`<div class="talle ${talleClass(t.stock)}"><div class="t">${esc(t.talle)}</div><div class="s">${t.stock}</div></div>`).join("")}</div>
-    <div class="section-h">Precios</div>
-    ${p.talles.map(t=>`<div class="row"><div class="grow"><div class="name">Talle ${esc(t.talle)}</div></div>
-      <div style="text-align:right"><div style="font-weight:700">${fmt(t.precio)}</div><div class="meta">Lista ${fmt(t.precioLista)}</div></div></div>`).join("")}
+    <div class="vm-list">${p.talles.map(t=>`<div class="vm-row">
+      <div class="grow"><div class="vm-row-title">Talle ${esc(t.talle)}</div><div class="vm-row-sub">${fmt(t.precio)} · Lista ${fmt(t.precioLista)}</div></div>
+      <span class="chip ${talleClass(t.stock)==='no'?'r':talleClass(t.stock)==='low'?'a':'g'}">${t.stock} u.</span>
+    </div>`).join("")}</div>
     <p style="font-size:12px;color:var(--muted);margin-top:14px">Para agregar prendas, talles o cambiar precios: pestaña Configuración.</p>`);
 }
 
@@ -1117,7 +1155,7 @@ async function viewConfiguracion(v,force){
       <div class="view-title">Catálogo</div>
       <div class="section-h" style="margin-top:0">Prendas y talles</div>
       <button class="btn gold" style="margin-bottom:14px" onclick="openNuevaPrenda()">+ Nueva prenda</button>
-      <div class="search"><span class="mag">🔎</span><input id="cfg-q" placeholder="Buscar prenda para editar…" value="${esc(window._cfgQ)}"></div>
+      <div class="search"><span class="mag">🔎</span><input id="cfg-q" placeholder="Buscar prenda para editar…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(window._cfgQ)}"></div>
       <div id="cfg-list"></div>`;
     const inp=$("#cfg-q");
     const draw=()=>{
@@ -1318,7 +1356,7 @@ async function viewVender(v,force){
   try{
     if(force||!DATA.catalogo){ loading(v); await getCatalogo(true); }
     if(isMobileVender()){
-      window._vmStep = window._vmStep||"home";
+      window._vmStep = window._vmStep||(cart.length?"cart":"search");
       window._vmTab = window._vmTab||"productos";
       renderVenderMobile(v);
       return;
@@ -1332,7 +1370,7 @@ async function viewVender(v,force){
         </div>
 
         <div class="field" style="margin-bottom:0"><label>Agregar prenda</label>
-          <input list="v-prenda-list" id="v-prenda-input" placeholder="Escribí o elegí una prenda…" autocomplete="off" oninput="onPrendaInput(this.value)">
+          <input list="v-prenda-list" id="v-prenda-input" placeholder="Escribí o elegí una prenda…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="onPrendaInput(this.value)">
           <datalist id="v-prenda-list">${prendaOpts}</datalist>
         </div>
         <div id="v-talle-picker"></div>
@@ -1348,7 +1386,11 @@ async function viewVender(v,force){
 }
 
 // ─────────────────────────────────────────────── VENDER MOBILE (Smart Grid)
-function vmGoHome(){ window._vmStep="home"; render(); }
+// Ya no hay paso "home" acá adentro -- eso ahora es la Home de toda la app
+// (viewInicioHome). Vender entra directo al Carrito (con buscador propio
+// arriba, como el Cart de Shopify POS) y de ahí se sale a buscar o a ver
+// una variante; vmGoHome() quedó como "volver al carrito".
+function vmGoHome(){ window._vmStep="cart"; render(); }
 function vmGoSearch(tab){ window._vmStep="search"; if(tab) window._vmTab=tab; render(); }
 function vmGoVariants(prendaId){ window._vmStep="variants"; window._vmVariantPrenda=prendaId; render(); }
 function vmGoCart(){ window._vmStep="cart"; render(); }
@@ -1356,26 +1398,13 @@ function renderVenderMobile(v){
   const step=window._vmStep;
   if(step==="search") return vmRenderSearch(v);
   if(step==="variants") return vmRenderVariants(v);
-  if(step==="cart") return vmRenderCart(v);
-  return vmRenderHome(v);
-}
-function vmRenderHome(v){
-  const c=venta.cliente;
-  v.innerHTML=`
-    <div class="vm-search" onclick="vmGoSearch('productos')"><span class="mag">🔎</span><span class="vm-search-ph">Buscar prenda…</span></div>
-    <div class="vm-grid">
-      <button type="button" class="vm-tile" onclick="openCliente()"><span class="vm-tile-ic">👤</span><span>Agregar cliente</span></button>
-      <button type="button" class="vm-tile" onclick="vmGoSearch('productos')"><span class="vm-tile-ic">🛒</span><span>Agregar venta</span></button>
-      <button type="button" class="vm-tile wide" onclick="go('gastos')"><span class="vm-tile-ic">💵</span><span>Registrar gasto</span></button>
-    </div>
-    ${c?`<div class="vm-cliente-chip">Cliente: <b>${esc(c.nombre)} ${esc(c.apellido||"")}</b><button type="button" onclick="openCliente()">Cambiar</button></div>`:""}`;
-  updateCartBar();
+  return vmRenderCart(v);
 }
 function vmRenderSearch(v){
   v.innerHTML=`
     <div class="vm-topbar">
-      <button type="button" class="vm-back" onclick="vmGoHome()">←</button>
-      <div class="vm-search"><span class="mag">🔎</span><input id="vm-q-input" placeholder="Buscar…" value="${esc(window._vmQ||"")}"></div>
+      <button type="button" class="vm-back" onclick="vmGoCart()">←</button>
+      <div class="vm-search"><span class="mag">🔎</span><input id="vm-q-input" placeholder="Buscar…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(window._vmQ||"")}"></div>
     </div>
     <div class="vm-tabs" id="vm-tabs"></div>
     <div class="vm-list" id="vm-list"></div>`;
@@ -1454,10 +1483,7 @@ function vmTapVariant(prendaId,talleId){
 function vmRenderCart(v){
   const c=venta.cliente;
   v.innerHTML=`
-    <div class="vm-topbar">
-      <button type="button" class="vm-back" onclick="vmGoHome()">←</button>
-      <div class="vm-topbar-title">Carrito</div>
-    </div>
+    <div class="vm-search" style="margin-bottom:14px" onclick="vmGoSearch('productos')"><span class="mag">🔎</span><span class="vm-search-ph">Buscar prenda…</span></div>
     <div class="vm-cliente-row"><span>${c?esc(c.nombre+" "+(c.apellido||"")):"Sin cliente"}</span><button type="button" onclick="openCliente()">Cambiar</button></div>
     <div id="v-cart"></div>
     <div id="v-checkout"></div>`;
@@ -1766,7 +1792,7 @@ async function registrarPedido(){
         <button class="btn gold" style="margin-top:10px" onclick='waResumen(${JSON.stringify(resumen)},${JSON.stringify(waTel)})'>${waLabel}</button>
         <button class="btn ghost" style="margin-top:10px" onclick="nuevoPedido()">Nuevo pedido</button>
       </div>`;
-    cart=[]; venta={cliente:null,descuentoTipo:"fixed",descuentoValor:0,envio:0,pago:"Tarjeta (Nave)"}; window._vmStep="home";
+    cart=[]; venta={cliente:null,descuentoTipo:"fixed",descuentoValor:0,envio:0,pago:"Tarjeta (Nave)"}; window._vmStep="cart";
     DATA.pedidos=null; DATA.catalogo=null;
     updateCartBar();
   }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent=card?"Registrar y generar link":"Registrar pedido"; }
@@ -1816,7 +1842,7 @@ async function cliSeg(mode){
   body.innerHTML='<div class="spinner"></div>';
   try{
     const clientes = await getClientes();
-    body.innerHTML=`<div class="search"><span class="mag">🔎</span><input id="cli-pick-q" placeholder="Nombre, apellido o email…"></div><div id="cli-pick-list"></div>`;
+    body.innerHTML=`<div class="search"><span class="mag">🔎</span><input id="cli-pick-q" placeholder="Nombre, apellido o email…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div><div id="cli-pick-list"></div>`;
     const inp=$("#cli-pick-q");
     const draw=()=>{
       const q=inp.value.trim().toLowerCase();
@@ -1894,42 +1920,54 @@ async function openPedido(pedidoId){
   window._pedCurrent = p;
   window._pedItems = items||[];
   window._pedCatMap = Object.fromEntries((DATA.catalogo||[]).map(pr=>[pr.nombre,pr]));
-  window._pedEditMode = false;
   window._sheetPedidoId = pedidoId;
+  oiRenderPedidoSheet();
+}
+// Dibuja la hoja ancha del pedido a partir del estado ya cargado en memoria
+// (_pedCurrent/_pedItems/_pedCatMap) -- sin volver a pedir nada al server.
+// Como sólo existe un slot de hoja (#sheet), abrir la hoja de detalle de una
+// línea (oiOpenLineItem) reemplaza este contenido; "Listo"/"Quitar" vuelven
+// acá llamando a esta misma función en vez de cerrar todo.
+function oiRenderPedidoSheet(){
+  const p=window._pedCurrent; if(!p) return;
   const opts=["Pendiente","En Preparación","Preparado","Entregado"];
   if(p.estado_envio && !opts.includes(p.estado_envio)) opts.unshift(p.estado_envio);
   const envs=["Retiro Habitat","Envío a domicilio"];
   if(p.envio && !envs.includes(p.envio)) envs.unshift(p.envio);
   const itemsHtml=oiItemsContainerHtml();
+  // Misma estructura que armar una venta nueva (tarjeta con ítems + agregar
+  // prenda + totales) y después, en tarjetas propias, lo que sólo existe acá:
+  // nota, pagos y entrega juntos, y factura.
   openWideSheet(`<div class="grabber"></div><h3>${esc(p.numero)}</h3><p class="sub">${esc(p.clienteNombre)} · ${esc(p.forma_pago||"")}</p>
 
-    <div class="section-h" style="margin-top:0;display:flex;justify-content:space-between;align-items:center;gap:8px">
-      <span>Prendas</span>
-      <button class="btn ghost sm" id="oi-edit-toggle" onclick="oiToggleEdit()">✏️ Editar prendas</button>
-    </div>
+    <div class="section-h" style="margin-top:0">Prendas</div>
     <div class="card" id="oi-items">${itemsHtml}</div>
     <div id="oi-totals">${oiTotalsHtml(p)}</div>
 
     <div class="section-h" style="margin:20px 2px 8px">📝 Nota interna</div>
-    <div class="field"><textarea id="pd-nota" rows="3" placeholder="Anotá algo sobre este pedido…" style="width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:12px;outline:none;background:#fff;font-family:inherit;font-size:14px;resize:vertical">${esc(p.notas||"")}</textarea></div>
-    <button class="btn ghost" id="pd-nota-save" onclick='guardarNotaPedido(${JSON.stringify(p.id)})'>Guardar nota</button>
-
-    <div class="section-h" style="margin:20px 2px 8px">💵 Registrar pago</div>
-    <div class="field"><label>Monto que recibís ($)</label><input type="text" inputmode="numeric" id="pg-monto" value="${fmtMiles(Math.max(0,Math.round(p.saldo)))}" placeholder="0" oninput="milesOnInput(this)"></div>
-    <div class="two">
-      <div class="field"><label>Fecha</label><input id="pg-fecha" value="${todayISO()}"></div>
-      <div class="field"><label>Forma de pago</label><select id="pg-forma"><option>Tarjeta (Nave)</option><option>Transf. Banc.</option><option>Efectivo</option></select></div>
+    <div class="card">
+      <textarea id="pd-nota" rows="3" placeholder="Anotá algo sobre este pedido…" style="width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:12px;outline:none;background:#fff;font-family:inherit;font-size:14px;resize:vertical">${esc(p.notas||"")}</textarea>
+      <button class="btn ghost" style="margin-top:10px" id="pd-nota-save" onclick='guardarNotaPedido(${JSON.stringify(p.id)})'>Guardar nota</button>
     </div>
-    <button class="btn" id="pg-save" onclick='savePago(${JSON.stringify(p.id)})'>Registrar pago</button>
 
-    <div class="section-h" style="margin:24px 2px 8px">🚚 Registrar entrega</div>
-    <div class="two">
-      <div class="field"><label>Estado</label><select id="en-est">${opts.map(o=>`<option ${p.estado_envio===o?"selected":""}>${o}</option>`).join("")}</select></div>
-      <div class="field"><label>Método</label><select id="en-env">${envs.map(o=>`<option ${p.envio===o?"selected":""}>${o}</option>`).join("")}</select></div>
+    <div class="section-h" style="margin:20px 2px 8px">💵🚚 Pagos y entrega</div>
+    <div class="card">
+      <div class="field"><label>Monto que recibís ($)</label><input type="text" inputmode="numeric" id="pg-monto" value="${fmtMiles(Math.max(0,Math.round(p.saldo)))}" placeholder="0" oninput="milesOnInput(this)"></div>
+      <div class="two">
+        <div class="field"><label>Fecha</label><input id="pg-fecha" value="${todayISO()}"></div>
+        <div class="field"><label>Forma de pago</label><select id="pg-forma"><option>Tarjeta (Nave)</option><option>Transf. Banc.</option><option>Efectivo</option></select></div>
+      </div>
+      <button class="btn" id="pg-save" onclick='savePago(${JSON.stringify(p.id)})'>Registrar pago</button>
+
+      <div class="two" style="margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)">
+        <div class="field"><label>Estado de entrega</label><select id="en-est">${opts.map(o=>`<option ${p.estado_envio===o?"selected":""}>${o}</option>`).join("")}</select></div>
+        <div class="field"><label>Método</label><select id="en-env">${envs.map(o=>`<option ${p.envio===o?"selected":""}>${o}</option>`).join("")}</select></div>
+      </div>
+      <button class="btn ghost" id="en-save" onclick='saveEntrega(${JSON.stringify(p.id)})'>Guardar entrega</button>
     </div>
-    <button class="btn ghost" id="en-save" onclick='saveEntrega(${JSON.stringify(p.id)})'>Guardar entrega</button>
 
-    <div class="section-h" style="margin:24px 2px 8px">🧾 Factura</div>
+    <div class="section-h" style="margin:20px 2px 8px">🧾 Factura</div>
+    <div class="card">
     ${p.factura ? `<div class="tot-line"><span>Comprobante C</span><span>N° ${esc(p.factura.numero_comprobante)}</span></div>
       <div class="tot-line"><span>CAE</span><span>${esc(p.factura.cae||"")}</span></div>
       <div style="color:var(--green);font-weight:700;font-size:13px;margin:8px 0 12px">✅ Ya facturado</div>
@@ -1940,6 +1978,7 @@ async function openPedido(pedidoId){
        <div class="field" id="fa-docnro-wrap" style="display:none"><label>N° de documento</label><input id="fa-docnro" inputmode="numeric" placeholder="Sin puntos ni guiones"></div>
        <div class="tot-line"><span>Importe a facturar</span><span>${fmt(p.total_venta)}</span></div>
        <button class="btn" id="fa-save" onclick='facturarPedido(${JSON.stringify(p.id)})'>Emitir Factura C</button>`}
+    </div>
 
     <button class="btn" style="margin-top:24px;background:var(--red)" id="del-pedido" ${p.factura?'disabled':''} onclick='eliminarPedido(${JSON.stringify(p.id)})'>🗑 Eliminar pedido</button>
     ${p.factura?'<p style="font-size:11.5px;color:var(--muted);margin-top:6px">No se puede eliminar: ya tiene factura emitida.</p>':'<p style="font-size:11.5px;color:var(--muted);margin-top:6px">Para pedidos de prueba. Borra el pedido, sus ítems y sus pagos — no se puede deshacer.</p>'}`);
@@ -1957,76 +1996,91 @@ function oiListaFor(talleObj){
   if(!talleObj) return 0;
   return talleObj.precioLista>0 ? talleObj.precioLista : Math.round(talleObj.precio*CARD_SURCHARGE);
 }
-function oiToggleEdit(){
-  window._pedEditMode = !window._pedEditMode;
-  const btn=$("#oi-edit-toggle"); if(btn) btn.textContent = window._pedEditMode ? "✓ Listo" : "✏️ Editar prendas";
-  const el=$("#oi-items"); if(el) el.innerHTML = oiItemsContainerHtml();
-}
+// Fila estilo Vender (cart-line): nombre+talle+descuento, stepper de
+// cantidad y subtotal siempre visibles; tocar la fila (fuera del stepper)
+// abre la hoja de detalle (oiOpenLineItem) para talle/descuento/quitar --
+// mismo patrón que armar una venta nueva, sin modo "editar" aparte.
 function oiRowHtml(it,idx){
   const prenda=window._pedCatMap[it.nombre_prenda];
   const talles=prenda?prenda.talles:[];
   const curTalle=talles.find(t=>t.talleId===it.talle_id);
-  const base=oiListaFor(curTalle) || it.precio_unitario;
-  const lista=oiListaFor(curTalle) || base;
+  const lista=oiListaFor(curTalle) || it.precio_unitario;
   // Se usa el % guardado al momento de vender; si es una fila vieja de antes de que
   // existiera esa columna (null), se lo estima contra el precio vigente de hoy.
   const descPct = it.descuento_pct!=null ? Math.round(it.descuento_pct)
-    : (base>0 ? Math.max(0, Math.round((1-it.precio_unitario/base)*100)) : 0);
-  const editing=!!window._pedEditMode;
-  const talleHtml = editing
-    ? `<select class="oi-talle" onchange="oiChangeTalle(${idx}, this.value)">${talles.length
-        ? talles.map(t=>`<option value="${t.talleId}" ${t.talleId===it.talle_id?"selected":""}>${esc(t.talle)}</option>`).join("")
-        : `<option value="${it.talle_id||''}" selected>${esc(it.talle)}</option>`}</select>`
-    : `<span class="oi-ro">T${esc(it.talle)}</span>`;
-  const qtyHtml = editing
-    ? `<div class="qty"><button onclick="oiChangeQty(${idx},-1)">−</button><span id="oi-qty-${idx}">${it.cantidad}</span><button onclick="oiChangeQty(${idx},1)">+</button></div>`
-    : `<span class="oi-ro">×${it.cantidad}</span>`;
-  const descHtml = editing
-    ? `<div class="oi-desc-wrap"><input type="text" inputmode="numeric" id="oi-desc-${idx}" value="${descPct}" onchange="oiChangeDesc(${idx}, this.value)"><span>%</span></div>`
-    : `<span class="oi-ro">${descPct}%</span>`;
-  const delHtml = editing
-    ? `<button type="button" class="oi-del" title="Eliminar prenda" onclick="oiDeleteItem(${idx})">✕</button>`
-    : "";
-  return `<div class="row oi-row${editing?" editing":""}" id="oi-row-${idx}">
-    <div class="oi-nombre" title="${esc(it.nombre_prenda)}">${esc(it.nombre_prenda)}</div>
-    ${talleHtml}
-    ${qtyHtml}
-    <div class="oi-precio" id="oi-precio-${idx}"><b>${fmt(lista)}</b> lista<div class="oi-lista">c/u ${fmt(it.precio_unitario)}</div></div>
-    ${descHtml}
-    <span class="oi-subtotal" id="oi-sub-${idx}">${fmt(it.cantidad*it.precio_unitario)}</span>
-    ${delHtml}
+    : (lista>0 ? Math.max(0, Math.round((1-it.precio_unitario/lista)*100)) : 0);
+  const subLine = descPct>0
+    ? `Talle ${esc(it.talle)} · ${fmt(lista)} c/u · <span class="disc">−${descPct}%</span>`
+    : `Talle ${esc(it.talle)} · ${fmt(lista)} c/u`;
+  return `<div class="cart-line" id="oi-row-${idx}" onclick="oiOpenLineItem(${idx})">
+    <div class="cl-info">
+      <div class="cl-name">${esc(it.nombre_prenda)}</div>
+      <div class="cl-sub">${subLine}</div>
+    </div>
+    <div class="qty" onclick="event.stopPropagation()"><button type="button" onclick="oiChangeQty(${idx},-1)">−</button><span id="oi-qty-${idx}">${it.cantidad}</span><button type="button" onclick="oiChangeQty(${idx},1)">+</button></div>
+    <span class="cl-total" id="oi-sub-${idx}">${fmt(it.cantidad*it.precio_unitario)}</span>
+    <span class="cl-chevron">›</span>
   </div>`;
 }
-// Ítems + (si está en modo edición) el mini-form de "+ Agregar prenda" al pie.
+// Ítems + widget de "+ Agregar prenda" (combobox + chips de talle), siempre
+// visible -- igual que armar una venta nueva, tocar un talle agrega 1 unidad.
+// Los ítems viven en su propio #oi-rows para poder refrescar sólo esa parte
+// (oiRedrawRows) sin perder lo que se esté escribiendo en el combobox de abajo.
 function oiItemsContainerHtml(){
-  const itemsHtml = window._pedItems.map((it,idx)=>oiRowHtml(it,idx)).join("") || '<div class="empty">Sin ítems</div>';
-  return itemsHtml + (window._pedEditMode ? oiAddFormHtml() : "");
+  return `<div id="oi-rows">${oiRowsHtml()}</div>` + oiAddWidgetHtml();
 }
-function oiAddFormHtml(){
-  const prendas = Object.values(window._pedCatMap||{}).sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  const prendaOpts = prendas.map(p=>`<option value="${esc(p.nombre)}">${esc(p.nombre)}</option>`).join("");
-  const first = prendas[0];
-  const talleOpts = first ? first.talles.map(t=>`<option value="${t.talleId}">${esc(t.talle)}</option>`).join("") : "";
-  return `<div class="oi-add" id="oi-add-row">
-    <select id="oi-add-prenda" onchange="oiAddFillTalles()">${prendaOpts || '<option value="">Sin prendas</option>'}</select>
-    <select id="oi-add-talle">${talleOpts}</select>
-    <input type="number" min="1" step="1" id="oi-add-qty" value="1">
-    <button type="button" class="btn ghost sm" onclick="oiAddItem()">+ Agregar</button>
+function oiRowsHtml(){
+  return window._pedItems.map((it,idx)=>oiRowHtml(it,idx)).join("") || '<div class="empty">Sin ítems</div>';
+}
+function oiRedrawRows(){
+  const el=$("#oi-rows"); if(el) el.innerHTML=oiRowsHtml();
+}
+function oiAddWidgetHtml(){
+  const prendaOpts = Object.values(window._pedCatMap||{}).slice().sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"))
+    .map(p=>`<option value="${esc(p.nombre)}">`).join("");
+  return `<div style="padding-top:12px;margin-top:6px;border-top:1px dashed var(--line)">
+    <div class="field" style="margin-bottom:0"><label>+ Agregar prenda</label>
+      <input list="oi-add-list" id="oi-add-input" placeholder="Escribí o elegí una prenda…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="oiOnPrendaInput(this.value)">
+      <datalist id="oi-add-list">${prendaOpts}</datalist>
+    </div>
+    <div id="oi-add-picker"></div>
   </div>`;
 }
-function oiAddFillTalles(){
-  const nombre=$("#oi-add-prenda")?.value;
-  const prenda=window._pedCatMap[nombre];
-  const sel=$("#oi-add-talle"); if(!sel) return;
-  sel.innerHTML = prenda ? prenda.talles.map(t=>`<option value="${t.talleId}">${esc(t.talle)}</option>`).join("") : "";
+function oiOnPrendaInput(val){
+  const name=(val||"").trim().toLowerCase();
+  const p=Object.values(window._pedCatMap||{}).find(x=>x.nombre.toLowerCase()===name);
+  window._oiSelectedPrenda = p ? p.id : null;
+  oiDrawTallePicker();
 }
-async function oiAddItem(){
-  const nombre=$("#oi-add-prenda")?.value;
-  const talleId=$("#oi-add-talle")?.value;
-  const qty=Math.max(1, Math.round(+($("#oi-add-qty")?.value)||1));
-  const prenda=window._pedCatMap[nombre]; if(!prenda) return;
-  const talleObj=prenda.talles.find(t=>t.talleId===talleId); if(!talleObj){ toast("Elegí un talle",true); return; }
-  const btn=document.querySelector("#oi-add-row button"); if(btn){ btn.disabled=true; btn.textContent="Agregando…"; }
+function oiDrawTallePicker(){
+  const box=$("#oi-add-picker"); if(!box) return;
+  const p=Object.values(window._pedCatMap||{}).find(x=>x.id===window._oiSelectedPrenda);
+  if(!p){ box.innerHTML=""; return; }
+  const first=p.talles[0];
+  box.innerHTML=`<div class="card" style="margin-top:10px;background:#fbf9f4">
+    <div class="row" style="padding:0 0 10px">
+      <div class="grow"><div class="name">${esc(p.nombre)}</div>
+        ${first?`<div class="meta">${fmt(oiListaFor(first))}</div>`:""}</div>
+    </div>
+    <div class="talle-chips">${oiTalleChips(p)}</div>
+  </div>`;
+}
+function oiTalleChips(p){
+  return p.talles.map(t=>{
+    const it=window._pedItems.find(x=>x.talle_id===t.talleId);
+    const q=it?it.cantidad:0;
+    return `<button type="button" class="talle-chip${q>0?" sel":""}" onclick='oiTapTalle(${JSON.stringify(p.id)},${JSON.stringify(t.talleId)})'>
+      ${esc(t.talle)}${q>0?`<span class="chip-qty">${q}</span>`:""}
+    </button>`;
+  }).join("");
+}
+// Tocar un talle: si ya está en el pedido suma 1 (mismo helper que el
+// stepper), si no, crea la línea nueva en 005_ordenes.
+async function oiTapTalle(prendaId,talleId){
+  const p=Object.values(window._pedCatMap||{}).find(x=>x.id===prendaId); if(!p) return;
+  const idx=window._pedItems.findIndex(x=>x.talle_id===talleId);
+  if(idx>=0){ oiChangeQty(idx,1); oiDrawTallePicker(); return; }
+  const talleObj=p.talles.find(t=>t.talleId===talleId); if(!talleObj) return;
   try{
     const base=oiListaFor(talleObj) || 0;
     let costo=0;
@@ -2035,26 +2089,86 @@ async function oiAddItem(){
       costo = Number(c?.costo)||0;
     }catch(e){}
     const { data: nuevo, error } = await getClient().from("005_ordenes").insert({
-      pedido_id: window._pedCurrent.id, talle_id: talleId, nombre_prenda: nombre, talle: talleObj.talle,
-      cantidad: qty, precio_unitario: base, costo_unitario: costo, descuento_pct: 0,
+      pedido_id: window._pedCurrent.id, talle_id: talleId, nombre_prenda: p.nombre, talle: talleObj.talle,
+      cantidad: 1, precio_unitario: base, costo_unitario: costo, descuento_pct: 0,
     }).select().single();
     if(error) throw error;
     window._pedItems.push(nuevo);
-    const el=$("#oi-items"); if(el) el.innerHTML=oiItemsContainerHtml();
+    oiRedrawRows(); oiDrawTallePicker();
     oiRecalcTotals();
-    toast("Prenda agregada");
-  }catch(e){ toast(friendlyError(e),true); if(btn){ btn.disabled=false; btn.textContent="+ Agregar"; } }
+  }catch(e){ toast(friendlyError(e),true); }
 }
-async function oiDeleteItem(idx){
+// Hoja de detalle de línea (igual que en Vender): cantidad, descuento %/$
+// fijo con toggle, cambio de talle y quitar.
+function oiOpenLineItem(idx){
   const it=window._pedItems[idx]; if(!it) return;
-  if(!(await confirmDialog(`¿Eliminar "${it.nombre_prenda}" talle ${it.talle} del pedido?`))) return;
+  const prenda=window._pedCatMap[it.nombre_prenda];
+  const talles=prenda?prenda.talles:[];
+  const descPct = it.descuento_pct!=null ? Math.round(it.descuento_pct) : 0;
+  window._oiLiMode="pct";
+  openCenterSheet(`<div class="grabber"></div><h3>${esc(it.nombre_prenda)}</h3><p class="sub">Talle ${esc(it.talle)}</p>
+    ${talles.length>1?`<div class="field"><label>Talle</label>
+      <select id="oi-li-talle" onchange="oiChangeTalle(${idx}, this.value)">${talles.map(t=>`<option value="${t.talleId}" ${t.talleId===it.talle_id?"selected":""}>${esc(t.talle)}</option>`).join("")}</select>
+    </div>`:""}
+    <div class="field"><label>Cantidad</label>
+      <div class="qty" style="width:fit-content"><button type="button" onclick="oiLiChangeQty(${idx},-1)">−</button><span id="oi-li-qty">${it.cantidad}</span><button type="button" onclick="oiLiChangeQty(${idx},1)">+</button></div>
+    </div>
+    <div class="field"><label>Descuento de esta línea</label>
+      <div class="seg"><button id="oi-li-seg-pct" class="on" onclick="oiLiSetDiscMode('pct',${idx})">%</button><button id="oi-li-seg-fixed" onclick="oiLiSetDiscMode('fixed',${idx})">$ fijo</button></div>
+      <input type="text" inputmode="numeric" id="oi-li-disc-val" value="${descPct}" placeholder="0" onchange="oiLiChangeDisc(${idx},this.value)">
+    </div>
+    <button type="button" class="btn" onclick="oiRenderPedidoSheet()">Listo</button>
+    <button type="button" class="btn ghost" style="margin-top:8px;color:#b23b3b;border-color:#e2c4c4" onclick='oiLiDelete(${idx})'>Quitar del pedido</button>`);
+}
+function oiLiChangeQty(idx,delta){
+  oiChangeQty(idx,delta);
+  const it=window._pedItems[idx];
+  const el=$("#oi-li-qty"); if(el && it) el.textContent=it.cantidad;
+}
+function oiLiSetDiscMode(mode,idx){
+  window._oiLiMode=mode;
+  $("#oi-li-seg-pct")?.classList.toggle("on",mode==="pct");
+  $("#oi-li-seg-fixed")?.classList.toggle("on",mode==="fixed");
+  const it=window._pedItems[idx]; if(!it) return;
+  const prenda=window._pedCatMap[it.nombre_prenda];
+  const curTalle=(prenda?prenda.talles:[]).find(t=>t.talleId===it.talle_id);
+  const lista=oiListaFor(curTalle)||it.precio_unitario;
+  const inp=$("#oi-li-disc-val"); if(!inp) return;
+  const pct=it.descuento_pct||0;
+  inp.value = mode==="fixed" ? fmtMiles(Math.round(lista*pct/100)) : pct;
+}
+function oiLiChangeDisc(idx,val){
+  const it=window._pedItems[idx]; if(!it) return;
+  const prenda=window._pedCatMap[it.nombre_prenda];
+  const curTalle=(prenda?prenda.talles:[]).find(t=>t.talleId===it.talle_id);
+  const lista=oiListaFor(curTalle)||it.precio_unitario;
+  let pct;
+  if(window._oiLiMode==="fixed"){
+    const monto=parseMiles(val);
+    pct = lista>0 ? Math.min(100,Math.max(0,Math.round(monto/lista*100))) : 0;
+  } else {
+    pct = Math.min(100,Math.max(0,+val||0));
+  }
+  oiChangeDesc(idx,pct);
+  const row=$("#oi-row-"+idx); if(row) row.outerHTML=oiRowHtml(it,idx);
+}
+async function oiLiDelete(idx){
+  const ok = await oiDeleteItem(idx);
+  if(ok) oiRenderPedidoSheet();
+}
+// Devuelve true si se eliminó de verdad (false si se canceló o falló), para
+// que quien la llama desde la hoja de detalle sepa si volver o quedarse.
+async function oiDeleteItem(idx){
+  const it=window._pedItems[idx]; if(!it) return false;
+  if(!(await confirmDialog(`¿Eliminar "${it.nombre_prenda}" talle ${it.talle} del pedido?`))) return false;
   try{
     const { error } = await getClient().from("005_ordenes").delete().eq("id", it.id);
     if(error) throw error;
     window._pedItems.splice(idx,1);
-    const el=$("#oi-items"); if(el) el.innerHTML=oiItemsContainerHtml();
+    oiRedrawRows();
     oiRecalcTotals();
-  }catch(e){ toast(friendlyError(e),true); }
+    return true;
+  }catch(e){ toast(friendlyError(e),true); return false; }
 }
 function oiRecalcTotals(){
   const p=window._pedCurrent; if(!p) return;
@@ -2315,10 +2429,12 @@ async function viewClientes(v,force){
   try{
     if(force||!DATA.clientes){ loading(v); await getClientes(true); }
     window._cliSort = window._cliSort||{field:"codigo",dir:-1};
+    const mobile=isMobileVender();
     v.innerHTML=`
       <div class="view-title">Clientes <span style="font-size:15px;color:var(--muted);font-weight:600">· ${(DATA.clientes||[]).length}</span></div>
       <button class="btn gold" style="margin-bottom:14px" onclick="openNuevoClienteAdmin()">+ Nuevo cliente</button>
-      <div class="search"><span class="mag">🔎</span><input id="cli-q" placeholder="Buscar por nombre, email, teléfono o código…" value="${esc(window._cliQ||"")}"></div>
+      <div class="search"><span class="mag">🔎</span><input id="cli-q" placeholder="Buscar por nombre, email, teléfono o código…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(window._cliQ||"")}"></div>
+      ${mobile ? `<div class="vm-list" id="cli-list"></div>` : `
       <div class="table-wrap"><table class="pr-table" id="cli-table">
         <thead><tr>
           <th data-field="codigo">Código</th>
@@ -2329,9 +2445,9 @@ async function viewClientes(v,force){
           <th></th>
         </tr></thead>
         <tbody id="cli-tbody"></tbody>
-      </table></div>`;
+      </table></div>`}`;
     const inp=$("#cli-q"); inp.oninput=()=>{ window._cliQ=inp.value; drawClientes(); };
-    $("#cli-table").querySelectorAll("th[data-field]").forEach(th=>{
+    if(!mobile) $("#cli-table").querySelectorAll("th[data-field]").forEach(th=>{
       th.onclick=()=>{
         const f=th.dataset.field;
         if(window._cliSort.field===f) window._cliSort.dir*=-1; else window._cliSort={field:f,dir:1};
@@ -2342,11 +2458,19 @@ async function viewClientes(v,force){
   }catch(e){ errBox(v,e); }
 }
 function drawClientes(){
-  const el=$("#cli-tbody"); if(!el) return;
   const q=(window._cliQ||"").toLowerCase().trim();
   const {field,dir}=window._cliSort;
   const list=(DATA.clientes||[]).filter(c=> !q || [c.nombre,c.apellido,c.email,c.telefono,c.codigo].some(x=>String(x||"").toLowerCase().includes(q)))
     .sort((a,b)=> field==="codigo" ? ((Number(a.nro)||0)-(Number(b.nro)||0))*dir : String(a[field]||"").localeCompare(String(b[field]||""),"es")*dir);
+  if(isMobileVender()){
+    const el=$("#cli-list"); if(!el) return;
+    el.innerHTML = list.length ? list.map(c=>`<div class="vm-row" onclick='openEditarCliente(${JSON.stringify(c.id)})'>
+      ${c.codigo?`<span class="chip n">${esc(c.codigo)}</span>`:""}
+      <div class="grow"><div class="vm-row-title">${esc(c.nombre)} ${esc(c.apellido||"")}</div><div class="vm-row-sub">${esc(c.telefono||c.email||"")}</div></div>
+      <span class="vm-chevron">›</span></div>`).join("") : '<div class="empty">Sin clientes</div>';
+    return;
+  }
+  const el=$("#cli-tbody"); if(!el) return;
   el.innerHTML = list.length ? list.map(c=>`<tr style="cursor:pointer" onclick='openEditarCliente(${JSON.stringify(c.id)})'>
       <td>${c.codigo?`<span class="chip n">${esc(c.codigo)}</span>`:"—"}</td>
       <td>${esc(c.nombre)}</td><td>${esc(c.apellido||"—")}</td><td>${esc(c.email||"—")}</td><td>${esc(c.telefono||"—")}</td>
@@ -3137,7 +3261,7 @@ async function viewGastos(v,force){
         </div>
       </div>
       <p style="font-size:12.5px;color:var(--muted);margin-top:-6px">${list0.length} gasto${list0.length!==1?"s":""} registrado${list0.length!==1?"s":""}.${mobile?" Tocá un gasto para editarlo.":" Todas las celdas son editables."}</p>
-      <div class="search"><span class="mag">🔎</span><input id="ga-q" placeholder="Buscar categoría, proveedor o descripción…" value="${esc(window._gaQ)}"></div>
+      <div class="search"><span class="mag">🔎</span><input id="ga-q" placeholder="Buscar categoría, proveedor o descripción…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(window._gaQ)}"></div>
       ${mobile ? `<div class="vm-list" id="ga-list"></div>` : `
       <div class="table-wrap"><table class="pr-table" id="ga-table">
         <colgroup><col style="width:11%"><col style="width:16%"><col style="width:11%"><col style="width:17%"><col style="width:39%"><col style="width:6%"></colgroup>
