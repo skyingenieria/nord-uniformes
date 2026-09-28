@@ -176,6 +176,22 @@
   .oi-row.editing{grid-template-columns:minmax(56px,1fr) 54px 74px 78px 58px 68px 24px}
   .oi-row .oi-del{border:none;background:transparent;color:#b23b3b;font-size:17px;font-weight:800;cursor:pointer;padding:2px 4px;line-height:1;justify-self:end}
   .oi-row .oi-del:active{opacity:.6}
+  /* Fila del carrito en Vender (distinta de .oi-row de Pedidos): simplificada
+     a nombre/talle + stepper + subtotal, sin selector de talle ni input de
+     descuento inline -- tocar la fila abre la hoja de detalle (openLineItem). */
+  .cart-line{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+  .cart-line:last-child{border-bottom:none}
+  .cart-line:active{background:#f7f5f0}
+  .cart-line .cl-info{flex:1;min-width:0}
+  .cart-line .cl-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cart-line .cl-sub{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cart-line .cl-sub .disc{color:var(--green);font-weight:700}
+  .cart-line .cl-sub .warn{color:var(--red);font-weight:700}
+  .cart-line .qty{flex-shrink:0;border-radius:8px}
+  .cart-line .qty button{width:26px;height:26px;font-size:14px}
+  .cart-line .qty span{min-width:20px;font-size:12px}
+  .cart-line .cl-total{font-weight:800;font-size:13.5px;text-align:right;white-space:nowrap;min-width:58px;flex-shrink:0}
+  .cart-line .cl-chevron{color:var(--muted);font-size:18px;flex-shrink:0}
   .oi-add{display:grid;grid-template-columns:minmax(0,1.4fr) 78px 58px auto;gap:8px;align-items:center;padding:12px 0 4px;border-top:1px dashed var(--line);margin-top:6px}
   .oi-add select,.oi-add input{padding:8px 9px;border:1.5px solid var(--line);border-radius:8px;font-size:12.5px;font-family:inherit;background:#fff}
   .oi-add input{text-align:center}
@@ -439,7 +455,7 @@ let navStack = [];
 let sheetOpen = false;
 const DATA = { catalogo:null, clientes:null, pedidos:null, ordenes:null, proveedores:null, compras:null, preciosCostos:null, facturas:null, gastos:null, egresos:null, dolarBlue:null, stockValor:null };
 let cart = [];
-let venta = { cliente:null, descuento:0, envio:0, pago:"Tarjeta (Nave)" };
+let venta = { cliente:null, descuentoTipo:"fixed", descuentoValor:0, envio:0, pago:"Tarjeta (Nave)" };
 
 const $ = (s,el=document)=>el.querySelector(s);
 const fmt = (n)=> "$" + Math.round(Number(n)||0).toLocaleString("es-AR");
@@ -1240,53 +1256,51 @@ async function registrarCompra(talleId){
 //  1) Por medio de pago: si la línea no tiene descuento manual, Transf./
 //     Efectivo bajan SOLOS de lista a transferencia, sin tocar nada.
 //     Tarjeta se queda en lista.
-//  2) Promo: el % que se carga a mano en cada línea reemplaza al de arriba
-//     y se calcula siempre sobre precio de lista (nunca sobre transferencia),
-//     sea cual sea el medio de pago.
-// Excepción -- Chomba Blanca: el 30% OFF es automático (no se carga a mano)
-// pero cubre como mucho 1 unidad EN TOTAL en todo el pedido, aunque haya
-// varias líneas en distintos talles (misma regla que la promo del sitio
-// público) -- el resto de las unidades quedan solo con el descuento por
-// medio de pago. Se recalcula con recomputeChombaPromo() cada vez que
-// cambia el carrito.
+//  2) Descuento por ítem: se carga tocando la prenda en el carrito (hoja de
+//     detalle), en % o en $ fijo (elegible), reemplaza al de arriba y se
+//     calcula siempre sobre precio de lista (nunca sobre transferencia),
+//     sea cual sea el medio de pago. Un $ fijo se reparte por unidad
+//     (discValue / cantidad) para que el precio unitario siga siendo
+//     consistente si después se suman más unidades.
+// Descuento general del pedido: mismo esquema (% o $ fijo) a nivel carrito,
+// en venta.descuentoTipo/descuentoValor — ver cartDescuentoMonto().
 const CARD_SURCHARGE = 1.15;
-const CHOMBA_BLANCA_NOMBRE = "Chomba Blanca";
-const CHOMBA_PROMO_PCT = 30;
 function isCard(){ return /nave|tarjeta/i.test(venta.pago); }
 function basePrice(i){ return i.precioLista>0 ? i.precioLista : Math.round(i.precio*CARD_SURCHARGE); }
 function priceAfterPaymentMethod(i){ return isCard() ? basePrice(i) : i.precio; }
-function recomputeChombaPromo(){
-  let remaining=1;
-  cart.forEach(i=>{
-    if(i.nombre!==CHOMBA_BLANCA_NOMBRE){ i._promoQty=0; return; }
-    const used=Math.min(i.qty, remaining);
-    i._promoQty=used; remaining-=used;
-  });
-}
 function unitPrice(i){
-  if(i.nombre===CHOMBA_BLANCA_NOMBRE){
-    const pq=Math.min(i._promoQty||0, i.qty);
-    const normal=priceAfterPaymentMethod(i);
-    if(pq<=0) return normal;
-    const conPromo=Math.round(basePrice(i)*(1-CHOMBA_PROMO_PCT/100));
-    return Math.round((conPromo*pq + normal*(i.qty-pq))/i.qty);
+  if(i.discType==="fixed" && i.discValue>0){
+    const perUnit=(i.discValue||0)/(i.qty||1);
+    return Math.max(0, Math.round(basePrice(i)-perUnit));
   }
-  const d=Math.min(100,Math.max(0,i.descPct||0));
-  if(d>0) return Math.round(basePrice(i)*(1-d/100));
+  if(i.discType==="pct" && i.discValue>0){
+    const d=Math.min(100,Math.max(0,i.discValue||0));
+    return Math.round(basePrice(i)*(1-d/100));
+  }
   return priceAfterPaymentMethod(i);
 }
 function effectiveDescPct(i){
-  if(i.nombre===CHOMBA_BLANCA_NOMBRE){
+  if(i.discType==="fixed" && i.discValue>0){
     const lista=basePrice(i);
     return lista>0 ? Math.round((1-unitPrice(i)/lista)*100) : 0;
   }
-  return i.descPct||0;
+  if(i.discType==="pct") return i.discValue||0;
+  return 0;
 }
 function cartGrossSubtotal(){ return cart.reduce((s,i)=>s+basePrice(i)*i.qty,0); }
 function cartPaymentDiscountTotal(){ return cart.reduce((s,i)=>s+(basePrice(i)-priceAfterPaymentMethod(i))*i.qty,0); }
 function cartPromoDiscountTotal(){ return cart.reduce((s,i)=>s+(priceAfterPaymentMethod(i)-unitPrice(i))*i.qty,0); }
 function cartSubtotal(){ return cart.reduce((s,i)=>s+unitPrice(i)*i.qty,0); }
-function cartTotal(){ return Math.max(0, cartSubtotal() - (venta.descuento||0) + (venta.envio||0)); }
+// Descuento general del pedido (nivel carrito, como en Shopify): % sobre el
+// subtotal ya con descuentos por línea aplicados, o $ fijo directo.
+function cartDescuentoMonto(){
+  if(venta.descuentoTipo==="pct"){
+    const d=Math.min(100,Math.max(0,venta.descuentoValor||0));
+    return Math.round(cartSubtotal()*d/100);
+  }
+  return Math.max(0, venta.descuentoValor||0);
+}
+function cartTotal(){ return Math.max(0, cartSubtotal() - cartDescuentoMonto() + (venta.envio||0)); }
 // Inputs de monto ($): sin flechitas de number, con separador de miles en vivo.
 function fmtMiles(n){ n=Math.round(Number(n)||0); return n?n.toLocaleString("es-AR"):""; }
 function parseMiles(s){ return Number(String(s||"").replace(/\D/g,""))||0; }
@@ -1451,34 +1465,52 @@ function vmRenderCart(v){
   drawCart();
   updateCartBar();
 }
+const PAGO_OPTS=[["Tarjeta (Nave)","Tarjeta"],["Transf. Banc.","Transferencia"],["Efectivo","Efectivo"]];
+function vmSetPago(p){ venta.pago=p; vmDrawCheckout(); drawCart(); }
 function vmDrawCheckout(){
   const el=$("#v-checkout"); if(!el) return;
   if(!cart.length){ el.innerHTML=""; return; }
   el.innerHTML=`
     <div class="section-h" style="margin:18px 2px 8px">Forma de pago</div>
-    <select id="v-pago" onchange="venta.pago=this.value;drawCart()">
-      <option value="Tarjeta (Nave)" ${isCard()?"selected":""}>Tarjeta (Nave)</option>
-      <option ${venta.pago==="Transf. Banc."?"selected":""}>Transf. Banc.</option>
-      <option ${venta.pago==="Efectivo"?"selected":""}>Efectivo</option>
-    </select>
+    <div class="vm-tabs">${PAGO_OPTS.map(([v,label])=>`<button type="button" class="${venta.pago===v?"on":""}" onclick="vmSetPago('${v}')">${label}</button>`).join("")}</div>
     ${isCard()?'<p style="font-size:12px;color:var(--muted);margin:8px 0 0">💳 Al registrar se genera el link de pago Nave para enviar al cliente por WhatsApp.</p>':''}
     <div id="v-totals" style="margin-top:14px"></div>
     <button type="button" class="btn vm-checkout-btn" id="v-submit" onclick="registrarPedido()">${isCard()?"Registrar y generar link":"Registrar pedido"}</button>`;
   drawTotals();
 }
-// "Más acciones" del carrito mobile: cliente, descuento general y envío --
-// en desktop estos campos van siempre visibles en la tarjeta; acá, para no
-// atiborrar la pantalla chica, quedan en esta hoja (como "Apply discount"
-// en el carrito de Shopify POS).
+// "Más acciones" del carrito mobile: cliente, descuento general (%/$ fijo,
+// como el descuento a nivel carrito de Shopify) y envío -- en desktop estos
+// campos van siempre visibles en la tarjeta; acá, para no atiborrar la
+// pantalla chica, quedan en esta hoja.
 function vmMoreActions(){
   const c=venta.cliente;
+  const tipo=venta.descuentoTipo==="pct"?"pct":"fixed";
   openCenterSheet(`<div class="grabber"></div><h3>Más acciones</h3>
     <div class="field"><label>Cliente</label>
       <button type="button" class="btn ghost" onclick="closeSheet();openCliente()">${c?esc(c.nombre+" "+(c.apellido||"")):"Elegir o crear cliente"}</button>
     </div>
-    <div class="field"><label>Descuento general ($)</label><input type="text" inputmode="numeric" id="vm-desc" value="${fmtMiles(venta.descuento)}" placeholder="0" oninput="venta.descuento=milesOnInput(this);drawTotals()"></div>
+    <div class="field"><label>Descuento general del pedido</label>
+      <div class="seg"><button id="vm-descseg-pct" class="${tipo==="pct"?"on":""}" onclick="setDescTipo('pct',true)">%</button><button id="vm-descseg-fixed" class="${tipo==="fixed"?"on":""}" onclick="setDescTipo('fixed',true)">$ fijo</button></div>
+      <input type="text" inputmode="numeric" id="vm-desc" value="${tipo==="fixed"?fmtMiles(venta.descuentoValor):(venta.descuentoValor||0)}" placeholder="0" oninput="changeDescValor(this)">
+    </div>
     <div class="field"><label>Cargo de envío ($)</label><input type="text" inputmode="numeric" id="vm-env" value="${fmtMiles(venta.envio)}" placeholder="0" oninput="venta.envio=milesOnInput(this);drawTotals()"></div>
     <button type="button" class="btn" onclick="closeSheet()">Listo</button>`);
+}
+// Descuento general (%/$ fijo), compartido entre el checkout inline de
+// desktop y la hoja "Más acciones" de mobile -- mobile=true dice cuál de
+// los dos inputs (vm-desc/v-desc) hay que releer.
+function setDescTipo(t,mobile){
+  venta.descuentoTipo=t;
+  const segPct=$(mobile?"#vm-descseg-pct":"#desc-seg-pct"), segFixed=$(mobile?"#vm-descseg-fixed":"#desc-seg-fixed");
+  segPct?.classList.toggle("on",t==="pct"); segFixed?.classList.toggle("on",t==="fixed");
+  const inp=$(mobile?"#vm-desc":"#v-desc");
+  if(inp) inp.value = t==="fixed" ? fmtMiles(venta.descuentoValor||0) : String(venta.descuentoValor||0);
+  drawTotals();
+}
+function changeDescValor(el){
+  const tipo=venta.descuentoTipo==="pct"?"pct":"fixed";
+  venta.descuentoValor = tipo==="fixed" ? milesOnInput(el) : Math.min(100,Math.max(0,+el.value||0));
+  drawTotals();
 }
 
 function renderCliente(){
@@ -1527,10 +1559,9 @@ function cartQtyFor(talleId){ const i=cart.find(x=>x.talleId===talleId); return 
 function tapTalle(prendaId, talleId){
   const p=(DATA.catalogo||[]).find(x=>x.id===prendaId); const t=p.talles.find(x=>x.talleId===talleId);
   let i=cart.find(x=>x.talleId===talleId);
-  if(!i){ i={talleId,nombre:p.nombre,talle:t.talle,precio:t.precio,precioLista:t.precioLista,qty:0,stock:t.stock,descPct:0}; cart.push(i); }
+  if(!i){ i={talleId,nombre:p.nombre,talle:t.talle,precio:t.precio,precioLista:t.precioLista,qty:0,stock:t.stock,discType:null,discValue:0}; cart.push(i); }
   i.qty+=1;
   if(t.stock>=0 && i.qty>t.stock) toast(`⚠ Sólo hay ${t.stock} en stock — el resto queda a pedido`);
-  recomputeChombaPromo();
   window._vSelectedPrenda=null;
   const inp=$("#v-prenda-input"); if(inp) inp.value="";
   drawTallePicker();
@@ -1539,28 +1570,7 @@ function tapTalle(prendaId, talleId){
 function chQty(idx,d){
   const i=cart[idx]; if(!i) return;
   i.qty+=d;
-  if(i.qty<=0){ cart.splice(idx,1); recomputeChombaPromo(); drawCart(); drawTallePicker(); return; }
-  recomputeChombaPromo();
-  drawCart(); drawTallePicker();
-}
-function cartPrecioHtml(i){ return `<b>${fmt(basePrice(i))}</b> lista<div class="oi-lista">c/u ${fmt(unitPrice(i))}</div>`; }
-function setItemDesc(idx,val){
-  const n=Math.min(100,Math.max(0,+val||0));
-  const i=cart[idx]; if(!i) return;
-  i.descPct=n;
-  const precEl=$("#cart-precio-"+idx); if(precEl) precEl.innerHTML=cartPrecioHtml(i);
-  const subEl=$("#cart-sub-"+idx); if(subEl) subEl.textContent=fmt(unitPrice(i)*i.qty);
-  drawTotals();
-}
-function cartChangeTalle(idx,talleId){
-  const i=cart[idx]; if(!i) return;
-  const prenda=(DATA.catalogo||[]).find(p=>p.nombre===i.nombre); if(!prenda) return;
-  const t=prenda.talles.find(x=>x.talleId===talleId); if(!t) return;
-  // si ya había otra línea con ese talle, se fusionan sumando cantidades en vez de duplicar
-  const dupIdx=cart.findIndex((x,j)=>j!==idx && x.talleId===talleId);
-  if(dupIdx!==-1){ cart[dupIdx].qty+=i.qty; cart.splice(idx,1); recomputeChombaPromo(); drawCart(); drawTallePicker(); return; }
-  i.talleId=t.talleId; i.talle=t.talle; i.precio=t.precio; i.precioLista=t.precioLista; i.stock=t.stock;
-  recomputeChombaPromo();
+  if(i.qty<=0){ cart.splice(idx,1); drawCart(); drawTallePicker(); return; }
   drawCart(); drawTallePicker();
 }
 async function clearCart(){
@@ -1568,25 +1578,75 @@ async function clearCart(){
   if(!(await confirmDialog("¿Vaciar todo el pedido?"))) return;
   cart=[]; drawCart(); drawTallePicker();
 }
+// Fila compacta: nombre+talle, stepper de cantidad, subtotal -- tocar la
+// fila (fuera del stepper) abre la hoja de detalle (openLineItem) donde se
+// edita el talle no se puede tocar más, sólo el descuento y la cantidad.
 function cartRowHtml(i,idx){
-  const prenda=(DATA.catalogo||[]).find(p=>p.nombre===i.nombre);
-  const talles=prenda?prenda.talles:[];
-  const talleOpts=talles.length
-    ? talles.map(t=>`<option value="${t.talleId}" ${t.talleId===i.talleId?"selected":""}>${esc(t.talle)}</option>`).join("")
-    : `<option value="${i.talleId||''}" selected>${esc(i.talle)}</option>`;
   const over=i.stock!=null && i.qty>i.stock;
-  const isChomba=i.nombre===CHOMBA_BLANCA_NOMBRE;
-  const descHtml=isChomba
-    ? `<span class="oi-ro" title="30% OFF automático en 1 unidad — el resto queda al precio según medio de pago">${(i._promoQty||0)>0?"Promo 30%":"—"}</span>`
-    : `<div class="oi-desc-wrap"><input type="text" inputmode="numeric" id="cart-desc-${idx}" value="${i.descPct||0}" oninput="setItemDesc(${idx},this.value)"><span>%</span></div>`;
-  return `<div class="row oi-row" id="cart-row-${idx}">
-    <div class="oi-nombre" title="${esc(i.nombre)}">${esc(i.nombre)}${over?' ⚠':''}</div>
-    <select class="oi-talle" onchange="cartChangeTalle(${idx}, this.value)">${talleOpts}</select>
-    <div class="qty"><button onclick="chQty(${idx},-1)">−</button><span id="cart-qty-${idx}">${i.qty}</span><button onclick="chQty(${idx},1)">+</button></div>
-    <div class="oi-precio" id="cart-precio-${idx}">${cartPrecioHtml(i)}</div>
-    ${descHtml}
-    <span class="oi-subtotal" id="cart-sub-${idx}">${fmt(unitPrice(i)*i.qty)}</span>
+  const hasDisc = i.discType && i.discValue>0;
+  const discTxt = i.discType==="pct" ? `−${i.discValue}%` : `−${fmt(i.discValue)}`;
+  const subLine = hasDisc
+    ? `Talle ${esc(i.talle)} · <span class="disc">${discTxt}</span> · ${fmt(unitPrice(i))} c/u`
+    : `Talle ${esc(i.talle)} · ${fmt(unitPrice(i))} c/u`;
+  return `<div class="cart-line" id="cart-row-${idx}" onclick="openLineItem(${idx})">
+    <div class="cl-info">
+      <div class="cl-name">${esc(i.nombre)}${over?' <span class="warn">⚠ sin stock</span>':''}</div>
+      <div class="cl-sub">${subLine}</div>
+    </div>
+    <div class="qty" onclick="event.stopPropagation()"><button type="button" onclick="chQty(${idx},-1)">−</button><span id="cart-qty-${idx}">${i.qty}</span><button type="button" onclick="chQty(${idx},1)">+</button></div>
+    <span class="cl-total" id="cart-sub-${idx}">${fmt(unitPrice(i)*i.qty)}</span>
+    <span class="cl-chevron">›</span>
   </div>`;
+}
+// Hoja de detalle de línea (como tocar un ítem en el carrito de Shopify
+// POS): cantidad, descuento %/$ fijo con toggle tipo .seg, y quitar.
+function openLineItem(idx){
+  const i=cart[idx]; if(!i) return;
+  const tipo=i.discType==="fixed"?"fixed":"pct";
+  openCenterSheet(`<div class="grabber"></div><h3>${esc(i.nombre)}</h3><p class="sub">Talle ${esc(i.talle)}</p>
+    <div class="field"><label>Cantidad</label>
+      <div class="qty" style="width:fit-content"><button type="button" onclick="liChangeQty(${idx},-1)">−</button><span id="li-qty">${i.qty}</span><button type="button" onclick="liChangeQty(${idx},1)">+</button></div>
+    </div>
+    <div class="field"><label>Descuento de esta línea</label>
+      <div class="seg"><button id="li-seg-pct" class="${tipo==="pct"?"on":""}" onclick="liSetDiscType(${idx},'pct')">%</button><button id="li-seg-fixed" class="${tipo==="fixed"?"on":""}" onclick="liSetDiscType(${idx},'fixed')">$ fijo</button></div>
+      <input type="text" inputmode="numeric" id="li-disc-val" value="${i.discType==="fixed"?fmtMiles(i.discValue||0):(i.discValue||0)}" placeholder="0" oninput="liChangeDisc(${idx},this.value)">
+    </div>
+    <div id="li-preview" class="field" style="margin-bottom:6px"></div>
+    <button type="button" class="btn" onclick="closeSheet()">Listo</button>
+    <button type="button" class="btn ghost" style="margin-top:8px;color:#b23b3b;border-color:#e2c4c4" onclick="liRemove(${idx})">Quitar del pedido</button>`);
+  liUpdatePreview(idx);
+}
+function liChangeQty(idx,d){
+  const i=cart[idx]; if(!i) return;
+  i.qty+=d;
+  if(i.qty<=0){ cart.splice(idx,1); closeSheet(); drawCart(); drawTallePicker(); return; }
+  const q=$("#li-qty"); if(q) q.textContent=i.qty;
+  drawCart(); liUpdatePreview(idx);
+}
+function liSetDiscType(idx,t){
+  const i=cart[idx]; if(!i) return;
+  i.discType = t;
+  $("#li-seg-pct")?.classList.toggle("on",t==="pct");
+  $("#li-seg-fixed")?.classList.toggle("on",t==="fixed");
+  const val=$("#li-disc-val");
+  if(val) val.value = t==="fixed" ? fmtMiles(i.discValue||0) : String(i.discValue||0);
+  drawCart(); liUpdatePreview(idx);
+}
+function liChangeDisc(idx,raw){
+  const i=cart[idx]; if(!i) return;
+  const tipo = i.discType==="fixed" ? "fixed" : "pct";
+  const n = tipo==="fixed" ? milesOnInput($("#li-disc-val")) : Math.min(100,Math.max(0,+raw||0));
+  i.discType = n>0 ? tipo : null;
+  i.discValue = n;
+  drawCart(); liUpdatePreview(idx);
+}
+function liUpdatePreview(idx){
+  const i=cart[idx]; const box=$("#li-preview"); if(!i||!box) return;
+  box.innerHTML=`<label>Precio con descuento</label><div style="font-size:20px;font-weight:800">${fmt(unitPrice(i))} <span style="font-size:12px;color:var(--muted);font-weight:600">c/u</span></div>
+    <div style="font-size:12.5px;color:var(--muted);margin-top:2px">Subtotal línea: ${fmt(unitPrice(i)*i.qty)}</div>`;
+}
+function liRemove(idx){
+  cart.splice(idx,1); closeSheet(); drawCart(); drawTallePicker();
 }
 function drawCart(){
   const c=$("#v-cart"); if(!c) return;
@@ -1626,10 +1686,13 @@ function drawCheckout(){
         <option ${venta.pago==="Efectivo"?"selected":""}>Efectivo</option>
       </select>
     </div>
-    <div class="two">
-      <div class="field"><label>Descuento ($)</label><input type="text" inputmode="numeric" id="v-desc" value="${fmtMiles(venta.descuento)}" placeholder="0" oninput="venta.descuento=milesOnInput(this);drawTotals()"></div>
-      <div class="field"><label>Cargo envío ($)</label><input type="text" inputmode="numeric" id="v-env" value="${fmtMiles(venta.envio)}" placeholder="0" oninput="venta.envio=milesOnInput(this);drawTotals()"></div>
+    <div class="field"><label>Descuento general del pedido</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="seg" style="margin-bottom:0;flex-shrink:0"><button id="desc-seg-pct" class="${venta.descuentoTipo==="pct"?"on":""}" onclick="setDescTipo('pct')">%</button><button id="desc-seg-fixed" class="${venta.descuentoTipo!=="pct"?"on":""}" onclick="setDescTipo('fixed')">$ fijo</button></div>
+        <input type="text" inputmode="numeric" id="v-desc" value="${venta.descuentoTipo==="pct"?(venta.descuentoValor||0):fmtMiles(venta.descuentoValor)}" placeholder="0" oninput="changeDescValor(this)">
+      </div>
     </div>
+    <div class="field"><label>Cargo envío ($)</label><input type="text" inputmode="numeric" id="v-env" value="${fmtMiles(venta.envio)}" placeholder="0" oninput="venta.envio=milesOnInput(this);drawTotals()"></div>
     ${isCard()?'<p style="font-size:12px;color:var(--muted);margin:-4px 0 12px">💳 Al registrar se genera el link de pago Nave para enviar al cliente por WhatsApp.</p>':''}
     <div id="v-totals"></div>
     <button class="btn" style="margin-top:14px" id="v-submit" onclick="registrarPedido()">${isCard()?"Registrar y generar link":"Registrar pedido"}</button>`;
@@ -1637,12 +1700,14 @@ function drawCheckout(){
 }
 function drawTotals(){
   const t=$("#v-totals"); if(!t) return;
-  const descPago=cartPaymentDiscountTotal(), descPromo=cartPromoDiscountTotal();
+  const descPago=cartPaymentDiscountTotal(), descPromo=cartPromoDiscountTotal(), descPedido=cartDescuentoMonto();
+  const descPedidoLabel = venta.descuentoTipo==="pct" && venta.descuentoValor>0
+    ? `Descuento pedido (${venta.descuentoValor}%)` : "Descuento pedido";
   t.innerHTML=`
     <div class="tot-line"><span>Subtotal (precio de lista)</span><span>${fmt(cartGrossSubtotal())}</span></div>
     ${descPago>0.5?`<div class="tot-line disc"><span>Descuento por medio de pago</span><span>−${fmt(descPago)}</span></div>`:""}
-    ${descPromo>0.5?`<div class="tot-line disc"><span>Descuento promo</span><span>−${fmt(descPromo)}</span></div>`:""}
-    ${venta.descuento?`<div class="tot-line disc"><span>Descuento pedido</span><span>−${fmt(venta.descuento)}</span></div>`:""}
+    ${descPromo>0.5?`<div class="tot-line disc"><span>Descuento por línea</span><span>−${fmt(descPromo)}</span></div>`:""}
+    ${descPedido>0.5?`<div class="tot-line disc"><span>${descPedidoLabel}</span><span>−${fmt(descPedido)}</span></div>`:""}
     ${venta.envio?`<div class="tot-line"><span>Envío</span><span>${fmt(venta.envio)}</span></div>`:""}
     <div class="tot-line big"><span>Total</span><span>${fmt(cartTotal())}</span></div>`;
   updateCartBar();
@@ -1662,7 +1727,7 @@ async function registrarPedido(){
 
     const { data: pedido, error: eP } = await c.from("004_pedidos").insert({
       colegio: venta.cliente.colegio||"WS", cliente_id: venta.cliente.id, forma_pago: venta.pago,
-      cargo_envio: venta.envio||0, descuento: venta.descuento||0,
+      cargo_envio: venta.envio||0, descuento: cartDescuentoMonto(),
     }).select().single();
     if(eP) throw eP;
 
@@ -1708,7 +1773,7 @@ async function registrarPedido(){
         <button class="btn gold" style="margin-top:10px" onclick='waResumen(${JSON.stringify(resumen)},${JSON.stringify(waTel)})'>${waLabel}</button>
         <button class="btn ghost" style="margin-top:10px" onclick="nuevoPedido()">Nuevo pedido</button>
       </div>`;
-    cart=[]; venta={cliente:null,descuento:0,envio:0,pago:"Tarjeta (Nave)"}; window._vmStep="home";
+    cart=[]; venta={cliente:null,descuentoTipo:"fixed",descuentoValor:0,envio:0,pago:"Tarjeta (Nave)"}; window._vmStep="home";
     DATA.pedidos=null; DATA.catalogo=null;
     updateCartBar();
   }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent=card?"Registrar y generar link":"Registrar pedido"; }
@@ -1720,7 +1785,8 @@ const DATOS_TRANSFERENCIA = { titular:"Florencia Cordeviola", banco:"Galicia", a
 function buildResumen(numero,total,naveUrl){
   const items = cart.map(i=>`• ${i.nombre} T${i.talle} x${i.qty} — ${fmt(unitPrice(i)*i.qty)}`).join("\n");
   let s=`*Pedido #${numero}* — NORD Uniformes\nCliente: ${venta.cliente.nombre} ${venta.cliente.apellido||""}\n\n${items}\n`;
-  if(venta.descuento) s+=`Descuento: −${fmt(venta.descuento)}\n`;
+  const descPedido=cartDescuentoMonto();
+  if(descPedido) s+=`Descuento: −${fmt(descPedido)}\n`;
   if(venta.envio) s+=`Envío: ${fmt(venta.envio)}\n`;
   s+=`\n*Total: ${fmt(total)}*\nForma de pago: ${venta.pago}`;
   if(naveUrl) s+=`\n\n💳 Pagá con tarjeta acá: ${naveUrl}`;
