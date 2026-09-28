@@ -315,6 +315,42 @@
     .kpi .val{font-size:24px}
   }
   @media (min-width:1280px){ #view{max-width:1240px} }
+
+  /* ============ Vender mobile — Smart Grid estilo Shopify POS ============
+     Sólo se renderiza por debajo de los 900px (ver isMobileVender()); el
+     look acá es deliberadamente más neutro/monocromo que el resto de la
+     app (a pedido de Flor, "estética simple de Shopify"), acotado a estas
+     pantallas nada más -- el resto de la app sigue con navy/dorado. */
+  .vm-search{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e1e3e5;border-radius:999px;padding:12px 16px;cursor:pointer}
+  .vm-search input{border:none;outline:none;background:transparent;flex:1;min-width:0;font-size:15px;font-family:inherit;color:var(--ink)}
+  .vm-search .vm-search-ph{color:var(--muted);font-size:15px}
+  .vm-search .mag{color:var(--muted);flex-shrink:0}
+  .vm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+  .vm-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #e1e3e5;border-radius:12px;padding:22px 10px;font-family:inherit;font-size:13px;font-weight:600;color:#1a1a1a;cursor:pointer}
+  .vm-tile:active{background:#f4f4f5}
+  .vm-tile-ic{font-size:26px}
+  .vm-tile.wide{grid-column:1/3}
+  .vm-cliente-chip{margin-top:16px;background:#fff;border:1px solid #e1e3e5;border-radius:10px;padding:12px 14px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .vm-cliente-chip button{border:none;background:none;color:#1a1a1a;font-weight:700;text-decoration:underline;font-size:13px;font-family:inherit;cursor:pointer}
+  .vm-topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .vm-back{border:1px solid #e1e3e5;background:#fff;border-radius:10px;width:38px;height:38px;font-size:18px;flex-shrink:0;cursor:pointer;color:var(--ink)}
+  .vm-topbar-title{font-weight:800;font-size:16px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vm-link{border:none;background:none;color:#1a1a1a;font-weight:700;font-size:13px;text-decoration:underline;cursor:pointer;white-space:nowrap;font-family:inherit}
+  .vm-topbar .vm-search{flex:1}
+  .vm-tabs{display:flex;gap:6px;margin-bottom:12px}
+  .vm-tabs button{flex:1;border:1px solid #e1e3e5;background:#fff;border-radius:999px;padding:8px 4px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer}
+  .vm-tabs button.on{background:#1a1a1a;border-color:#1a1a1a;color:#fff}
+  .vm-list{display:flex;flex-direction:column}
+  .vm-row{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid #e1e3e5;cursor:pointer}
+  .vm-row:last-child{border-bottom:none}
+  .vm-row-title{font-weight:700;font-size:14px}
+  .vm-row-sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .vm-chevron{color:var(--muted);font-size:18px;flex-shrink:0}
+  .vm-cliente-row{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #e1e3e5;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px}
+  .vm-cliente-row button{border:none;background:none;color:#1a1a1a;font-weight:700;text-decoration:underline;font-size:12.5px;font-family:inherit;cursor:pointer}
+  .vm-cart-actions{margin-bottom:6px;text-align:right}
+  .vm-checkout-btn{width:100%;background:#1a1a1a !important;border:none;color:#fff}
+  .vm-checkout-btn:active{background:#000 !important}
 </style>
 </head>
 <body>
@@ -1256,9 +1292,23 @@ function fmtMiles(n){ n=Math.round(Number(n)||0); return n?n.toLocaleString("es-
 function parseMiles(s){ return Number(String(s||"").replace(/\D/g,""))||0; }
 function milesOnInput(el){ const n=parseMiles(el.value); el.value=fmtMiles(n); return n; }
 
+// Vender tiene dos UI enteramente distintas: la tarjeta única de desktop
+// (combobox + carrito + pago todo junto, ya aprobada) y un flujo por pasos
+// en mobile al estilo Shopify POS (home con grilla → buscar → variante →
+// carrito), porque en una pantalla chica ese flujo de mostrador anda mejor
+// que todo apilado en una sola tarjeta larga. Comparten el mismo estado
+// (cart, venta) y las mismas funciones de precio/stock -- sólo cambia cómo
+// se dibuja.
+function isMobileVender(){ return window.innerWidth<900; }
 async function viewVender(v,force){
   try{
     if(force||!DATA.catalogo){ loading(v); await getCatalogo(true); }
+    if(isMobileVender()){
+      window._vmStep = window._vmStep||"home";
+      window._vmTab = window._vmTab||"productos";
+      renderVenderMobile(v);
+      return;
+    }
     const prendaOpts=(DATA.catalogo||[]).slice().sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"))
       .map(p=>`<option value="${esc(p.nombre)}">`).join("");
     v.innerHTML = `
@@ -1282,6 +1332,155 @@ async function viewVender(v,force){
     drawCart();
   }catch(e){ errBox(v,e); }
 }
+
+// ─────────────────────────────────────────────── VENDER MOBILE (Smart Grid)
+function vmGoHome(){ window._vmStep="home"; render(); }
+function vmGoSearch(tab){ window._vmStep="search"; if(tab) window._vmTab=tab; render(); }
+function vmGoVariants(prendaId){ window._vmStep="variants"; window._vmVariantPrenda=prendaId; render(); }
+function vmGoCart(){ window._vmStep="cart"; render(); }
+function renderVenderMobile(v){
+  const step=window._vmStep;
+  if(step==="search") return vmRenderSearch(v);
+  if(step==="variants") return vmRenderVariants(v);
+  if(step==="cart") return vmRenderCart(v);
+  return vmRenderHome(v);
+}
+function vmRenderHome(v){
+  const c=venta.cliente;
+  v.innerHTML=`
+    <div class="vm-search" onclick="vmGoSearch('productos')"><span class="mag">🔎</span><span class="vm-search-ph">Buscar prenda…</span></div>
+    <div class="vm-grid">
+      <button type="button" class="vm-tile" onclick="openCliente()"><span class="vm-tile-ic">👤</span><span>Agregar cliente</span></button>
+      <button type="button" class="vm-tile" onclick="vmGoSearch('productos')"><span class="vm-tile-ic">🛒</span><span>Agregar venta</span></button>
+      <button type="button" class="vm-tile wide" onclick="go('gastos')"><span class="vm-tile-ic">➖</span><span>Registrar gasto</span></button>
+    </div>
+    ${c?`<div class="vm-cliente-chip">Cliente: <b>${esc(c.nombre)} ${esc(c.apellido||"")}</b><button type="button" onclick="openCliente()">Cambiar</button></div>`:""}`;
+  updateCartBar();
+}
+function vmRenderSearch(v){
+  v.innerHTML=`
+    <div class="vm-topbar">
+      <button type="button" class="vm-back" onclick="vmGoHome()">←</button>
+      <div class="vm-search"><span class="mag">🔎</span><input id="vm-q-input" placeholder="Buscar…" value="${esc(window._vmQ||"")}"></div>
+    </div>
+    <div class="vm-tabs" id="vm-tabs"></div>
+    <div class="vm-list" id="vm-list"></div>`;
+  const inp=$("#vm-q-input");
+  inp.oninput=()=>{ window._vmQ=inp.value; vmDrawList(); };
+  inp.focus();
+  vmDrawTabs();
+  vmDrawList();
+  updateCartBar();
+}
+function vmDrawTabs(){
+  const box=$("#vm-tabs"); if(!box) return;
+  const tab=window._vmTab;
+  const labels={productos:"Productos",pedidos:"Pedidos",clientes:"Clientes"};
+  box.innerHTML=Object.keys(labels).map(t=>`<button type="button" class="${tab===t?"on":""}" onclick="vmSetTab('${t}')">${labels[t]}</button>`).join("");
+}
+async function vmSetTab(t){
+  window._vmTab=t; vmDrawTabs();
+  if(t==="pedidos" && !DATA.pedidos){ vmDrawList(); await getPedidos(); }
+  else if(t==="clientes" && !DATA.clientes){ vmDrawList(); await getClientes(); }
+  vmDrawList();
+}
+function vmDrawList(){
+  const box=$("#vm-list"); if(!box) return;
+  const q=(window._vmQ||"").trim().toLowerCase();
+  const tab=window._vmTab;
+  if(tab==="productos"){
+    const res=(DATA.catalogo||[]).filter(p=>!q||p.nombre.toLowerCase().includes(q));
+    box.innerHTML=res.length?res.map(p=>{
+      const tot=p.talles.reduce((s,t)=>s+t.stock,0);
+      return `<div class="vm-row" onclick='vmGoVariants(${JSON.stringify(p.id)})'>
+        ${p.foto?`<img class="thumb" src="${esc(p.foto)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'thumb ph',textContent:'👕'}))">`:'<div class="thumb ph">👕</div>'}
+        <div class="grow"><div class="vm-row-title">${esc(p.nombre)}</div><div class="vm-row-sub">${fmt(p.precioLista)} · ${p.talles.length} talle${p.talles.length!==1?"s":""} · ${tot} u.</div></div>
+        <span class="vm-chevron">›</span></div>`;
+    }).join(""):'<div class="empty">Sin resultados</div>';
+  } else if(tab==="pedidos"){
+    const res=(DATA.pedidos||[]).filter(p=>!q||`${p.numero} ${p.clienteNombre}`.toLowerCase().includes(q)).slice(0,30);
+    box.innerHTML=res.length?res.map(p=>`<div class="vm-row" onclick='openPedido(${JSON.stringify(p.id)})'>
+        <div class="grow"><div class="vm-row-title">${esc(p.numero)} · ${esc(p.clienteNombre)}</div><div class="vm-row-sub">${fmt(p.total_venta)}</div></div>
+        <span class="vm-chevron">›</span></div>`).join(""):'<div class="empty">Sin pedidos</div>';
+  } else {
+    const res=(DATA.clientes||[]).filter(cl=>!q||`${cl.nombre} ${cl.apellido||""} ${cl.codigo||""}`.toLowerCase().includes(q)).slice(0,30);
+    box.innerHTML=res.length?res.map(cl=>`<div class="vm-row" onclick='vmPickCliente(${JSON.stringify(cl).replace(/'/g,"&#39;")})'>
+        <span class="chip n">${esc(cl.codigo||"")}</span>
+        <div class="grow"><div class="vm-row-title">${esc(cl.nombre)} ${esc(cl.apellido||"")}</div></div>
+        <span class="vm-chevron">›</span></div>`).join(""):'<div class="empty">Sin clientes</div>';
+  }
+}
+function vmPickCliente(c){ venta.cliente=c; vmGoHome(); }
+function vmRenderVariants(v){
+  const p=(DATA.catalogo||[]).find(x=>x.id===window._vmVariantPrenda);
+  if(!p){ vmGoSearch(); return; }
+  v.innerHTML=`
+    <div class="vm-topbar">
+      <button type="button" class="vm-back" onclick="vmGoSearch()">←</button>
+      <div class="vm-topbar-title">${esc(p.nombre)}</div>
+    </div>
+    <div class="vm-list">${vmVariantRows(p)}</div>`;
+  updateCartBar();
+}
+function vmVariantRows(p){
+  return p.talles.map(t=>{
+    const q=cartQtyFor(t.talleId);
+    const noStock=t.stock<=0;
+    return `<div class="vm-row" onclick='vmTapVariant(${JSON.stringify(p.id)},${JSON.stringify(t.talleId)})'>
+      <div class="grow"><div class="vm-row-title">Talle ${esc(t.talle)}${q>0?` · <span style="color:var(--green)">${q} en pedido</span>`:""}</div>
+      <div class="vm-row-sub">${fmt(t.precioLista)} · ${noStock?'<span style="color:var(--red)">sin stock</span>':`stock ${t.stock}`}</div></div>
+      <span class="vm-chevron">›</span></div>`;
+  }).join("");
+}
+function vmTapVariant(prendaId,talleId){
+  tapTalle(prendaId,talleId); // agrega la unidad al cart (mismo helper que el picker de desktop)
+  updateCartBar();
+  vmGoSearch();
+}
+function vmRenderCart(v){
+  const c=venta.cliente;
+  v.innerHTML=`
+    <div class="vm-topbar">
+      <button type="button" class="vm-back" onclick="vmGoHome()">Cerrar</button>
+      <div class="vm-topbar-title">Carrito</div>
+      <button type="button" class="vm-link" onclick="vmMoreActions()">Más acciones</button>
+    </div>
+    <div class="vm-cliente-row"><span>${c?esc(c.nombre+" "+(c.apellido||"")):"Sin cliente"}</span><button type="button" onclick="vmMoreActions()">Cambiar</button></div>
+    <div id="v-cart"></div>
+    <div id="v-checkout"></div>`;
+  drawCart();
+  updateCartBar();
+}
+function vmDrawCheckout(){
+  const el=$("#v-checkout"); if(!el) return;
+  if(!cart.length){ el.innerHTML=""; return; }
+  el.innerHTML=`
+    <div class="section-h" style="margin:18px 2px 8px">Forma de pago</div>
+    <select id="v-pago" onchange="venta.pago=this.value;drawCart()">
+      <option value="Tarjeta (Nave)" ${isCard()?"selected":""}>Tarjeta (Nave)</option>
+      <option ${venta.pago==="Transf. Banc."?"selected":""}>Transf. Banc.</option>
+      <option ${venta.pago==="Efectivo"?"selected":""}>Efectivo</option>
+    </select>
+    ${isCard()?'<p style="font-size:12px;color:var(--muted);margin:8px 0 0">💳 Al registrar se genera el link de pago Nave para enviar al cliente por WhatsApp.</p>':''}
+    <div id="v-totals" style="margin-top:14px"></div>
+    <button type="button" class="btn vm-checkout-btn" id="v-submit" onclick="registrarPedido()">${isCard()?"Registrar y generar link":"Registrar pedido"}</button>`;
+  drawTotals();
+}
+// "Más acciones" del carrito mobile: cliente, descuento general y envío --
+// en desktop estos campos van siempre visibles en la tarjeta; acá, para no
+// atiborrar la pantalla chica, quedan en esta hoja (como "Apply discount"
+// en el carrito de Shopify POS).
+function vmMoreActions(){
+  const c=venta.cliente;
+  openCenterSheet(`<div class="grabber"></div><h3>Más acciones</h3>
+    <div class="field"><label>Cliente</label>
+      <button type="button" class="btn ghost" onclick="closeSheet();openCliente()">${c?esc(c.nombre+" "+(c.apellido||"")):"Elegir o crear cliente"}</button>
+    </div>
+    <div class="field"><label>Descuento general ($)</label><input type="text" inputmode="numeric" id="vm-desc" value="${fmtMiles(venta.descuento)}" placeholder="0" oninput="venta.descuento=milesOnInput(this);drawTotals()"></div>
+    <div class="field"><label>Cargo de envío ($)</label><input type="text" inputmode="numeric" id="vm-env" value="${fmtMiles(venta.envio)}" placeholder="0" oninput="venta.envio=milesOnInput(this);drawTotals()"></div>
+    <button type="button" class="btn" onclick="closeSheet()">Listo</button>`);
+}
+
 function renderCliente(){
   const b=$("#v-cliente-btn"); if(!b) return;
   const c=venta.cliente;
@@ -1364,7 +1563,11 @@ function cartChangeTalle(idx,talleId){
   recomputeChombaPromo();
   drawCart(); drawTallePicker();
 }
-function clearCart(){ cart=[]; drawCart(); drawTallePicker(); }
+async function clearCart(){
+  if(!cart.length) return;
+  if(!(await confirmDialog("¿Vaciar todo el pedido?"))) return;
+  cart=[]; drawCart(); drawTallePicker();
+}
 function cartRowHtml(i,idx){
   const prenda=(DATA.catalogo||[]).find(p=>p.nombre===i.nombre);
   const talles=prenda?prenda.talles:[];
@@ -1387,25 +1590,30 @@ function cartRowHtml(i,idx){
 }
 function drawCart(){
   const c=$("#v-cart"); if(!c) return;
-  if(!cart.length){ c.innerHTML='<div class="empty">Todavía no agregaste prendas</div>'; drawCheckout(); updateCartBar(); return; }
+  const checkoutFn = isMobileVender() ? vmDrawCheckout : drawCheckout;
+  if(!cart.length){ c.innerHTML='<div class="empty">Todavía no agregaste prendas</div>'; checkoutFn(); updateCartBar(); return; }
   const n=cart.reduce((s,i)=>s+i.qty,0);
   c.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <span style="font-size:12px;color:var(--muted);font-weight:700">${n} prenda${n!==1?'s':''}</span>
       <button class="btn ghost sm" onclick="clearCart()">Vaciar</button></div>` +
     cart.map((i,idx)=>cartRowHtml(i,idx)).join("");
-  drawCheckout();
+  checkoutFn();
   updateCartBar();
 }
 function updateCartBar(){
   const bar=$("#cart-bar"); if(!bar) return;
   const n=cart.reduce((s,i)=>s+i.qty,0);
-  if(TAB==="vender" && n>0){
-    $("#cart-bar-txt").textContent=`${n} prenda${n!==1?'s':''} · Ver pedido ↑`;
+  const onMobileCartScreen = isMobileVender() && TAB==="vender" && window._vmStep==="cart";
+  if(TAB==="vender" && n>0 && !onMobileCartScreen){
+    $("#cart-bar-txt").textContent = isMobileVender() ? `${n} prenda${n!==1?'s':''} · Ver carrito` : `${n} prenda${n!==1?'s':''} · Ver pedido ↑`;
     $("#cart-bar-total").textContent=fmt(cartTotal());
     bar.classList.add("show");
   } else bar.classList.remove("show");
 }
-function scrollToCheckout(){ ($("#v-cart")||$("#v-checkout"))?.scrollIntoView({behavior:"smooth",block:"start"}); window.scrollTo({top:0,behavior:"smooth"}); }
+function scrollToCheckout(){
+  if(isMobileVender() && TAB==="vender" && window._vmStep!=="cart"){ vmGoCart(); return; }
+  ($("#v-cart")||$("#v-checkout"))?.scrollIntoView({behavior:"smooth",block:"start"}); window.scrollTo({top:0,behavior:"smooth"});
+}
 function drawCheckout(){
   const el=$("#v-checkout"); if(!el) return;
   if(!cart.length){ el.innerHTML=""; return; }
@@ -1500,11 +1708,15 @@ async function registrarPedido(){
         <button class="btn gold" style="margin-top:10px" onclick='waResumen(${JSON.stringify(resumen)},${JSON.stringify(waTel)})'>${waLabel}</button>
         <button class="btn ghost" style="margin-top:10px" onclick="nuevoPedido()">Nuevo pedido</button>
       </div>`;
-    cart=[]; venta={cliente:null,descuento:0,envio:0,pago:"Tarjeta (Nave)"};
+    cart=[]; venta={cliente:null,descuento:0,envio:0,pago:"Tarjeta (Nave)"}; window._vmStep="home";
     DATA.pedidos=null; DATA.catalogo=null;
     updateCartBar();
   }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent=card?"Registrar y generar link":"Registrar pedido"; }
 }
+// Mismos datos que se muestran en confirmacion.html del sitio público --
+// si vendemos por transferencia desde acá, el mensaje ya trae la cuenta
+// para que el cliente transfiera directo, sin tener que pedirla aparte.
+const DATOS_TRANSFERENCIA = { titular:"Florencia Cordeviola", banco:"Galicia", alias:"nord.uniformes", cbu:"0070999030004239948231" };
 function buildResumen(numero,total,naveUrl){
   const items = cart.map(i=>`• ${i.nombre} T${i.talle} x${i.qty} — ${fmt(unitPrice(i)*i.qty)}`).join("\n");
   let s=`*Pedido #${numero}* — NORD Uniformes\nCliente: ${venta.cliente.nombre} ${venta.cliente.apellido||""}\n\n${items}\n`;
@@ -1512,6 +1724,10 @@ function buildResumen(numero,total,naveUrl){
   if(venta.envio) s+=`Envío: ${fmt(venta.envio)}\n`;
   s+=`\n*Total: ${fmt(total)}*\nForma de pago: ${venta.pago}`;
   if(naveUrl) s+=`\n\n💳 Pagá con tarjeta acá: ${naveUrl}`;
+  else if(/transf/i.test(venta.pago)){
+    const d=DATOS_TRANSFERENCIA;
+    s+=`\n\n🏦 *Datos para transferir:*\nTitular: ${d.titular}\nBanco: ${d.banco}\nAlias: ${d.alias}\nCBU: ${d.cbu}`;
+  }
   return s;
 }
 function copyText(txt,msg){ navigator.clipboard?.writeText(txt).then(()=>toast(msg||"Copiado")).catch(()=>{}); }
@@ -1556,7 +1772,10 @@ async function cliSeg(mode){
     inp.oninput=draw; draw();
   }catch(e){ body.innerHTML=`<div class="empty">${esc(friendlyError(e))}</div>`; }
 }
-function pickCliente(c){ venta.cliente=c; closeSheet(); if(TAB==="vender"){ renderCliente(); drawCheckout(); } }
+function pickCliente(c){
+  venta.cliente=c; closeSheet();
+  if(TAB==="vender"){ if(isMobileVender()) render(); else{ renderCliente(); drawCheckout(); } }
+}
 async function crearClienteYSeleccionar(){
   const nombre=$("#c-nom").value.trim(), apellido=$("#c-ape").value.trim(), email=$("#c-mail").value.trim(), telefono=$("#c-tel").value.trim();
   if(!nombre) return toast("El nombre es obligatorio",true);
