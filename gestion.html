@@ -1352,7 +1352,7 @@ function vmRenderHome(v){
     <div class="vm-grid">
       <button type="button" class="vm-tile" onclick="openCliente()"><span class="vm-tile-ic">👤</span><span>Agregar cliente</span></button>
       <button type="button" class="vm-tile" onclick="vmGoSearch('productos')"><span class="vm-tile-ic">🛒</span><span>Agregar venta</span></button>
-      <button type="button" class="vm-tile wide" onclick="go('gastos')"><span class="vm-tile-ic">➖</span><span>Registrar gasto</span></button>
+      <button type="button" class="vm-tile wide" onclick="go('gastos')"><span class="vm-tile-ic">💵</span><span>Registrar gasto</span></button>
     </div>
     ${c?`<div class="vm-cliente-chip">Cliente: <b>${esc(c.nombre)} ${esc(c.apellido||"")}</b><button type="button" onclick="openCliente()">Cambiar</button></div>`:""}`;
   updateCartBar();
@@ -1441,7 +1441,7 @@ function vmRenderCart(v){
   const c=venta.cliente;
   v.innerHTML=`
     <div class="vm-topbar">
-      <button type="button" class="vm-back" onclick="vmGoHome()">Cerrar</button>
+      <button type="button" class="vm-back" onclick="vmGoHome()">←</button>
       <div class="vm-topbar-title">Carrito</div>
       <button type="button" class="vm-link" onclick="vmMoreActions()">Más acciones</button>
     </div>
