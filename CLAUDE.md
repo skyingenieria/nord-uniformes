@@ -220,32 +220,78 @@ lectura), Vender, Pedidos (con alta/baja de prendas al editar un pedido ya
 creado), Órdenes (detalle línea por línea de lo vendido, editable tipo
 Excel: talle, cantidad, descuento%), Clientes, Proveedores, Compras
 (editable tipo Excel, todas las celdas), Precios y costos (editable tipo
-Excel), Gastos (alta y edición tipo Excel de gastos operativos: logística,
-packaging, software, impuestos, etc — tabla `013_gastos`), Egresos (alta y
+Excel), Gastos (alta de gastos operativos: logística, packaging, software,
+impuestos, etc — tabla `013_gastos`; en **desktop** la lista es una tabla
+editable tipo Excel, en **mobile** es una lista de sólo lectura y tocar una
+fila abre una hoja para editarla o borrarla — rediseño 2026-09-28, la tabla
+completa se veía mal en pantalla chica), Egresos (alta y
 edición tipo Excel de pagos/aportes extraordinarios de Flor/Fede — tabla
 `015_egresos`, standalone, no se relaciona con nada más), Contabilidad (con
 botón "Subir a Drive" por factura), Catálogo (alta de prendas/talles).
 
-- **Modelo de precios de `gestion.html`** (distinto del "Modelo de precios"
-  de abajo, que es de wellspring/carrito): en Vender, sin tocar nada, Transf./
-  Efectivo bajan solos el precio de lista a precio de transferencia y Tarjeta
-  se queda en lista — es el único descuento "automático". El % de descuento
-  manual por ítem (Vender, Pedido ya creado, u Órdenes) **anula ese automático
-  en vez de sumarse** (antes se acumulaban, cambiado a pedido de Flor
-  2026-09-27: la promo de la Chomba Blanca al 30% OFF daba de más si el
-  pedido era por transferencia) y se calcula **siempre sobre precio de
-  lista**, sea cual sea la forma de pago. El checkout muestra el desglose:
-  subtotal a precio de lista, descuento por medio de pago, descuento promo
-  (la parte extra que agrega el % manual, si lo hay) y descuento del pedido
-  (aparte, un monto fijo en $). Ese % se guarda tal cual en
-  `005_ordenes.descuento_pct` (no se recalcula contra el precio de hoy) —
-  filas de antes de que existiera esa columna quedan en NULL y la UI les
-  sigue estimando el % en vivo, como hacía antes.
-- **Edición de pedidos ya creados:** de sólo lectura por default (una línea
-  por ítem: talle/cantidad/precio/%desc/subtotal) — hay que tocar "✏️ Editar
+- **Vender — arquitectura** (rediseño completo 2026-09-27/28, inspirado en
+  Shopify POS; ver "Pendiente" al final de este bloque): dos UI enteramente
+  distintas que comparten el mismo estado (`cart`, `venta`) y las mismas
+  funciones de precio (`unitPrice`, `basePrice`, `cartTotal`, etc. — no hay
+  lógica duplicada, sólo cambia cómo se dibuja):
+  - **Desktop:** tarjeta única — combobox para elegir/escribir la prenda,
+    talles como chips (se tocan, no se listan con precio/stock repetido;
+    tocar un chip agrega 1 unidad y cierra el picker solo), carrito con una
+    fila compacta por ítem, y checkout (forma de pago, descuento del
+    pedido, envío) siempre visible debajo.
+  - **Mobile** (`isMobileVender()` = `window.innerWidth<900`, mismo
+    breakpoint que el resto de la app): flujo por pasos tipo Smart Grid de
+    Shopify POS — `home` (grilla Agregar cliente / Agregar venta /
+    Registrar gasto + buscador) → `search` (tabs Productos/Pedidos/Clientes)
+    → `variants` (talles del producto elegido, como chips) → `cart`. Reusa
+    el mismo picker de cliente (`openCliente`) que desktop. Estética propia
+    scopeada a clases `.vm-*` (botones negros `#1a1a1a`, bordes grises
+    `#e1e3e5`, pills segmentadas) — el resto de la app no cambió de look.
+- **Modelo de descuentos de `gestion.html` — Vender** (distinto del "Modelo
+  de precios" de abajo, que es de wellspring/carrito; reemplaza un esquema
+  viejo de un solo % por línea + $ fijo a nivel pedido, y el 30% automático
+  de la Chomba Blanca que existió brevemente — ver nota al final):
+  - **Por medio de pago** (automático, sin tocar nada): Transf./Efectivo
+    bajan solos el precio de lista a precio de transferencia; Tarjeta se
+    queda en lista.
+  - **Por ítem** (manual — tocar la prenda en "Ítems del pedido" abre la
+    hoja de detalle `openLineItem`: cantidad, descuento, quitar): reemplaza
+    al descuento por medio de pago en esa línea (no se suman) y soporta
+    **% o $ fijo** con un toggle tipo Shopify, siempre calculado sobre
+    **precio de lista** sea cual sea la forma de pago. El $ fijo se reparte
+    por unidad (`discValue / cantidad`).
+  - **Del pedido** (`venta.descuentoTipo`/`descuentoValor` — inline en
+    desktop, debajo de "Forma de pago" en mobile): también % o $ fijo, como
+    el descuento a nivel carrito de Shopify; el % se calcula sobre el
+    subtotal ya con los descuentos de línea aplicados.
+  - El subtítulo de cada ítem en "Ítems del pedido" (bajo el nombre/talle)
+    muestra **siempre precio de lista**, nunca el precio con descuento o
+    medio de pago aplicado — sólo el precio final, a la derecha de la fila,
+    cambia. Evita confundir "bajó el precio de lista" con "hay un
+    descuento cargado".
+  - `005_ordenes.descuento_pct` sigue guardando el % efectivo de la línea
+    al vender (se calcula igual venga de un % o de un $ fijo) — sin cambios
+    de schema.
+  - **Nota histórica:** durante un tiempo (2026-09-27/28) Vender aplicó un
+    30% OFF automático a la Chomba Blanca, tope 1 unidad por pedido, igual
+    que la promo del sitio público — se sacó a pedido de Flor (28/09,
+    daba menos control que el esquema de descuentos general de arriba).
+    Ya **no existe** en `gestion.html`: la Chomba Blanca es un ítem más,
+    sin lógica especial. **La promo del sitio público sigue activa y es
+    independiente** — ver "Cart upsell: Chomba Blanca 30% off" más abajo
+    (`wellspring.html`/`carrito.html`/`api/orders.js`), no confundir una
+    con otra.
+- **Edición de pedidos ya creados** (tabs Pedidos/Órdenes — vista distinta
+  a Vender, con su propia fila `oiRowHtml`, no tocada en el rediseño de
+  arriba): de sólo lectura por default (una línea por ítem:
+  talle/cantidad/precio/%desc/subtotal) — hay que tocar "✏️ Editar
   prendas" para habilitar los controles editables, para evitar cambios
   accidentales una vez armado el pedido. También hay un campo de nota
   interna libre por pedido (`004_pedidos.notas`).
+- **Pendiente (a futuro, sesión aparte):** Flor pidió eventualmente llevar
+  más de la arquitectura de `gestion.html` (no sólo Vender) a un estilo más
+  parecido a Shopify POS — todavía no definido en detalle, retomar cuando
+  haga falta.
 - **Facturación ARCA + Drive:** desde Pedidos se emite Factura C real (acción
   `facturar-supabase` de `api/erp.js`). Al emitir se genera el PDF (reusando
   `/factura.js` + `/factura-pdf.js`, los mismos scripts estáticos que usaba
@@ -323,6 +369,53 @@ Para desarrollo local: pedirle a Fede el archivo `.env.local` (no está en el re
 `ADMIN_PASSWORD` queda en Vercel sin uso real (el código legacy que la
 validaba está archivado o inalcanzable — ver "Datos" arriba) — se puede
 borrar de Vercel el día que se confirme que nada la necesita, no es urgente.
+
+---
+
+## Accesos y configuración (para poder editar el proyecto)
+
+### GitHub
+- Repo: `github.com/skyingenieria/nord-uniformes` (público).
+- Una sesión de Claude Code accede vía la integración de GitHub del
+  entorno — no hace falta ningún token manual, puede leer, commitear y
+  pushear directo a ramas que no sean `main` sin pedir nada más (ver
+  "Flujo de trabajo recomendado" abajo). Mergear a `main` dispara el
+  deploy automático en Vercel.
+- Fede administra los colaboradores/permisos del repo si hace falta dar
+  acceso a alguien más.
+
+### Supabase
+- Proyecto: `https://piaagjddrrcbijienvll.supabase.co` (región
+  `sa-east-1` — ver "Datos" arriba para el detalle completo del esquema).
+- **Dashboard de Supabase** (SQL Editor, Table Editor, Auth, logs): login
+  con la cuenta de Fede o Flor en `supabase.com` — pedirles que inviten a
+  alguien más al proyecto si hace falta.
+- **Claves:**
+  - `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` ya están cargadas en Vercel
+    (tabla de variables de entorno arriba) — no hace falta tocarlas.
+  - Para desarrollo local, en `.env.local` (no versionado) — pedirle el
+    archivo a Fede.
+  - La `anon key` pública (la usan `wellspring.html`, `carrito.html` y
+    `gestion.html` para hablar directo con Supabase vía RLS desde el
+    browser) está hardcodeada en esos archivos — no es secreta.
+- **Cambios de schema (DDL/SQL a mano):** sólo desde el SQL Editor del
+  dashboard de Supabase (ver arriba "Cómo se hizo el SQL Editor de
+  Supabase confiable" para tips). Una sesión de Claude Code en la nube
+  **no puede conectarse directo a Postgres** (5432/6543 da timeout, sólo
+  sale por HTTPS — ver el aviso más arriba) — para eso, armar el SQL acá y
+  pedirle a Fede/Flor que lo corran en el SQL Editor, o guiarlos paso a
+  paso.
+- **Datos (leer/escribir filas):** la API REST de Supabase (`supabase-js`
+  o `SUPABASE_URL/rest/v1/...`) anda perfecto desde cualquier sesión,
+  incluida una de Claude Code en la nube — es lo que se usó para toda la
+  carga de datos real y para crear/borrar cuentas de prueba descartables
+  al verificar cambios en vivo con Playwright.
+
+### Vercel
+- Deploy automático al pushear/mergear a `main` (ver "Flujo de trabajo
+  recomendado" abajo). Lo administra Fede desde el dashboard de Vercel,
+  conectado al repo de GitHub — ahí viven las variables de entorno (tabla
+  arriba), el historial de deploys y los logs de las funciones serverless.
 
 ---
 
