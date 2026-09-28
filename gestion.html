@@ -116,6 +116,17 @@
   .talle .s{font-size:11px;margin-top:2px;font-weight:700}
   .talle.ok .s{color:var(--green)} .talle.low .s{color:var(--amber)} .talle.no{opacity:.5} .talle.no .s{color:var(--red)}
 
+  /* Chips de talle del picker de Vender (tocar = agregar), estilo variante de POS */
+  .talle-chips{display:flex;flex-wrap:wrap;gap:8px}
+  .talle-chip{position:relative;border:1.5px solid var(--line);border-radius:10px;padding:10px 18px;
+    font-family:inherit;font-size:14px;font-weight:700;background:#fff;color:var(--azul-900);cursor:pointer;transition:transform .1s}
+  .talle-chip:active{transform:scale(.94)}
+  .talle-chip.sel{border-color:var(--azul-900);background:var(--azul-900);color:#fff}
+  .talle-chip.no-stock{border-color:var(--red);color:var(--red)}
+  .talle-chip.no-stock.sel{background:var(--red);border-color:var(--red);color:#fff}
+  .talle-chip .chip-qty{position:absolute;top:-8px;right:-8px;background:var(--dorado);color:var(--azul-900);
+    font-size:11px;font-weight:800;min-width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 1px 3px rgba(15,23,46,.25)}
+
   .thumb{width:46px;height:46px;border-radius:10px;object-fit:cover;background:#eef1f6;flex:0 0 auto}
   .thumb.ph{display:grid;place-items:center;font-size:22px}
   #cart-bar{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 8px);z-index:25;
@@ -174,19 +185,32 @@
   .eg-add{grid-template-columns:100px 1fr 1fr 76px 90px 1.2fr auto;border-top:none;padding-top:0}
   .eg-add input{text-align:left}
   @media (max-width:480px){
-    .oi-row{grid-template-columns:minmax(36px,1fr) 36px 54px 56px 38px 48px;column-gap:4px;padding:8px 0}
-    .oi-row.editing{grid-template-columns:minmax(28px,1fr) 36px 54px 56px 38px 48px 20px}
-    .oi-row .oi-nombre{font-size:10px}
+    /* Antes era una sola fila de 6 columnas apretadas en ~5px cada una.
+       Ahora dos renglones por ítem -- arriba prenda+subtotal, abajo
+       talle/cantidad/precio/descuento -- por posición (nth-child), así
+       funciona igual para la fila de Vender (6 hijos) y la de Pedido en
+       modo edición (7, con el botón de borrar). */
+    .oi-row{display:grid;grid-template-columns:1fr auto auto auto auto auto;column-gap:6px;row-gap:6px;padding:10px 0}
+    .oi-row.editing{grid-template-columns:1fr auto auto auto auto auto}
+    .oi-row>:nth-child(1){grid-row:1;grid-column:1/6}
+    .oi-row>:nth-child(6){grid-row:1;grid-column:6;justify-self:end}
+    .oi-row>:nth-child(2){grid-row:2;grid-column:1;justify-self:start}
+    .oi-row>:nth-child(3){grid-row:2;grid-column:2}
+    .oi-row>:nth-child(4){grid-row:2;grid-column:3}
+    .oi-row>:nth-child(5){grid-row:2;grid-column:4/6}
+    .oi-row>:nth-child(7){grid-row:2;grid-column:6;justify-self:end}
+    .oi-row .oi-nombre{font-size:12px;white-space:normal}
     .oi-row .oi-lista{display:none}
-    .oi-row .oi-precio{font-size:9.5px}
-    .oi-row .oi-precio b{font-size:10.5px}
-    .oi-row .qty button{width:18px;height:18px;font-size:11px}
-    .oi-row .qty span{min-width:14px;font-size:10px}
-    .oi-row select.oi-talle{font-size:10px;padding:3px 1px}
-    .oi-row .oi-desc-wrap input{width:24px;padding:4px 2px;font-size:10px}
-    .oi-row .oi-subtotal{font-size:11px}
-    .oi-row .oi-ro{font-size:10px;padding:4px 4px}
-    .oi-row .oi-del{font-size:15px}
+    .oi-row .oi-precio{font-size:10px;text-align:left}
+    .oi-row .oi-precio b{font-size:11.5px}
+    .oi-row .qty button{width:22px;height:22px;font-size:12.5px}
+    .oi-row .qty span{min-width:16px;font-size:11px}
+    .oi-row select.oi-talle{font-size:11.5px;padding:4px 2px;width:auto}
+    .oi-row .oi-desc-wrap{justify-self:end}
+    .oi-row .oi-desc-wrap input{width:30px;padding:5px 3px;font-size:11px}
+    .oi-row .oi-subtotal{font-size:12.5px}
+    .oi-row .oi-ro{font-size:11px;padding:5px 7px}
+    .oi-row .oi-del{font-size:16px}
     .oi-add{grid-template-columns:1fr;gap:6px}
     .ga-add{grid-template-columns:1fr}
     .eg-add{grid-template-columns:1fr}
@@ -1274,38 +1298,43 @@ function onPrendaInput(val){
   window._vSelectedPrenda = p ? p.id : null;
   drawTallePicker();
 }
+// Talles como chips (como el selector de variante de Shopify POS): se tocan,
+// no se listan con precio/stock repetidos en cada fila. Tocar un chip agrega
+// 1 unidad y cierra el picker solo -- para sumar más del mismo talle se usa
+// el +/- de su línea en "Ítems del pedido", no se reabre el picker.
 function drawTallePicker(){
   const box=$("#v-talle-picker"); if(!box) return;
   const p=(DATA.catalogo||[]).find(x=>x.id===window._vSelectedPrenda);
   if(!p){ box.innerHTML=""; return; }
+  const first=p.talles[0];
   box.innerHTML=`<div class="card" style="margin-top:10px;background:#fbf9f4">
-    <div class="name" style="margin-bottom:8px">${esc(p.nombre)}</div>
-    <div id="talle-rows">${talleRows(p)}</div>
+    <div class="row" style="padding:0 0 10px">
+      <div class="grow"><div class="name">${esc(p.nombre)}</div>
+        ${first?`<div class="meta">${fmt(first.precioLista)} <span style="color:var(--muted)">· Transf. ${fmt(first.precio)}</span></div>`:""}</div>
+    </div>
+    <div class="talle-chips">${talleChips(p)}</div>
   </div>`;
 }
-function talleRows(p){
+function talleChips(p){
   return p.talles.map(t=>{
     const q=cartQtyFor(t.talleId);
-    const over = q>t.stock;
-    return `<div class="row">
-      <div class="grow"><div class="name">Talle ${esc(t.talle)}</div>
-        <div class="meta">${fmt(t.precioLista)} <span style="color:var(--muted)">· Transf. ${fmt(t.precio)}</span> · stock ${t.stock}${t.stock<=0?' · <span style="color:var(--red)">sin stock</span>':''}${over?` · <span style="color:var(--amber)">pedís ${q}</span>`:''}</div></div>
-      <div class="qty"><button onclick='chQtyTalle(${JSON.stringify(p.id)},${JSON.stringify(t.talleId)},-1)'>−</button><span>${q}</span><button onclick='chQtyTalle(${JSON.stringify(p.id)},${JSON.stringify(t.talleId)},1)'>+</button></div>
-    </div>`;
+    const noStock=t.stock<=0;
+    return `<button type="button" class="talle-chip${q>0?" sel":""}${noStock?" no-stock":""}" title="${noStock?"Sin stock — se agrega a pedido":`Stock ${t.stock}`}" onclick='tapTalle(${JSON.stringify(p.id)},${JSON.stringify(t.talleId)})'>
+      ${esc(t.talle)}${q>0?`<span class="chip-qty">${q}</span>`:""}
+    </button>`;
   }).join("");
 }
 function cartQtyFor(talleId){ const i=cart.find(x=>x.talleId===talleId); return i?i.qty:0; }
-function chQtyTalle(prendaId, talleId, delta){
+function tapTalle(prendaId, talleId){
   const p=(DATA.catalogo||[]).find(x=>x.id===prendaId); const t=p.talles.find(x=>x.talleId===talleId);
   let i=cart.find(x=>x.talleId===talleId);
-  if(!i && delta>0){ i={talleId,nombre:p.nombre,talle:t.talle,precio:t.precio,precioLista:t.precioLista,qty:0,stock:t.stock,descPct:0}; cart.push(i); }
-  if(i){
-    i.qty+=delta;
-    if(i.qty<=0) cart=cart.filter(x=>x!==i);
-    else if(delta>0 && t.stock>=0 && i.qty>t.stock) toast(`⚠ Sólo hay ${t.stock} en stock — el resto queda a pedido`, true);
-  }
+  if(!i){ i={talleId,nombre:p.nombre,talle:t.talle,precio:t.precio,precioLista:t.precioLista,qty:0,stock:t.stock,descPct:0}; cart.push(i); }
+  i.qty+=1;
+  if(t.stock>=0 && i.qty>t.stock) toast(`⚠ Sólo hay ${t.stock} en stock — el resto queda a pedido`);
   recomputeChombaPromo();
-  const cont=$("#talle-rows"); if(cont) cont.innerHTML=talleRows(p);
+  window._vSelectedPrenda=null;
+  const inp=$("#v-prenda-input"); if(inp) inp.value="";
+  drawTallePicker();
   drawCart();
 }
 function chQty(idx,d){
