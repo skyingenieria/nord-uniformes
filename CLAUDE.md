@@ -210,24 +210,56 @@ desde la web app nueva cuando haya tiempo):
   `api/erp.js` sólo entra para lo que necesita credenciales que no pueden
   viajar al browser: ARCA, Drive, Google Analytics.
 
+**Tipografía:** toda `gestion.html` (mobile y desktop) usa **Inter** (Google
+Fonts, `<link>` en el `<head>`) como fuente principal, con el viejo stack de
+system-fonts como fallback — a pedido de Flor, para imitar la estética de
+Shopify POS de forma consistente entre plataformas (antes dependía de la
+fuente del sistema de cada dispositivo).
+
 **Estado de `gestion.html`:** vive en `https://www.norduniformes.com.ar/gestion`
 (rewrite en `vercel.json`, **sin subdominio propio** — decisión de Flor,
-2026-09-27). Tabs: Dashboard (ventas/ganancia/margen%, año calendario, tabla
-mensual de prendas vendidas + monto/ganancia en USD al dólar blue del día de
-cada operación, valorización de stock a costo de reposición y a precio de
-lista, y tráfico del sitio vía GA4 con carga bajo demanda), Stock (solo
-lectura), Vender, Pedidos (con alta/baja de prendas al editar un pedido ya
-creado), Órdenes (detalle línea por línea de lo vendido, editable tipo
-Excel: talle, cantidad, descuento%), Clientes, Proveedores, Compras
-(editable tipo Excel, todas las celdas), Precios y costos (editable tipo
-Excel), Gastos (alta de gastos operativos: logística, packaging, software,
-impuestos, etc — tabla `013_gastos`; en **desktop** la lista es una tabla
-editable tipo Excel, en **mobile** es una lista de sólo lectura y tocar una
-fila abre una hoja para editarla o borrarla — rediseño 2026-09-28, la tabla
-completa se veía mal en pantalla chica), Egresos (alta y
-edición tipo Excel de pagos/aportes extraordinarios de Flor/Fede — tabla
-`015_egresos`, standalone, no se relaciona con nada más), Contabilidad (con
-botón "Subir a Drive" por factura), Catálogo (alta de prendas/talles).
+2026-09-27). Tabs: Inicio (Dashboard en desktop: ventas/ganancia/margen%, año
+calendario, tabla mensual de prendas vendidas + monto/ganancia en USD al
+dólar blue del día de cada operación, valorización de stock a costo de
+reposición y a precio de lista, y tráfico del sitio vía GA4 con carga bajo
+demanda — en mobile es la Home de tarjetas, ver abajo), Stock (lista sólo la
+prenda; tocarla muestra el detalle por talle), Ventas (ex "Vender"), Pedidos
+(con alta/baja de prendas al editar un pedido ya creado), Órdenes (detalle
+línea por línea de lo vendido, editable tipo Excel: talle, cantidad,
+descuento%), Clientes, Proveedores, Compras (editable tipo Excel, todas las
+celdas), Precios y costos (editable tipo Excel), Gastos (alta de gastos
+operativos: logística, packaging, software, impuestos, etc — tabla
+`013_gastos`; en **desktop** la lista es una tabla editable tipo Excel, en
+**mobile** es una lista de sólo lectura y tocar una fila abre una hoja para
+editarla o borrarla — rediseño 2026-09-28, la tabla completa se veía mal en
+pantalla chica), Egresos (alta y edición tipo Excel de pagos/aportes
+extraordinarios de Flor/Fede — tabla `015_egresos`, standalone, no se
+relaciona con nada más), Contabilidad (con botón "Subir a Drive" por
+factura), Catálogo (alta de prendas/talles).
+
+- **Home de mobile + bottom bar** (rediseño 2026-09-28, estilo Shopify POS —
+  ver "Vender — arquitectura" abajo para el antecedente): en pantallas
+  chicas la pestaña "Inicio" dejó de mostrar el Dashboard y ahora es una
+  Home con 6 tarjetas de acceso directo (grilla `.vm-tile`, sin fetch):
+  Agregar cliente, Agregar venta (entra directo a buscar en Ventas),
+  Registrar gasto, Ver stock, Ver métricas (el Dashboard de siempre, ahora
+  vive en la pestaña `metricas` — misma función `viewInicio(v,force,
+  forceDashboard)` con el flag en `true`) y Ver pedidos. La bottom bar de
+  mobile bajó de 5 a 4 accesos directos: **Inicio, Clientes, Ventas,
+  Gastos** — Stock, Pedidos y el Dashboard se sacaron de la bottom bar (se
+  llega por las tarjetas de la Home) y Clientes se sumó (antes era
+  `desk-only`, ahora tiene su propia lista mobile tipo Gastos: filas
+  `.vm-row`, tocar una abre `openEditarCliente`). El orden de la bottom bar
+  se resuelve con `order` en CSS bajo `@media (max-width:899px)` — el
+  `<button>` de Clientes no se movió en el DOM para no alterar el orden del
+  sidebar de escritorio (que no cambió: sigue mostrando todas las pestañas,
+  Dashboard incluido bajo "Inicio").
+- **Stock** (rediseño 2026-09-28): la lista ahora muestra sólo la fila de la
+  prenda (foto, nombre, cantidad de talles, stock total) — antes mostraba
+  además todos los talles como chips apretados en la misma fila. Tocar la
+  prenda abre el detalle con una fila por variante (talle + precio + stock,
+  formato `.vm-row`, como la lista de variantes de un producto en Shopify),
+  reemplazando la vieja grilla de chips + tabla de precios separada.
 
 - **Vender — arquitectura** (rediseño completo 2026-09-27/28, inspirado en
   Shopify POS; ver "Pendiente" al final de este bloque): dos UI enteramente
@@ -241,12 +273,20 @@ botón "Subir a Drive" por factura), Catálogo (alta de prendas/talles).
     pedido, envío) siempre visible debajo.
   - **Mobile** (`isMobileVender()` = `window.innerWidth<900`, mismo
     breakpoint que el resto de la app): flujo por pasos tipo Smart Grid de
-    Shopify POS — `home` (grilla Agregar cliente / Agregar venta /
-    Registrar gasto + buscador) → `search` (tabs Productos/Pedidos/Clientes)
-    → `variants` (talles del producto elegido, como chips) → `cart`. Reusa
-    el mismo picker de cliente (`openCliente`) que desktop. Estética propia
-    scopeada a clases `.vm-*` (botones negros `#1a1a1a`, bordes grises
-    `#e1e3e5`, pills segmentadas) — el resto de la app no cambió de look.
+    Shopify POS — `cart` (carrito, con su propio buscador arriba tipo pill,
+    igual que el Cart de Shopify POS) ⇄ `search` (tabs
+    Productos/Pedidos/Clientes) → `variants` (talles del producto elegido,
+    como chips) → vuelve a agregar al carrito. Entrar a la pestaña Ventas
+    aterriza directo en `cart` si ya hay ítems, o en `search` si está vacío
+    (menos toques para arrancar a vender). Reusa el mismo picker de cliente
+    (`openCliente`) que desktop. Estética propia scopeada a clases `.vm-*`
+    (botones negros `#1a1a1a`, bordes grises `#e1e3e5`, pills segmentadas) —
+    el resto de la app no cambió de look.
+    **Nota (rediseño 2026-09-28):** el paso `home` (grilla Agregar cliente /
+    Agregar venta / Registrar gasto) que vivía acá adentro se sacó — esa
+    grilla ahora es la Home de toda la app (`viewInicioHome`, ver "Home de
+    mobile + bottom bar" arriba), no una pantalla de Vender. `vmGoHome()`
+    quedó como sinónimo de "volver al carrito" (`vmGoCart()`).
 - **Modelo de descuentos de `gestion.html` — Vender** (distinto del "Modelo
   de precios" de abajo, que es de wellspring/carrito; reemplaza un esquema
   viejo de un solo % por línea + $ fijo a nivel pedido, y el 30% automático
@@ -281,17 +321,31 @@ botón "Subir a Drive" por factura), Catálogo (alta de prendas/talles).
     independiente** — ver "Cart upsell: Chomba Blanca 30% off" más abajo
     (`wellspring.html`/`carrito.html`/`api/orders.js`), no confundir una
     con otra.
-- **Edición de pedidos ya creados** (tabs Pedidos/Órdenes — vista distinta
-  a Vender, con su propia fila `oiRowHtml`, no tocada en el rediseño de
-  arriba): de sólo lectura por default (una línea por ítem:
-  talle/cantidad/precio/%desc/subtotal) — hay que tocar "✏️ Editar
-  prendas" para habilitar los controles editables, para evitar cambios
-  accidentales una vez armado el pedido. También hay un campo de nota
-  interna libre por pedido (`004_pedidos.notas`).
+- **Edición de pedidos ya creados** (tabs Pedidos/Órdenes; rediseño completo
+  2026-09-28 para que se parezca a armar una venta nueva en vez de a una
+  tabla editable): la hoja (`oiRenderPedidoSheet`, `openWideSheet`) tiene una
+  tarjeta "Prendas" con filas estilo carrito de Vender (`oiRowHtml`, misma
+  clase `.cart-line`) — nombre/talle/descuento, stepper de cantidad y
+  subtotal siempre visibles, sin modo "editar" aparte; tocar una fila abre
+  `oiOpenLineItem` (cantidad, descuento %/$ fijo con toggle, cambio de
+  talle, quitar), igual que `openLineItem` en Vender. Para sumar prendas,
+  el mismo combobox + chips de talle que Vender desktop (`oiOnPrendaInput` /
+  `oiDrawTallePicker` / `oiTapTalle`) reemplaza a los dos `<select>` +
+  cantidad de antes — tocar un talle agrega 1 unidad o suma si ya estaba.
+  Como sólo existe un slot de hoja (`#sheet`), abrir la hoja de detalle de
+  una línea reemplaza el contenido de la hoja del pedido; "Listo" y
+  "Quitar" vuelven llamando a `oiRenderPedidoSheet()` (redibuja desde el
+  estado en memoria, sin refetch) en vez de cerrar todo — si tocás "Listo"
+  sin esto, se cerraba la hoja entera y volvías a la lista de Pedidos.
+  Debajo de "Prendas": nota interna (`004_pedidos.notas`) en su propia
+  tarjeta, **"Pagos y entrega" fusionados en una sola tarjeta** (antes eran
+  dos secciones separadas — "Registrar pago" y "Registrar entrega"), y
+  Factura en la suya.
 - **Pendiente (a futuro, sesión aparte):** Flor pidió eventualmente llevar
-  más de la arquitectura de `gestion.html` (no sólo Vender) a un estilo más
-  parecido a Shopify POS — todavía no definido en detalle, retomar cuando
-  haga falta.
+  más de la arquitectura de `gestion.html` a un estilo más parecido a
+  Shopify POS — la Home de mobile, Vender y la edición de pedidos ya se
+  hicieron (2026-09-28); falta pensar Stock/Precios/Compras/Contabilidad si
+  hace falta, retomar cuando surja.
 - **Facturación ARCA + Drive:** desde Pedidos se emite Factura C real (acción
   `facturar-supabase` de `api/erp.js`). Al emitir se genera el PDF (reusando
   `/factura.js` + `/factura-pdf.js`, los mismos scripts estáticos que usaba
