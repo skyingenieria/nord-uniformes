@@ -1235,22 +1235,26 @@ function milesOnInput(el){ const n=parseMiles(el.value); el.value=fmtMiles(n); r
 async function viewVender(v,force){
   try{
     if(force||!DATA.catalogo){ loading(v); await getCatalogo(true); }
+    const prendaOpts=(DATA.catalogo||[]).slice().sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"))
+      .map(p=>`<option value="${esc(p.nombre)}">`).join("");
     v.innerHTML = `
-      <div class="card" style="margin-bottom:14px">
-        <div class="field" style="margin-bottom:0"><label>Cliente</label>
+      <div class="card">
+        <div class="field"><label>Cliente</label>
           <button class="btn ghost" id="v-cliente-btn" onclick="openCliente()">Elegir o crear cliente</button>
         </div>
-      </div>
-      <div class="section-h" style="margin-top:4px">Pedido</div>
-      <div class="card" id="v-cart"></div>
-      <div id="v-checkout"></div>
-      <div class="section-h">Agregar prendas</div>
-      <div class="search"><span class="mag">🔎</span><input id="v-q" placeholder="Buscar prenda…"></div>
-      <div id="v-results"></div>`;
+
+        <div class="field" style="margin-bottom:0"><label>Agregar prenda</label>
+          <input list="v-prenda-list" id="v-prenda-input" placeholder="Escribí o elegí una prenda…" autocomplete="off" oninput="onPrendaInput(this.value)">
+          <datalist id="v-prenda-list">${prendaOpts}</datalist>
+        </div>
+        <div id="v-talle-picker"></div>
+
+        <div class="section-h" style="margin:18px 2px 8px">Ítems del pedido</div>
+        <div id="v-cart"></div>
+
+        <div id="v-checkout"></div>
+      </div>`;
     renderCliente();
-    const inp=$("#v-q");
-    inp.oninput=()=>{ window._venderQ=inp.value.trim().toLowerCase(); drawResults(window._venderQ); };
-    drawResults(window._venderQ="");
     drawCart();
   }catch(e){ errBox(v,e); }
 }
@@ -1261,28 +1265,23 @@ function renderCliente(){
   b.style.borderColor = c ? "var(--green)" : "var(--line)";
   b.style.color = c ? "var(--green)" : "var(--azul-900)";
 }
-function drawResults(q){
-  const box=$("#v-results"); if(!box) return;
-  const res=(DATA.catalogo||[]).filter(p=>!q||p.nombre.toLowerCase().includes(q));
-  box.innerHTML = res.length? res.map(p=>{
-    const tot=p.talles.reduce((s,t)=>s+t.stock,0);
-    const enPedido=cart.filter(i=>i.nombre===p.nombre).reduce((s,i)=>s+i.qty,0);
-    return `<div class="card" style="margin-bottom:10px;cursor:pointer" onclick='openTalle(${JSON.stringify(p.id)})'>
-      <div class="row" style="padding:0">
-        ${p.foto?`<img class="thumb" src="${esc(p.foto)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'thumb ph',textContent:'👕'}))">`:'<div class="thumb ph">👕</div>'}
-        <div class="grow"><div class="name">${esc(p.nombre)}</div><div class="meta">desde ${fmt(p.precioLista)} <span style="color:var(--muted)">· Transf. ${fmt(p.precio)}</span> · ${tot} u. en stock</div></div>
-        ${enPedido?`<span class="chip g">${enPedido} en pedido</span>`:'<span style="color:var(--dorado);font-size:24px;line-height:1">＋</span>'}
-      </div>
-    </div>`;
-  }).join("") : '<div class="empty">Sin resultados</div>';
+// Combobox de prenda (escribís o elegís del dropdown nativo): apenas el texto
+// coincide con una prenda del catálogo, aparece su selector de talle abajo
+// mismo -- sin buscador ni lista aparte, como un POS de mostrador.
+function onPrendaInput(val){
+  const name=(val||"").trim().toLowerCase();
+  const p=(DATA.catalogo||[]).find(x=>x.nombre.toLowerCase()===name);
+  window._vSelectedPrenda = p ? p.id : null;
+  drawTallePicker();
 }
-function openTalle(prendaId){
-  const p=(DATA.catalogo||[]).find(x=>x.id===prendaId); if(!p) return;
-  openSheet(`<div class="grabber"></div>
-    ${p.foto?`<img class="sheet-foto" src="${esc(p.foto)}" onerror="this.style.display='none'">`:''}
-    <h3>${esc(p.nombre)}</h3><p class="sub">Elegí el talle y la cantidad</p>
+function drawTallePicker(){
+  const box=$("#v-talle-picker"); if(!box) return;
+  const p=(DATA.catalogo||[]).find(x=>x.id===window._vSelectedPrenda);
+  if(!p){ box.innerHTML=""; return; }
+  box.innerHTML=`<div class="card" style="margin-top:10px;background:#fbf9f4">
+    <div class="name" style="margin-bottom:8px">${esc(p.nombre)}</div>
     <div id="talle-rows">${talleRows(p)}</div>
-    <button class="btn" style="margin-top:6px" onclick="closeSheet()">Listo</button>`);
+  </div>`;
 }
 function talleRows(p){
   return p.talles.map(t=>{
@@ -1307,14 +1306,14 @@ function chQtyTalle(prendaId, talleId, delta){
   }
   recomputeChombaPromo();
   const cont=$("#talle-rows"); if(cont) cont.innerHTML=talleRows(p);
-  drawResults(window._venderQ||""); drawCart();
+  drawCart();
 }
 function chQty(idx,d){
   const i=cart[idx]; if(!i) return;
   i.qty+=d;
-  if(i.qty<=0){ cart.splice(idx,1); recomputeChombaPromo(); drawCart(); drawResults(window._venderQ||""); return; }
+  if(i.qty<=0){ cart.splice(idx,1); recomputeChombaPromo(); drawCart(); drawTallePicker(); return; }
   recomputeChombaPromo();
-  drawCart(); drawResults(window._venderQ||"");
+  drawCart(); drawTallePicker();
 }
 function cartPrecioHtml(i){ return `<b>${fmt(basePrice(i))}</b> lista<div class="oi-lista">c/u ${fmt(unitPrice(i))}</div>`; }
 function setItemDesc(idx,val){
@@ -1331,12 +1330,12 @@ function cartChangeTalle(idx,talleId){
   const t=prenda.talles.find(x=>x.talleId===talleId); if(!t) return;
   // si ya había otra línea con ese talle, se fusionan sumando cantidades en vez de duplicar
   const dupIdx=cart.findIndex((x,j)=>j!==idx && x.talleId===talleId);
-  if(dupIdx!==-1){ cart[dupIdx].qty+=i.qty; cart.splice(idx,1); recomputeChombaPromo(); drawCart(); drawResults(window._venderQ||""); return; }
+  if(dupIdx!==-1){ cart[dupIdx].qty+=i.qty; cart.splice(idx,1); recomputeChombaPromo(); drawCart(); drawTallePicker(); return; }
   i.talleId=t.talleId; i.talle=t.talle; i.precio=t.precio; i.precioLista=t.precioLista; i.stock=t.stock;
   recomputeChombaPromo();
-  drawCart(); drawResults(window._venderQ||"");
+  drawCart(); drawTallePicker();
 }
-function clearCart(){ cart=[]; drawCart(); drawResults(window._venderQ||""); }
+function clearCart(){ cart=[]; drawCart(); drawTallePicker(); }
 function cartRowHtml(i,idx){
   const prenda=(DATA.catalogo||[]).find(p=>p.nombre===i.nombre);
   const talles=prenda?prenda.talles:[];
@@ -1382,22 +1381,21 @@ function drawCheckout(){
   const el=$("#v-checkout"); if(!el) return;
   if(!cart.length){ el.innerHTML=""; return; }
   el.innerHTML = `
-    <div class="card" style="margin-top:12px">
-      <div class="field"><label>Forma de pago</label>
-        <select id="v-pago" onchange="venta.pago=this.value;drawCart()">
-          <option value="Tarjeta (Nave)" ${isCard()?"selected":""}>Tarjeta (Nave)</option>
-          <option ${venta.pago==="Transf. Banc."?"selected":""}>Transf. Banc.</option>
-          <option ${venta.pago==="Efectivo"?"selected":""}>Efectivo</option>
-        </select>
-      </div>
-      <div class="two">
-        <div class="field"><label>Descuento ($)</label><input type="text" inputmode="numeric" id="v-desc" value="${fmtMiles(venta.descuento)}" placeholder="0" oninput="venta.descuento=milesOnInput(this);drawTotals()"></div>
-        <div class="field"><label>Cargo envío ($)</label><input type="text" inputmode="numeric" id="v-env" value="${fmtMiles(venta.envio)}" placeholder="0" oninput="venta.envio=milesOnInput(this);drawTotals()"></div>
-      </div>
-      ${isCard()?'<p style="font-size:12px;color:var(--muted);margin:-4px 0 12px">💳 Al registrar se genera el link de pago Nave para enviar al cliente por WhatsApp.</p>':''}
-      <div id="v-totals"></div>
-      <button class="btn" style="margin-top:14px" id="v-submit" onclick="registrarPedido()">${isCard()?"Registrar y generar link":"Registrar pedido"}</button>
-    </div>`;
+    <div class="section-h" style="margin:18px 2px 8px">Pago</div>
+    <div class="field"><label>Forma de pago</label>
+      <select id="v-pago" onchange="venta.pago=this.value;drawCart()">
+        <option value="Tarjeta (Nave)" ${isCard()?"selected":""}>Tarjeta (Nave)</option>
+        <option ${venta.pago==="Transf. Banc."?"selected":""}>Transf. Banc.</option>
+        <option ${venta.pago==="Efectivo"?"selected":""}>Efectivo</option>
+      </select>
+    </div>
+    <div class="two">
+      <div class="field"><label>Descuento ($)</label><input type="text" inputmode="numeric" id="v-desc" value="${fmtMiles(venta.descuento)}" placeholder="0" oninput="venta.descuento=milesOnInput(this);drawTotals()"></div>
+      <div class="field"><label>Cargo envío ($)</label><input type="text" inputmode="numeric" id="v-env" value="${fmtMiles(venta.envio)}" placeholder="0" oninput="venta.envio=milesOnInput(this);drawTotals()"></div>
+    </div>
+    ${isCard()?'<p style="font-size:12px;color:var(--muted);margin:-4px 0 12px">💳 Al registrar se genera el link de pago Nave para enviar al cliente por WhatsApp.</p>':''}
+    <div id="v-totals"></div>
+    <button class="btn" style="margin-top:14px" id="v-submit" onclick="registrarPedido()">${isCard()?"Registrar y generar link":"Registrar pedido"}</button>`;
   drawTotals();
 }
 function drawTotals(){
