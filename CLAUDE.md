@@ -312,6 +312,14 @@ factura), Catálogo (alta de prendas/talles).
   - `005_ordenes.descuento_pct` sigue guardando el % efectivo de la línea
     al vender (se calcula igual venga de un % o de un $ fijo) — sin cambios
     de schema.
+  - **Tocar un talle ya agregado crea una línea nueva** (`tapTalle`,
+    2026-10-05), no suma cantidad a la existente — mismo criterio que
+    `oiTapTalle` en la edición de pedidos (ver abajo), aplicado acá también
+    a pedido de Flor: "cuando agrego una prenda idéntica con el mismo talle
+    no me la agrega, me la suma". `cartQtyFor(talleId)` (el badge "N en
+    pedido" de los chips/variantes) suma la cantidad de todas las líneas de
+    ese talle, puede haber más de una. Para sumar cantidad a una línea ya
+    cargada se usa el +/- de esa fila (`chQty`), no se reabre el picker.
   - **Nota histórica:** durante un tiempo (2026-09-27/28) Vender aplicó un
     30% OFF automático a la Chomba Blanca, tope 1 unidad por pedido, igual
     que la promo del sitio público — se sacó a pedido de Flor (28/09,

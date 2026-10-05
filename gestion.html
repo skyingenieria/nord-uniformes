@@ -1572,13 +1572,19 @@ function talleChips(p){
     </button>`;
   }).join("");
 }
-function cartQtyFor(talleId){ const i=cart.find(x=>x.talleId===talleId); return i?i.qty:0; }
+// Suma la cantidad de TODAS las líneas de ese talle -- puede haber más de
+// una (ver tapTalle) si se cargó con descuentos de línea distintos.
+function cartQtyFor(talleId){ return cart.filter(x=>x.talleId===talleId).reduce((s,x)=>s+x.qty,0); }
+// Tocar un talle siempre agrega una línea nueva al carrito, aunque ya haya
+// una de ese mismo talle -- así se puede poner un descuento de línea a una
+// sola unidad sin afectar al resto (mismo criterio que oiTapTalle en la
+// edición de pedidos, 2026-10-05). Para sumar cantidad a una línea ya
+// cargada se usa el +/- de esa fila (chQty), no se reabre el picker.
 function tapTalle(prendaId, talleId){
   const p=(DATA.catalogo||[]).find(x=>x.id===prendaId); const t=p.talles.find(x=>x.talleId===talleId);
-  let i=cart.find(x=>x.talleId===talleId);
-  if(!i){ i={talleId,nombre:p.nombre,talle:t.talle,precio:t.precio,precioLista:t.precioLista,qty:0,stock:t.stock,discType:null,discValue:0}; cart.push(i); }
-  i.qty+=1;
-  if(t.stock>=0 && i.qty>t.stock) toast(`⚠ Sólo hay ${t.stock} en stock — el resto queda a pedido`);
+  const i={talleId,nombre:p.nombre,talle:t.talle,precio:t.precio,precioLista:t.precioLista,qty:1,stock:t.stock,discType:null,discValue:0};
+  cart.push(i);
+  if(t.stock>=0 && cartQtyFor(talleId)>t.stock) toast(`⚠ Sólo hay ${t.stock} en stock — el resto queda a pedido`);
   window._vSelectedPrenda=null;
   const inp=$("#v-prenda-input"); if(inp) inp.value="";
   drawTallePicker();
