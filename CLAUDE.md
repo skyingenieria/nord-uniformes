@@ -297,9 +297,12 @@ factura), Catálogo (alta de prendas/talles).
   - **Por ítem** (manual — tocar la prenda en "Ítems del pedido" abre la
     hoja de detalle `openLineItem`: cantidad, descuento, quitar): reemplaza
     al descuento por medio de pago en esa línea (no se suman) y soporta
-    **% o $ fijo** con un toggle tipo Shopify, siempre calculado sobre
-    **precio de lista** sea cual sea la forma de pago. El $ fijo se reparte
-    por unidad (`discValue / cantidad`).
+    **% o $ fijo** con un toggle tipo Shopify. La base sobre la que se
+    calcula (`discBasePrice()`) es **precio de lista si la forma de pago es
+    Tarjeta, o precio de transferencia si es Transferencia/Efectivo**
+    (2026-10-05 — antes era siempre sobre lista sin importar el medio de
+    pago; a pedido de Flor). El $ fijo se reparte por unidad
+    (`discValue / cantidad`).
   - **Del pedido** (`venta.descuentoTipo`/`descuentoValor` — inline en
     desktop, debajo de "Forma de pago" en mobile): también % o $ fijo, como
     el descuento a nivel carrito de Shopify; el % se calcula sobre el
@@ -360,6 +363,14 @@ factura), Catálogo (alta de prendas/talles).
     (`oiChangeQty`), no el picker de agregar. El badge de cantidad en el
     chip de talle (`oiTalleChips`) ahora suma todas las líneas de ese talle,
     no sólo una.
+  - **Base del precio automático y del descuento por línea según forma de
+    pago** (`oiDiscBaseFor()`, mismo criterio que `discBasePrice()` de
+    Vender): tanto el precio con el que se agrega una prenda nueva
+    (`oiTapTalle`) como la base sobre la que se calcula un descuento manual
+    de línea (`oiChangeDesc`/`oiLiChangeDisc`/`oiLiSetDiscMode`/
+    `oiChangeTalle`) usan **lista si `_pedCurrent.forma_pago` es Tarjeta, o
+    transferencia si es Transferencia/Efectivo** — antes siempre usaban
+    lista sin mirar la forma de pago del pedido.
   - **Forma de pago del pedido editable:** selector nuevo arriba de
     "Prendas" (`#pd-forma-pago` + botón Guardar, `oiEditFormaPago`) — para
     cuando un pedido se vendió con una forma de pago y en los hechos lo
