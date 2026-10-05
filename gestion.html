@@ -1934,11 +1934,24 @@ function oiRenderPedidoSheet(){
   if(p.estado_envio && !opts.includes(p.estado_envio)) opts.unshift(p.estado_envio);
   const envs=["Retiro Habitat","Envío a domicilio"];
   if(p.envio && !envs.includes(p.envio)) envs.unshift(p.envio);
+  // Preseleccionada con la forma de pago del pedido -- antes siempre arrancaba
+  // en "Tarjeta (Nave)" (la primera opción) sin importar cómo se vendió.
+  const pagoOpts=["Tarjeta (Nave)","Transf. Banc.","Efectivo"];
+  if(p.forma_pago && !pagoOpts.includes(p.forma_pago)) pagoOpts.unshift(p.forma_pago);
   const itemsHtml=oiItemsContainerHtml();
   // Misma estructura que armar una venta nueva (tarjeta con ítems + agregar
   // prenda + totales) y después, en tarjetas propias, lo que sólo existe acá:
   // nota, pagos y entrega juntos, y factura.
-  openWideSheet(`<div class="grabber"></div><h3>${esc(p.numero)}</h3><p class="sub">${esc(p.clienteNombre)} · ${esc(p.forma_pago||"")}</p>
+  openWideSheet(`<div class="grabber"></div><h3>${esc(p.numero)}</h3><p class="sub">${esc(p.clienteNombre)}</p>
+
+    <div class="field" style="margin:14px 0 4px">
+      <label>Forma de pago del pedido</label>
+      <div style="display:flex;gap:8px">
+        <select id="pd-forma-pago" style="flex:1" ${p.factura?"disabled":""}>${pagoOpts.map(o=>`<option ${p.forma_pago===o?"selected":""}>${esc(o)}</option>`).join("")}</select>
+        <button type="button" class="btn ghost sm" id="pd-forma-pago-save" ${p.factura?"disabled":""} onclick='oiEditFormaPago(${JSON.stringify(p.id)})'>Guardar</button>
+      </div>
+      ${p.factura?'<p style="font-size:11.5px;color:var(--muted);margin-top:6px">No se puede cambiar: el pedido ya tiene factura emitida.</p>':'<p style="font-size:11.5px;color:var(--muted);margin-top:6px">Recalcula el precio de las prendas sin descuento manual, al precio de lista o de transferencia según corresponda.</p>'}
+    </div>
 
     <div class="section-h" style="margin-top:0">Prendas</div>
     <div class="card" id="oi-items">${itemsHtml}</div>
@@ -1955,7 +1968,7 @@ function oiRenderPedidoSheet(){
       <div class="field"><label>Monto que recibís ($)</label><input type="text" inputmode="numeric" id="pg-monto" value="${fmtMiles(Math.max(0,Math.round(p.saldo)))}" placeholder="0" oninput="milesOnInput(this)"></div>
       <div class="two">
         <div class="field"><label>Fecha</label><input id="pg-fecha" value="${todayISO()}"></div>
-        <div class="field"><label>Forma de pago</label><select id="pg-forma"><option>Tarjeta (Nave)</option><option>Transf. Banc.</option><option>Efectivo</option></select></div>
+        <div class="field"><label>Forma de pago</label><select id="pg-forma">${pagoOpts.map(o=>`<option ${p.forma_pago===o?"selected":""}>${o}</option>`).join("")}</select></div>
       </div>
       <button class="btn" id="pg-save" onclick='savePago(${JSON.stringify(p.id)})'>Registrar pago</button>
 
@@ -1982,6 +1995,45 @@ function oiRenderPedidoSheet(){
 
     <button class="btn" style="margin-top:24px;background:var(--red)" id="del-pedido" ${p.factura?'disabled':''} onclick='eliminarPedido(${JSON.stringify(p.id)})'>🗑 Eliminar pedido</button>
     ${p.factura?'<p style="font-size:11.5px;color:var(--muted);margin-top:6px">No se puede eliminar: ya tiene factura emitida.</p>':'<p style="font-size:11.5px;color:var(--muted);margin-top:6px">Para pedidos de prueba. Borra el pedido, sus ítems y sus pagos — no se puede deshacer.</p>'}`);
+}
+// Cambiar la forma de pago de un pedido ya creado (ej: se vendió como
+// Tarjeta y en realidad lo pagaron por Transferencia). Recalcula el precio
+// de cada línea SIN descuento manual (descuento_pct===0) al precio de lista
+// o de transferencia según corresponda -- igual que al armar una venta
+// nueva (ver isCard()/priceAfterPaymentMethod() en Vender). Las líneas con
+// un descuento puntual ya cargado (oiOpenLineItem) no se tocan: ese
+// descuento reemplaza al automático por medio de pago, no se suman.
+async function oiEditFormaPago(pedidoId){
+  const sel=$("#pd-forma-pago"); if(!sel) return;
+  const nuevo=sel.value;
+  const p=window._pedCurrent; if(!p || p.id!==pedidoId) return;
+  if(nuevo===p.forma_pago) return toast("Ya estaba en esa forma de pago");
+  const esCard=/nave|tarjeta/i.test(nuevo);
+  if(!(await confirmDialog(`¿Cambiar la forma de pago a "${nuevo}"? Las prendas sin descuento manual pasan a precio de ${esCard?"lista":"transferencia"}.`))) return;
+  const btn=$("#pd-forma-pago-save"); btn.disabled=true; btn.textContent="Guardando…";
+  try{
+    const updates=[];
+    window._pedItems.forEach(it=>{
+      if(Number(it.descuento_pct)>0) return;
+      const prenda=window._pedCatMap[it.nombre_prenda];
+      const curTalle=prenda?prenda.talles.find(t=>t.talleId===it.talle_id):null;
+      if(!curTalle) return;
+      const nuevoPrecio = esCard ? oiListaFor(curTalle) : curTalle.precio;
+      if(nuevoPrecio!==it.precio_unitario){ it.precio_unitario=nuevoPrecio; updates.push(it); }
+    });
+    const c=getClient();
+    for(const it of updates){
+      const { error } = await c.from("005_ordenes").update({ precio_unitario: it.precio_unitario }).eq("id", it.id);
+      if(error) throw error;
+    }
+    const { error: eP } = await c.from("004_pedidos").update({ forma_pago: nuevo }).eq("id", pedidoId);
+    if(eP) throw eP;
+    p.forma_pago=nuevo;
+    oiRecalcTotals();
+    DATA.pedidos=null;
+    toast("Forma de pago actualizada"+(updates.length?` — ${updates.length} prenda${updates.length!==1?"s":""} recalculada${updates.length!==1?"s":""}`:""));
+    oiRenderPedidoSheet();
+  }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Guardar"; }
 }
 function oiTotalsHtml(p){
   return `<div class="tot-line" style="margin-top:10px"><span>Subtotal ítems</span><span>${fmt(p.monto)}</span></div>
@@ -2067,19 +2119,20 @@ function oiDrawTallePicker(){
 }
 function oiTalleChips(p){
   return p.talles.map(t=>{
-    const it=window._pedItems.find(x=>x.talle_id===t.talleId);
-    const q=it?it.cantidad:0;
+    // La cantidad del badge suma TODAS las líneas de ese talle -- puede haber
+    // más de una (ver oiTapTalle) si se cargaron con descuentos distintos.
+    const q=window._pedItems.filter(x=>x.talle_id===t.talleId).reduce((s,x)=>s+x.cantidad,0);
     return `<button type="button" class="talle-chip${q>0?" sel":""}" onclick='oiTapTalle(${JSON.stringify(p.id)},${JSON.stringify(t.talleId)})'>
       ${esc(t.talle)}${q>0?`<span class="chip-qty">${q}</span>`:""}
     </button>`;
   }).join("");
 }
-// Tocar un talle: si ya está en el pedido suma 1 (mismo helper que el
-// stepper), si no, crea la línea nueva en 005_ordenes.
+// Tocar un talle: siempre crea una línea nueva en 005_ordenes, aunque ya
+// haya una línea de ese mismo talle -- así se puede poner un descuento a una
+// sola unidad/línea sin afectar al resto (a pedido de Flor, 2026-10-05).
+// Para sumar cantidad a una línea ya cargada se usa el +/- de esa fila.
 async function oiTapTalle(prendaId,talleId){
   const p=Object.values(window._pedCatMap||{}).find(x=>x.id===prendaId); if(!p) return;
-  const idx=window._pedItems.findIndex(x=>x.talle_id===talleId);
-  if(idx>=0){ oiChangeQty(idx,1); oiDrawTallePicker(); return; }
   const talleObj=p.talles.find(t=>t.talleId===talleId); if(!talleObj) return;
   try{
     const base=oiListaFor(talleObj) || 0;
@@ -2402,6 +2455,9 @@ async function guardarNotaPedido(pedidoId){
   }catch(e){ toast(friendlyError(e),true); }
   btn.disabled=false; btn.textContent="Guardar nota";
 }
+// No cierra la hoja al guardar (antes sí) -- así se puede registrar el pago
+// y ajustar la entrega en la misma visita, sin tener que reabrir el pedido.
+// Refresca _pedCurrent en memoria (sin refetch) y redibuja la hoja entera.
 async function savePago(pedidoId){
   const monto=parseMiles($("#pg-monto").value); if(!monto||monto<=0) return toast("Ingresá el monto",true);
   const btn=$("#pg-save"); btn.disabled=true; btn.textContent="Guardando…";
@@ -2410,17 +2466,22 @@ async function savePago(pedidoId){
       pedido_id: pedidoId, monto, forma_pago: $("#pg-forma").value, fecha: $("#pg-fecha").value.trim()||todayISO(),
     });
     if(error) throw error;
-    closeSheet(); toast("Pago registrado"); DATA.pedidos=null; render(true);
+    toast("Pago registrado");
+    DATA.pedidos=null;
+    const p=window._pedCurrent;
+    if(p && p.id===pedidoId){ p.monto_pagado=(Number(p.monto_pagado)||0)+monto; p.saldo=Number(p.total_venta)-p.monto_pagado; oiRenderPedidoSheet(); }
   }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Registrar pago"; }
 }
 async function saveEntrega(pedidoId){
   const btn=$("#en-save"); btn.disabled=true; btn.textContent="Guardando…";
   try{
-    const { error } = await getClient().from("004_pedidos").update({
-      estado_envio: $("#en-est").value, envio: $("#en-env").value,
-    }).eq("id", pedidoId);
+    const estado_envio=$("#en-est").value, envio=$("#en-env").value;
+    const { error } = await getClient().from("004_pedidos").update({ estado_envio, envio }).eq("id", pedidoId);
     if(error) throw error;
-    closeSheet(); toast("Entrega actualizada"); DATA.pedidos=null; render(true);
+    toast("Entrega actualizada");
+    DATA.pedidos=null;
+    const p=window._pedCurrent;
+    if(p && p.id===pedidoId){ p.estado_envio=estado_envio; p.envio=envio; oiRenderPedidoSheet(); }
   }catch(e){ toast(friendlyError(e),true); btn.disabled=false; btn.textContent="Guardar entrega"; }
 }
 
