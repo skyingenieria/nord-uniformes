@@ -341,6 +341,40 @@ factura), Catálogo (alta de prendas/talles).
   tarjeta, **"Pagos y entrega" fusionados en una sola tarjeta** (antes eran
   dos secciones separadas — "Registrar pago" y "Registrar entrega"), y
   Factura en la suya.
+  **Ajustes 2026-10-05:**
+  - **Agregar un talle que ya está en el pedido** (`oiTapTalle`) ahora
+    siempre crea una línea nueva en `005_ordenes`, aunque ya exista una
+    línea de ese mismo talle — antes sumaba cantidad a la existente. Así se
+    puede poner un descuento puntual a una sola línea/unidad sin afectar al
+    resto del mismo talle (a pedido de Flor: "si pongo un descuento en un
+    pedido de 2 prendas, debería poder ser sólo para una"). Para sumar
+    cantidad a una línea ya cargada se sigue usando el +/- de esa fila
+    (`oiChangeQty`), no el picker de agregar. El badge de cantidad en el
+    chip de talle (`oiTalleChips`) ahora suma todas las líneas de ese talle,
+    no sólo una.
+  - **Forma de pago del pedido editable:** selector nuevo arriba de
+    "Prendas" (`#pd-forma-pago` + botón Guardar, `oiEditFormaPago`) — para
+    cuando un pedido se vendió con una forma de pago y en los hechos lo
+    terminaron pagando con otra (ej: se cargó como Tarjeta y pagó por
+    Transferencia). Al guardar, recalcula `precio_unitario` de cada línea
+    **sin descuento manual** (`descuento_pct` 0 o null) al precio de lista
+    o de transferencia de `window._pedCatMap` según corresponda — mismo
+    criterio que `isCard()`/`priceAfterPaymentMethod()` de Vender. Las
+    líneas con un descuento puntual ya cargado (vía `oiOpenLineItem`) **no
+    se tocan**: ese descuento reemplaza al automático por medio de pago,
+    no se suman (mismo criterio que al vender por primera vez, ver "Modelo
+    de descuentos" abajo). Deshabilitado si el pedido ya tiene factura
+    emitida (no se puede desalinear el total de una Factura C ya emitida).
+  - **"Registrar pago" y "Guardar entrega" ya no cierran la hoja** al
+    confirmar (antes sí, y volvías a la lista de Pedidos) — ahora
+    refrescan `_pedCurrent` en memoria (sin refetch) y redibujan la hoja
+    entera (`oiRenderPedidoSheet()`), para poder registrar el pago y
+    ajustar el estado de entrega en la misma visita. El selector "Forma de
+    pago" de "Registrar pago" (`#pg-forma`, para dejar asentado cómo se
+    recibió *ese* pago puntual — no tiene por qué coincidir con la forma de
+    pago del pedido si hubo pagos parciales con medios distintos) viene
+    preseleccionado con la forma de pago del pedido en vez de arrancar
+    siempre en "Tarjeta (Nave)".
 - **Pendiente (a futuro, sesión aparte):** Flor pidió eventualmente llevar
   más de la arquitectura de `gestion.html` a un estilo más parecido a
   Shopify POS — la Home de mobile, Vender y la edición de pedidos ya se
