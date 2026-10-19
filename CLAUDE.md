@@ -517,6 +517,16 @@ borrar de Vercel el día que se confirme que nada la necesita, no es urgente.
   incluida una de Claude Code en la nube — es lo que se usó para toda la
   carga de datos real y para crear/borrar cuentas de prueba descartables
   al verificar cambios en vivo con Playwright.
+- **Proyecto pausado por inactividad (plan Free):** Supabase pausa el
+  proyecto si no recibe ninguna request en 7 días. GitHub Action
+  `.github/workflows/keep-supabase-alive.yml` (2026-10-19) le hace un
+  `SELECT` liviano a `001_prendas` lunes y jueves (cron, + botón manual
+  "Run workflow" en la pestaña Actions del repo) para que nunca llegue a
+  ese umbral — usa la misma anon key pública hardcodeada en
+  `wellspring.html`/etc., no hace falta cargar ningún secret. Si Supabase
+  igual se pausa (por ejemplo, si GitHub Actions estuvo caído varios días),
+  se reactiva a mano desde el dashboard de Supabase (botón "Restore" en la
+  página del proyecto).
 
 ### Vercel
 - Deploy automático al pushear/mergear a `main` (ver "Flujo de trabajo

@@ -1,0 +1,36 @@
+name: Keep Supabase alive
+
+# Supabase pausa los proyectos del plan Free si no reciben ninguna request
+# en 7 días seguidos. Este workflow le pega al REST API un par de veces por
+# semana (lunes y jueves) para que nunca pase ese umbral.
+#
+# Usa la misma anon key pública que ya está hardcodeada en wellspring.html/
+# carrito.html/gestion.html (no es secreta, protegida por RLS del lado de
+# Supabase -- ver CLAUDE.md, sección Supabase) y sólo hace un SELECT de 1
+# fila de 001_prendas (catálogo público), no escribe nada.
+
+on:
+  schedule:
+    - cron: '0 12 * * 1,4' # lunes y jueves, 12:00 UTC
+  workflow_dispatch: {} # para poder probarlo a mano desde la pestaña Actions
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: https://piaagjddrrcbijienvll.supabase.co
+          SUPABASE_ANON_KEY: sb_publishable_yd1wUT0mgOFUcqzbJl_9Cw_WZ8AX6Vp
+        run: |
+          http_code=$(curl -sS -o /tmp/resp.json -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/001_prendas?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "HTTP $http_code"
+          cat /tmp/resp.json
+          echo
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "::error::Supabase respondió $http_code -- revisar si el proyecto está pausado o la anon key cambió"
+            exit 1
+          fi
