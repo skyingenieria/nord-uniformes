@@ -237,6 +237,22 @@ extraordinarios de Flor/Fede — tabla `015_egresos`, standalone, no se
 relaciona con nada más), Contabilidad (con botón "Subir a Drive" por
 factura), Catálogo (alta de prendas/talles).
 
+- **Exportar a Excel** (2026-11-10, a pedido de Flor como respaldo "por si
+  las dudas"): botón "⬇️ Excel" en el header de las 10 tablas principales
+  (Stock, Pedidos, Órdenes, Clientes, Proveedores, Compras, Precios y
+  costos, Contabilidad/Facturas, Gastos, Egresos) que descarga un `.xlsx`
+  real con los datos ya cargados en memoria (`DATA.*`, sin refetch).
+  100% client-side con **SheetJS**, vendorizado como `xlsx.full.min.js` en
+  la raíz del repo (mismo criterio que `html2pdf.bundle.min.js`/
+  `jspdf.umd.min.js`/`qrcode.js` — evita sumar una función serverless más,
+  ver el límite de 12 de Vercel Hobby arriba) y cargado con
+  `<script src="/xlsx.full.min.js" defer>` en el `<head>`. Helper genérico
+  `exportExcel(filename, sheetName, rows)` + una función `export*Excel()`
+  por tabla (arman el array de filas desde `DATA.*` con columnas en
+  español) + `exportBtnHtml(fn,label)` para el botón. Si `DATA.*` está
+  vacío muestra un toast ("No hay datos para exportar") en vez de generar
+  un Excel vacío.
+
 - **Home de mobile + bottom bar** (rediseño 2026-09-28, estilo Shopify POS —
   ver "Vender — arquitectura" abajo para el antecedente): en pantallas
   chicas la pestaña "Inicio" dejó de mostrar el Dashboard y ahora es una
