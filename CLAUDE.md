@@ -270,12 +270,21 @@ factura), Catálogo (alta de prendas/talles).
   `<button>` de Clientes no se movió en el DOM para no alterar el orden del
   sidebar de escritorio (que no cambió: sigue mostrando todas las pestañas,
   Dashboard incluido bajo "Inicio").
-- **Stock** (rediseño 2026-09-28): la lista ahora muestra sólo la fila de la
-  prenda (foto, nombre, cantidad de talles, stock total) — antes mostraba
-  además todos los talles como chips apretados en la misma fila. Tocar la
-  prenda abre el detalle con una fila por variante (talle + precio + stock,
-  formato `.vm-row`, como la lista de variantes de un producto en Shopify),
-  reemplazando la vieja grilla de chips + tabla de precios separada.
+- **Stock** (rediseño 2026-11-10, a pedido de Flor: "que se vea tipo tabla
+  filtrable por prenda, por talle y por cantidad" — reemplaza el rediseño
+  2026-09-28 de lista de prendas + detalle por variante al tocar, que
+  obligaba a entrar a cada prenda para ver el stock por talle): ahora es
+  una tabla tipo Excel (`.pr-table`/`.table-wrap`, mismo componente que
+  Precios y costos) con **una fila por talle** (no por prenda), columnas
+  Prenda/Talle/SKU/Cantidad, encabezados clickeables para ordenar
+  (`drawStock`, `window._stkSort`). Tres filtros arriba: buscador de texto
+  por prenda (`#stk-q`, igual que antes), un `<select>` de talle con las
+  opciones armadas dinámicamente desde `DATA.catalogo` (`#stk-talle`), y un
+  `<select>` de cantidad (`#stk-cant`: Sin stock/Stock bajo 1-3/Con stock
+  4+ — mismos umbrales que `talleClass()`, para no inventar una escala
+  nueva). Sólo lectura (no se edita desde acá, para eso sigue Configuración/
+  Precios) — `openPrendaStock` (el sheet de detalle por prenda) se borró,
+  ya no hace falta.
 
 - **Vender — arquitectura** (rediseño completo 2026-09-27/28, inspirado en
   Shopify POS; ver "Pendiente" al final de este bloque): dos UI enteramente
