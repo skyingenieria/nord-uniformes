@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
 <script src="/qrcode.js" defer></script>
 <script src="/factura.js" defer></script>
+<script src="/xlsx.full.min.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -490,6 +491,93 @@ function compareTalle(ta,tb){
 
 function toast(msg, err){ const t=$("#toast"); t.textContent=msg; t.className="toast show"+(err?" err":""); setTimeout(()=>t.className="toast",2600); }
 
+// ─────────────────────────────────────────────────────────────── EXPORTAR A EXCEL
+// Todo client-side con SheetJS (xlsx.full.min.js, vendorizado como los
+// demás scripts de /factura.js, html2pdf, etc. -- sin tocar api/, para no
+// sumar otra función serverless al límite de 12 de Vercel Hobby). Cada
+// tabla arma sus propias filas con encabezados en español a partir de los
+// datos ya cargados en DATA (no vuelve a pedirle nada a Supabase) y
+// descarga un .xlsx de una sola hoja con fecha de hoy en el nombre.
+function exportExcel(filename, sheetName, rows){
+  if(!window.XLSX){ toast("La planilla todavía está cargando, probá de nuevo en un segundo",true); return; }
+  if(!rows || !rows.length){ toast("No hay datos para exportar",true); return; }
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, String(sheetName||"Datos").slice(0,31));
+  XLSX.writeFile(wb, filename);
+}
+function exportBtnHtml(fn,label){
+  return `<button type="button" class="btn ghost sm" style="width:auto;white-space:nowrap" onclick="${fn}">⬇️ ${label||"Excel"}</button>`;
+}
+function exportStockExcel(){
+  const rows=[];
+  (DATA.catalogo||[]).forEach(p=>{
+    (p.talles||[]).forEach(t=>{
+      rows.push({ Prenda:p.nombre, Talle:t.talle, SKU:t.sku||"", Stock:t.stock, "Precio transferencia":t.precio, "Precio lista":t.precioLista });
+    });
+  });
+  exportExcel(`Stock_${todayISO()}.xlsx`, "Stock", rows);
+}
+function exportPedidosExcel(){
+  const rows=(DATA.pedidos||[]).map(p=>({
+    Número:p.numero, Fecha:p.created_at?p.created_at.slice(0,10):"", Cliente:p.clienteNombre, "Forma de pago":p.forma_pago||"",
+    Prendas:p.cant, Subtotal:Number(p.monto)||0, Descuento:Number(p.descuento)||0, Envío:Number(p.cargo_envio)||0, Total:Number(p.total_venta)||0,
+    Pagado:Number(p.monto_pagado)||0, Saldo:Number(p.saldo)||0, Estado:Number(p.saldo)>0.5?"Debe":"Pagado",
+    Entrega:p.estado_envio||"Sin entregar", Factura:p.factura?p.factura.numero_comprobante:"", Notas:p.notas||"",
+  }));
+  exportExcel(`Pedidos_${todayISO()}.xlsx`, "Pedidos", rows);
+}
+function exportOrdenesExcel(){
+  const rows=(DATA.ordenes||[]).map(o=>({
+    Fecha:o.fecha||"", Pedido:o.pedidoNumero||"", Cliente:o.clienteNombre||"", Prenda:o.nombre_prenda||"", Talle:o.talle||"",
+    Cantidad:o.cantidad, "Precio unitario":Number(o.precio_unitario)||0, "Costo unitario":Number(o.costo_unitario)||0,
+    "Descuento %":o.descuento_pct!=null?Math.round(o.descuento_pct):0,
+    Subtotal:(Number(o.cantidad)||0)*(Number(o.precio_unitario)||0),
+  }));
+  exportExcel(`Ordenes_${todayISO()}.xlsx`, "Órdenes", rows);
+}
+function exportClientesExcel(){
+  const rows=(DATA.clientes||[]).map(c=>({ Código:c.codigo||"", Nombre:c.nombre, Apellido:c.apellido||"", Email:c.email||"", WhatsApp:c.telefono||"" }));
+  exportExcel(`Clientes_${todayISO()}.xlsx`, "Clientes", rows);
+}
+function exportProveedoresExcel(){
+  const rows=(DATA.proveedores||[]).map(p=>({ Nombre:p.nombre }));
+  exportExcel(`Proveedores_${todayISO()}.xlsx`, "Proveedores", rows);
+}
+function exportComprasExcel(){
+  const rows=(DATA.compras||[]).map(co=>({
+    Número:co.numero||"", Fecha:co.fecha||"", Proveedor:co.proveedorNombre||"", Prenda:co.prenda||co.sku_original||"",
+    Talle:co.talleNombre||"", Cantidad:co.cantidad, "Costo unitario":Number(co.costo_unitario)||0,
+    Subtotal:(Number(co.cantidad)||0)*(Number(co.costo_unitario)||0), Estado:co.estado||"",
+  }));
+  exportExcel(`Compras_${todayISO()}.xlsx`, "Compras", rows);
+}
+function exportPreciosExcel(){
+  const rows=(DATA.preciosCostos||[]).map(r=>({
+    Prenda:r.nombre, Talle:r.talle, SKU:r.sku||"", Costo:r.costo, Transferencia:r.precio, Lista:r.precioLista,
+    "Margen %":r.margen!=null?Math.round(r.margen):"",
+  }));
+  exportExcel(`Precios_${todayISO()}.xlsx`, "Precios y costos", rows);
+}
+function exportFacturasExcel(){
+  const rows=(DATA.facturas||[]).map(f=>({
+    Fecha:f.fecha||"", Comprobante:f.numero_comprobante||"", Pedido:f.pedidoNumero||"", Cliente:f.clienteNombre||"",
+    Receptor:f.tipo_receptor||"", CAE:f.cae||"", Importe:Number(f.importe)||0, "Link Drive":f.drive_link||"",
+  }));
+  exportExcel(`Facturas_${todayISO()}.xlsx`, "Facturas", rows);
+}
+function exportGastosExcel(){
+  const rows=(DATA.gastos||[]).map(g=>({ Fecha:g.fecha||"", Categoría:g.categoria||"", Monto:Number(g.monto)||0, Proveedor:g.proveedor||"", Descripción:g.descripcion||"" }));
+  exportExcel(`Gastos_${todayISO()}.xlsx`, "Gastos", rows);
+}
+function exportEgresosExcel(){
+  const rows=(DATA.egresos||[]).map(e=>({
+    Fecha:e.fecha||"", "Pagado por":e.pagado_por||"", Proveedor:e.proveedor||"", Moneda:e.moneda||"",
+    Monto:Number(e.monto_total)||0, Comentario:e.comentario||"",
+  }));
+  exportExcel(`Egresos_${todayISO()}.xlsx`, "Egresos", rows);
+}
+
 // ─────────────────────────────────────────────────────────────── AUTH
 async function login(){
   const email=$("#l-email").value.trim(), pass=$("#l-pass").value;
@@ -641,7 +729,9 @@ async function viewOrdenes(v,force){
     window._orQ = window._orQ||"";
     window._orSort = window._orSort||{field:"fecha",dir:-1};
     v.innerHTML=`
-      <div class="view-title">Órdenes</div>
+      <div class="view-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span>Órdenes</span>${exportBtnHtml("exportOrdenesExcel()")}
+      </div>
       <p style="font-size:12.5px;color:var(--muted);margin-top:-8px">Detalle línea por línea de todo lo vendido (últimas 500). Talle, cantidad y descuento son editables directo; tocá el número de pedido para abrirlo.</p>
       <div class="search"><span class="mag">🔎</span><input id="or-q" placeholder="Buscar prenda, pedido o cliente…" value="${esc(window._orQ)}"></div>
       <div class="table-wrap"><table class="pr-table" id="or-table">
@@ -1105,45 +1195,99 @@ async function loadGA4(){
 
 // ─────────────────────────────────────────────────────────────── STOCK (solo lectura)
 function talleClass(s){ return s<=0?"no": s<=3?"low":"ok"; }
+// Tabla filtrable (rediseño 2026-11-10, a pedido de Flor): antes era una
+// lista de prendas que había que tocar para ver los talles -- ahora es una
+// fila por variante (talle), igual que Precios y costos, filtrable por
+// prenda (texto), talle (select) y cantidad (select de rango, mismos
+// umbrales que talleClass: sin/bajo/con stock). Sólo lectura -- para
+// agregar prendas/talles o cambiar precios sigue siendo la pestaña
+// Configuración/Precios, acá es puramente para consultar y exportar.
 async function viewStock(v,force){
   try{
     if(force||!DATA.catalogo){ loading(v); await getCatalogo(true); }
-    window._catQ = window._catQ||"";
+    window._stkQ = window._stkQ||"";
+    window._stkTalle = window._stkTalle||"";
+    window._stkCant = window._stkCant||"";
+    window._stkSort = window._stkSort||{field:"nombre",dir:1};
+    const talles=[...new Set((DATA.catalogo||[]).flatMap(p=>p.talles.map(t=>t.talle)))]
+      .sort((a,b)=>String(a).localeCompare(String(b),"es",{numeric:true}));
     v.innerHTML = `
-      <div class="view-title">Stock</div>
-      <div class="search"><span class="mag">🔎</span><input id="cat-q" placeholder="Buscar prenda…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(window._catQ)}"></div>
-      <div id="cat-list"></div>`;
-    const inp=$("#cat-q");
-    const draw=()=>{
-      const q=inp.value.trim().toLowerCase(); window._catQ=inp.value;
-      const list=(DATA.catalogo||[]).filter(p=>p.nombre.toLowerCase().includes(q));
-      // Sólo la fila de la prenda -- nombre, foto y stock total. Las
-      // variantes (talle + stock) se ven al entrar (openPrendaStock), como
-      // la lista de variantes de un producto en Shopify (no todo junto acá).
-      $("#cat-list").innerHTML = list.length ? `<div class="vm-list">${list.map(p=>{
-        const tot=p.talles.reduce((s,t)=>s+t.stock,0);
-        return `<div class="vm-row" onclick='openPrendaStock(${JSON.stringify(p.id)})'>
-          ${p.foto?`<img class="thumb" src="${esc(p.foto)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'thumb ph',textContent:'👕'}))">`:'<div class="thumb ph">👕</div>'}
-          <div class="grow"><div class="vm-row-title">${esc(p.nombre)}</div><div class="vm-row-sub">${p.talles.length} talle${p.talles.length!==1?"s":""}</div></div>
-          <span class="chip ${tot<=0?'r':tot<=8?'a':'g'}">${tot} u.</span>
-          <span class="vm-chevron">›</span></div>`;
-      }).join("")}</div>` : '<div class="empty">Sin resultados</div>';
-    };
-    inp.oninput=draw; draw();
+      <div class="view-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span>Stock</span>${exportBtnHtml("exportStockExcel()")}
+      </div>
+      <div class="search"><span class="mag">🔎</span><input id="stk-q" placeholder="Buscar prenda…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(window._stkQ)}"></div>
+      <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <select id="stk-talle" style="flex:1;min-width:130px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:13.5px;background:#fff">
+          <option value="">Todos los talles</option>
+          ${talles.map(t=>`<option value="${esc(t)}" ${window._stkTalle===t?"selected":""}>Talle ${esc(t)}</option>`).join("")}
+        </select>
+        <select id="stk-cant" style="flex:1;min-width:150px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:13.5px;background:#fff">
+          <option value="">Toda cantidad</option>
+          <option value="sin" ${window._stkCant==="sin"?"selected":""}>Sin stock (0)</option>
+          <option value="bajo" ${window._stkCant==="bajo"?"selected":""}>Stock bajo (1-3)</option>
+          <option value="con" ${window._stkCant==="con"?"selected":""}>Con stock (4+)</option>
+        </select>
+      </div>
+      <div class="table-wrap"><table class="pr-table static" id="stk-table">
+        <thead><tr>
+          <th data-field="nombre">Prenda</th>
+          <th data-field="talle">Talle</th>
+          <th data-field="sku">SKU</th>
+          <th data-field="stock">Cantidad</th>
+        </tr></thead>
+        <tbody id="stk-tbody"></tbody>
+      </table></div>`;
+    const inp=$("#stk-q"), selTalle=$("#stk-talle"), selCant=$("#stk-cant");
+    inp.oninput=()=>{ window._stkQ=inp.value; drawStock(); };
+    selTalle.onchange=()=>{ window._stkTalle=selTalle.value; drawStock(); };
+    selCant.onchange=()=>{ window._stkCant=selCant.value; drawStock(); };
+    $("#stk-table").querySelectorAll("th[data-field]").forEach(th=>{
+      th.onclick=()=>{
+        const f=th.dataset.field;
+        if(window._stkSort.field===f) window._stkSort.dir*=-1; else window._stkSort={field:f,dir:f==="stock"?-1:1};
+        drawStock();
+      };
+    });
+    drawStock();
   }catch(e){ errBox(v,e); }
 }
-// Detalle de una prenda: una fila por variante (talle), con stock y precio
-// juntos -- como la lista de variantes de un producto en Shopify.
-function openPrendaStock(prendaId){
-  const p=(DATA.catalogo||[]).find(x=>x.id===prendaId); if(!p) return;
-  openSheet(`<div class="grabber"></div>
-    ${p.foto?`<img class="sheet-foto" src="${esc(p.foto)}" onerror="this.style.display='none'">`:''}
-    <h3>${esc(p.nombre)}</h3><p class="sub">${esc(p.genero||"")}${p.categorias.length?" · "+esc(p.categorias.join(", ")):""}</p>
-    <div class="vm-list">${p.talles.map(t=>`<div class="vm-row">
-      <div class="grow"><div class="vm-row-title">Talle ${esc(t.talle)}</div><div class="vm-row-sub">${fmt(t.precio)} · Lista ${fmt(t.precioLista)}</div></div>
-      <span class="chip ${talleClass(t.stock)==='no'?'r':talleClass(t.stock)==='low'?'a':'g'}">${t.stock} u.</span>
-    </div>`).join("")}</div>
-    <p style="font-size:12px;color:var(--muted);margin-top:14px">Para agregar prendas, talles o cambiar precios: pestaña Configuración.</p>`);
+function stkRows(){
+  const rows=[];
+  (DATA.catalogo||[]).forEach(p=>{
+    p.talles.forEach(t=>rows.push({ nombre:p.nombre, talle:t.talle, sku:t.sku||"", stock:t.stock }));
+  });
+  return rows;
+}
+function stkMatchCant(stock, filtro){
+  if(filtro==="sin") return stock<=0;
+  if(filtro==="bajo") return stock>0 && stock<=3;
+  if(filtro==="con") return stock>3;
+  return true;
+}
+function stkRowHtml(r){
+  const cls=talleClass(r.stock)==='no'?'r':talleClass(r.stock)==='low'?'a':'g';
+  return `<tr><td>${esc(r.nombre)}</td><td>T${esc(r.talle)}</td><td>${esc(r.sku)}</td>
+    <td><span class="chip ${cls}">${r.stock} u.</span></td></tr>`;
+}
+function drawStock(){
+  const inp=$("#stk-q"); if(!inp) return;
+  const q=inp.value.trim().toLowerCase(); window._stkQ=inp.value;
+  const {field,dir}=window._stkSort;
+  const list=stkRows()
+    .filter(r=>r.nombre.toLowerCase().includes(q))
+    .filter(r=>!window._stkTalle || r.talle===window._stkTalle)
+    .filter(r=>stkMatchCant(r.stock, window._stkCant))
+    .sort((a,b)=>{
+      const av=a[field], bv=b[field];
+      if(typeof av==="string"||typeof bv==="string") return String(av||"").localeCompare(String(bv||""),"es",{numeric:true})*dir;
+      return ((av??-Infinity)-(bv??-Infinity))*dir;
+    });
+  $("#stk-tbody").innerHTML = list.length ? list.map(stkRowHtml).join("") : `<tr><td colspan="4"><div class="empty">Sin resultados</div></td></tr>`;
+  $("#stk-table").querySelectorAll("th[data-field]").forEach(th=>{
+    th.classList.toggle("sorted", th.dataset.field===field);
+    th.querySelectorAll(".arrow").forEach(a=>a.remove());
+    if(th.dataset.field===field) th.insertAdjacentHTML("beforeend", `<span class="arrow">${dir>0?"▲":"▼"}</span>`);
+  });
 }
 
 // ─────────────────────────────────────────────────────────────── CONFIGURACIÓN (alta de prendas/talles/precios/compras)
@@ -1904,6 +2048,7 @@ async function viewPedidos(v,force){
     if(f==="debe") list=list.filter(p=>Number(p.saldo)>0.5);
     else if(f==="entregar") list=list.filter(p=>!isEnt(p.estado_envio));
     v.innerHTML=`
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">${exportBtnHtml("exportPedidosExcel()")}</div>
       <div class="seg">
         <button class="${f==='todos'?'on':''}" onclick="window._pedFilter='todos';render()">Todos</button>
         <button class="${f==='debe'?'on':''}" onclick="window._pedFilter='debe';render()">Deben</button>
@@ -2516,7 +2661,9 @@ async function viewClientes(v,force){
     window._cliSort = window._cliSort||{field:"codigo",dir:-1};
     const mobile=isMobileVender();
     v.innerHTML=`
-      <div class="view-title">Clientes <span style="font-size:15px;color:var(--muted);font-weight:600">· ${(DATA.clientes||[]).length}</span></div>
+      <div class="view-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span>Clientes <span style="font-size:15px;color:var(--muted);font-weight:600">· ${(DATA.clientes||[]).length}</span></span>${exportBtnHtml("exportClientesExcel()")}
+      </div>
       <button class="btn gold" style="margin-bottom:14px" onclick="openNuevoClienteAdmin()">+ Nuevo cliente</button>
       <div class="search"><span class="mag">🔎</span><input id="cli-q" placeholder="Buscar por nombre, email, teléfono o código…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(window._cliQ||"")}"></div>
       ${mobile ? `<div class="vm-list" id="cli-list"></div>` : `
@@ -2635,7 +2782,9 @@ async function viewProveedores(v,force){
   try{
     if(force||!DATA.proveedores){ loading(v); await getProveedores(true); }
     v.innerHTML=`
-      <div class="view-title">Proveedores</div>
+      <div class="view-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span>Proveedores</span>${exportBtnHtml("exportProveedoresExcel()")}
+      </div>
       <div class="field"><label>Nuevo proveedor</label>
         <div style="display:flex;gap:8px">
           <input id="pv-nombre" placeholder="Nombre" style="flex:1;padding:12px 13px;border:1.5px solid var(--line);border-radius:12px">
@@ -2736,7 +2885,9 @@ async function viewCompras(v,force){
     const resumen=Object.values(grupos).sort((a,b)=>b.numero.localeCompare(a.numero,undefined,{numeric:true}));
 
     v.innerHTML = `
-      <div class="view-title">Compras</div>
+      <div class="view-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span>Compras</span>${exportBtnHtml("exportComprasExcel()")}
+      </div>
       <button class="btn gold" style="margin-bottom:14px" onclick="openNuevaCompra()">+ Registrar compra</button>
 
       <div class="card" style="text-align:center;padding:16px;margin-bottom:16px"><div style="font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase">Total comprado</div><div style="font-size:22px;font-weight:800;margin-top:4px">${fmt(totalComprado)}</div></div>
@@ -2992,7 +3143,9 @@ async function viewPrecios(v,force){
     window._prQ = window._prQ||"";
     window._prSort = window._prSort||{field:"nombre",dir:1};
     v.innerHTML=`
-      <div class="view-title">Precios y costos</div>
+      <div class="view-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span>Precios y costos</span>${exportBtnHtml("exportPreciosExcel()")}
+      </div>
       <p style="font-size:12.5px;color:var(--muted);margin-top:-8px">Margen = (precio transferencia − costo) / precio transferencia. Tocá costo/transferencia/lista para editar directo (Enter guarda y baja a la fila siguiente); tocá el margen para simular antes de aplicar.</p>
       <div class="card" id="pr-bulk" style="display:none;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -3255,7 +3408,9 @@ async function viewContabilidad(v,force){
         <tbody>${mesesOrdenados.map(m=>`<tr><td>${mesLabel(m)}</td><td>${porMes[m].n}</td><td style="font-weight:700">${fmt(porMes[m].total)}</td></tr>`).join("")}</tbody>
       </table></div>` : "";
     v.innerHTML=`
-      <div class="view-title">Contabilidad</div>
+      <div class="view-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span>Contabilidad</span>${exportBtnHtml("exportFacturasExcel()")}
+      </div>
       <div class="two" style="margin-bottom:14px">
         <div class="card" style="text-align:center;padding:16px"><div style="font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase">Total facturado</div><div style="font-size:22px;font-weight:800;margin-top:4px">${fmt(totalFacturado)}</div></div>
         <div class="card" style="text-align:center;padding:16px"><div style="font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase">Facturado este mes</div><div style="font-size:22px;font-weight:800;margin-top:4px">${fmt(totalMes)}</div></div>
@@ -3329,7 +3484,9 @@ async function viewGastos(v,force){
     const catOpts=GASTO_CATEGORIAS.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
     const mobile=isMobileVender();
     v.innerHTML=`
-      <div class="view-title">Gastos</div>
+      <div class="view-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span>Gastos</span>${exportBtnHtml("exportGastosExcel()")}
+      </div>
       <div class="two" style="margin-bottom:14px">
         <div class="card" style="text-align:center;padding:16px"><div style="font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase">Total histórico</div><div style="font-size:22px;font-weight:800;margin-top:4px">${fmt(totalHist)}</div></div>
         <div class="card" style="text-align:center;padding:16px"><div style="font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase">Gastado este mes</div><div style="font-size:22px;font-weight:800;margin-top:4px">${fmt(totalMes)}</div></div>
@@ -3551,7 +3708,9 @@ async function viewEgresos(v,force){
     window._egSort = window._egSort||{field:"fecha",dir:-1};
     const list0=DATA.egresos||[];
     v.innerHTML=`
-      <div class="view-title">Egresos</div>
+      <div class="view-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span>Egresos</span>${exportBtnHtml("exportEgresosExcel()")}
+      </div>
       <p style="font-size:12.5px;color:var(--muted);margin-top:-8px">Pagos o aportes extraordinarios (plata que pone Flor o Fede). No se relaciona con ninguna otra tabla — es solo un registro.</p>
       <div class="card" style="margin-bottom:14px">
         <div class="section-h" style="margin-top:0">+ Nuevo egreso</div>

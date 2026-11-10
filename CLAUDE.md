@@ -237,6 +237,22 @@ extraordinarios de Flor/Fede — tabla `015_egresos`, standalone, no se
 relaciona con nada más), Contabilidad (con botón "Subir a Drive" por
 factura), Catálogo (alta de prendas/talles).
 
+- **Exportar a Excel** (2026-11-10, a pedido de Flor como respaldo "por si
+  las dudas"): botón "⬇️ Excel" en el header de las 10 tablas principales
+  (Stock, Pedidos, Órdenes, Clientes, Proveedores, Compras, Precios y
+  costos, Contabilidad/Facturas, Gastos, Egresos) que descarga un `.xlsx`
+  real con los datos ya cargados en memoria (`DATA.*`, sin refetch).
+  100% client-side con **SheetJS**, vendorizado como `xlsx.full.min.js` en
+  la raíz del repo (mismo criterio que `html2pdf.bundle.min.js`/
+  `jspdf.umd.min.js`/`qrcode.js` — evita sumar una función serverless más,
+  ver el límite de 12 de Vercel Hobby arriba) y cargado con
+  `<script src="/xlsx.full.min.js" defer>` en el `<head>`. Helper genérico
+  `exportExcel(filename, sheetName, rows)` + una función `export*Excel()`
+  por tabla (arman el array de filas desde `DATA.*` con columnas en
+  español) + `exportBtnHtml(fn,label)` para el botón. Si `DATA.*` está
+  vacío muestra un toast ("No hay datos para exportar") en vez de generar
+  un Excel vacío.
+
 - **Home de mobile + bottom bar** (rediseño 2026-09-28, estilo Shopify POS —
   ver "Vender — arquitectura" abajo para el antecedente): en pantallas
   chicas la pestaña "Inicio" dejó de mostrar el Dashboard y ahora es una
@@ -254,12 +270,21 @@ factura), Catálogo (alta de prendas/talles).
   `<button>` de Clientes no se movió en el DOM para no alterar el orden del
   sidebar de escritorio (que no cambió: sigue mostrando todas las pestañas,
   Dashboard incluido bajo "Inicio").
-- **Stock** (rediseño 2026-09-28): la lista ahora muestra sólo la fila de la
-  prenda (foto, nombre, cantidad de talles, stock total) — antes mostraba
-  además todos los talles como chips apretados en la misma fila. Tocar la
-  prenda abre el detalle con una fila por variante (talle + precio + stock,
-  formato `.vm-row`, como la lista de variantes de un producto en Shopify),
-  reemplazando la vieja grilla de chips + tabla de precios separada.
+- **Stock** (rediseño 2026-11-10, a pedido de Flor: "que se vea tipo tabla
+  filtrable por prenda, por talle y por cantidad" — reemplaza el rediseño
+  2026-09-28 de lista de prendas + detalle por variante al tocar, que
+  obligaba a entrar a cada prenda para ver el stock por talle): ahora es
+  una tabla tipo Excel (`.pr-table`/`.table-wrap`, mismo componente que
+  Precios y costos) con **una fila por talle** (no por prenda), columnas
+  Prenda/Talle/SKU/Cantidad, encabezados clickeables para ordenar
+  (`drawStock`, `window._stkSort`). Tres filtros arriba: buscador de texto
+  por prenda (`#stk-q`, igual que antes), un `<select>` de talle con las
+  opciones armadas dinámicamente desde `DATA.catalogo` (`#stk-talle`), y un
+  `<select>` de cantidad (`#stk-cant`: Sin stock/Stock bajo 1-3/Con stock
+  4+ — mismos umbrales que `talleClass()`, para no inventar una escala
+  nueva). Sólo lectura (no se edita desde acá, para eso sigue Configuración/
+  Precios) — `openPrendaStock` (el sheet de detalle por prenda) se borró,
+  ya no hace falta.
 
 - **Vender — arquitectura** (rediseño completo 2026-09-27/28, inspirado en
   Shopify POS; ver "Pendiente" al final de este bloque): dos UI enteramente
