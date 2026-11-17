@@ -1,8 +1,12 @@
 name: Keep Supabase alive
 
-# Supabase pausa los proyectos del plan Free si no reciben ninguna request
-# en 7 días seguidos. Este workflow le pega al REST API un par de veces por
-# semana (lunes y jueves) para que nunca pase ese umbral.
+# Supabase pausa los proyectos del plan Free con poca actividad en 7 días
+# seguidos -- pero, según la doc oficial (supabase.com/docs/guides/platform/
+# free-project-pausing), lo que cuenta es "a few user requests... each day
+# over the previous week": quiere señal TODOS los días, no alcanza con
+# pasar cada pocos días por debajo del umbral de 7. Con el cron viejo
+# (lunes y jueves, cada 3-4 días) el proyecto se pausó igual el 2026-11-16
+# -- este workflow corre una vez por día para no volver a caer en eso.
 #
 # Usa la misma anon key pública que ya está hardcodeada en wellspring.html/
 # carrito.html/gestion.html (no es secreta, protegida por RLS del lado de
@@ -11,7 +15,7 @@ name: Keep Supabase alive
 
 on:
   schedule:
-    - cron: '0 12 * * 1,4' # lunes y jueves, 12:00 UTC
+    - cron: '0 12 * * *' # todos los días, 12:00 UTC
   workflow_dispatch: {} # para poder probarlo a mano desde la pestaña Actions
 
 jobs:
