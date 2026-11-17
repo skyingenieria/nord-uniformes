@@ -543,15 +543,25 @@ borrar de Vercel el día que se confirme que nada la necesita, no es urgente.
   carga de datos real y para crear/borrar cuentas de prueba descartables
   al verificar cambios en vivo con Playwright.
 - **Proyecto pausado por inactividad (plan Free):** Supabase pausa el
-  proyecto si no recibe ninguna request en 7 días. GitHub Action
+  proyecto con poca actividad en 7 días seguidos. GitHub Action
   `.github/workflows/keep-supabase-alive.yml` (2026-10-19) le hace un
-  `SELECT` liviano a `001_prendas` lunes y jueves (cron, + botón manual
-  "Run workflow" en la pestaña Actions del repo) para que nunca llegue a
-  ese umbral — usa la misma anon key pública hardcodeada en
-  `wellspring.html`/etc., no hace falta cargar ningún secret. Si Supabase
-  igual se pausa (por ejemplo, si GitHub Actions estuvo caído varios días),
-  se reactiva a mano desde el dashboard de Supabase (botón "Restore" en la
-  página del proyecto).
+  `SELECT` liviano a `001_prendas` (+ botón manual "Run workflow" en la
+  pestaña Actions del repo) para que nunca llegue a ese umbral — usa la
+  misma anon key pública hardcodeada en `wellspring.html`/etc., no hace
+  falta cargar ningún secret.
+  **Incidente 2026-11-16:** el proyecto se pausó igual estando el cron
+  activo (corría lunes y jueves, cada 3-4 días, bien dentro de la ventana
+  de 7 días). Según la doc oficial de Supabase
+  (`supabase.com/docs/guides/platform/free-project-pausing`), lo que
+  cuenta no es "no pasar de 7 días sin ningún request" sino *"a few user
+  requests to the database each day over the previous week"* — quiere
+  señal **todos los días**, no alcanza con pasar cada pocos días por
+  debajo del umbral. Por eso el cron se cambió a diario (`0 12 * * *`,
+  antes `0 12 * * 1,4`). Si Supabase igual se pausa (por ejemplo, si
+  GitHub Actions estuvo caído varios días), se reactiva a mano desde el
+  dashboard de Supabase (botón "Restore" en la página del proyecto — la
+  doc oficial dice que se puede restaurar hasta 1 año después de
+  pausado).
 
 ### Vercel
 - Deploy automático al pushear/mergear a `main` (ver "Flujo de trabajo
